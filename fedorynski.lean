@@ -129,18 +129,16 @@ by_contradiction
 )
 
 
-theorem Lemma_1_61 (a : ℤ) (b : ℤ) (n : ℤ) (x : ℤ) (y: ℤ)
-    (h: a ≥ 1 ∧ b ≥ 1 ∧ n ≥ 1 ∧ x ≥ 0 ∧ y ≥ 0
-        ∧ a * x + b * y = n ∧ n > 2 * a * b - a - b):
+theorem Lemma_1_61 (a b n x y : ℤ)
+(h_sol_xy: a * x + b * y = n)
+(a_pos: a ≥ 1)
+(b_pos: b ≥ 1)
+(x_nneg: x ≥ 0)
+(y_nneg: y ≥ 0)
+(n_geq: n > 2 * a * b - a - b)
+:
 ∃ (x1 : ℤ), ∃ (y1 : ℤ),
     (x1 ≥ 0 ∧ y1 ≥ 0 ∧ a * x1 + b * y1 = n ∧ (x1 ≠ x ∨ y1 ≠ y)) :=
-have h_sol_xy: a * x + b * y = n, from h.2.2.2.2.2.1,
-have a_pos: a ≥ 1, from h.1,
-have b_pos: b ≥ 1, from h.2.1,
-have n_pos: n ≥ 1, from h.2.2.1,
-have x_nneg: x ≥ 0, from h.2.2.2.1,
-have y_nneg: y ≥ 0, from h.2.2.2.2.1,
-have n_geq: n > 2 * a * b - a - b, from h.2.2.2.2.2.2,
 have h_alt1: a * (x - b) + b * (y + a) = n,
     from (helper_fact a b n x y h_sol_xy).symm,
 have h_alt2: a * (x + b) + b * (y - a) = n, from
