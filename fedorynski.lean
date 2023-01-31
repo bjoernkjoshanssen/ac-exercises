@@ -69,10 +69,6 @@ c + c = 1 * c + 1 * c : by rw one_mul
     ... = (1 + 1) * c   : by rw right_distrib
     ... = 2 * c         : rfl
 
-lemma obvious_fact_3 (c b a : ℤ):
-(c - b) - a = c - b - a :=
-by exact rfl
-
 lemma helper_fact_2 (a : ℤ) (b : ℤ) (n : ℤ) (x : ℤ) (y : ℤ)
     (h: a ≥ 1 ∧ b ≥ 1 ∧ a * x + b * y = n ∧ n > 2 * a * b - a - b):
         x ≥ b ∨ y ≥ a :=
@@ -101,7 +97,6 @@ by_contradiction
     have hhh3: b * a = a * b, from mul_comm b a,
     have hhh4: b * a - b = a * b - b, by rw hhh3,
     have hhh5: b * (a - 1) = a * b - b, from eq.trans hhh2 hhh4,
-    have hhh6: (a * b - b) - a = a * b - b - a, from obvious_fact_3 (a * b) b a,
     have hhh7: a * b + a * b = 2 * (a * b), from obvious_fact_2 (a * b),
     have hhh8: 2 * a * b = 2 * (a * b), by rw mul_assoc,
     have hhh9: a * b + a * b = 2 * a * b, from eq.trans hhh7 hhh8.symm,
