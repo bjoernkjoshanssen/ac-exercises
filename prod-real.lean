@@ -54,12 +54,10 @@ theorem lemma_6_16 (a : list (ℝ×ℝ)) :
       le_refl _ 
   ) (
     λ hd tl h_ind hn1 hn2 hdom,
-    have hh2: nonnegative (hd.2 :: (p2 tl)), from hn2,
-    have hh1: nonnegative (hd.1 :: (p1 tl)), from hn1,
-    have hh: 0≤hd.2, from nonn_hd hh2,
+    have hh: 0≤hd.2, from nonn_hd hn2,
     have hhh: hd.1 ≤ hd.2, from hdom hd (list.mem_cons_self hd tl),
-    have hhh1: nonnegative (p1 tl), from nonn_tl _ hd.1 hh1,
-    have hhh2: nonnegative (p2 tl), from nonn_tl _ hd.2 hh2,
+    have hhh1: nonnegative (p1 tl), from nonn_tl _ hd.1 hn1,
+    have hhh2: nonnegative (p2 tl), from nonn_tl _ hd.2 hn2,
     have H: 0 ≤ (p1 tl).prod, from prod_nonneg _ hhh1,
     have hp: (p1 tl).prod ≤ (p2 tl).prod, from
       h_ind hhh1 hhh2 (dom_cons hd tl hdom),
