@@ -43,7 +43,7 @@ lemma reverse_cons_length {V : Type} {G : simple_graph V} (a v₀ w : V)
   nat.succ.inj this
 
 theorem third_vertex_in_walk_induction {V : Type} {G : simple_graph V} (v₀ v₁ w : V)
-  (hv : v₀ ≠ v₁) (hv₀w: v₀ ≠ w) (hv₁w: v₁ ≠ w) (n:ℕ):
+(hv₀w: v₀ ≠ w) (hv₁w: v₁ ≠ w) (n:ℕ):
 (∀ p : G.walk v₀ w, p.length = n → ∃ a, (G.adj v₀ a ∨ G.adj v₁ a) ∧ a ≠ v₀ ∧ a ≠ v₁) ∧
 (∀ p : G.walk v₁ w, p.length = n → ∃ a, (G.adj v₀ a ∨ G.adj v₁ a) ∧ a ≠ v₀ ∧ a ≠ v₁)
 :=
@@ -101,13 +101,22 @@ nat.rec_on n (
   )
 )
 
+
+theorem third_vertex_in_walk' {V : Type} (G : simple_graph V) (v₀ v₁ w : V)
+   (hv₀w: v₀ ≠ w) (hv₁w: v₁ ≠ w):
+  (∀ p : G.walk v₀ w,  ∃ a, (G.adj v₀ a ∨ G.adj v₁ a) ∧ a ≠ v₀ ∧ a ≠ v₁) :=
+
+    λ p, (third_vertex_in_walk_induction v₀ v₁ w hv₀w hv₁w p.length).1 p rfl
+
+
 theorem third_vertex_in_walk {V : Type} (G : simple_graph V) (v₀ v₁ w : V)
-  (hv : v₀ ≠ v₁) (hv₀w: v₀ ≠ w) (hv₁w: v₁ ≠ w):
+   (hv₀w: v₀ ≠ w) (hv₁w: v₁ ≠ w):
   (∀ p : G.walk v₀ w,  ∃ a, (G.adj v₀ a ∨ G.adj v₁ a) ∧ a ≠ v₀ ∧ a ≠ v₁) ∧
   (∀ p : G.walk v₁ w,  ∃ a, (G.adj v₀ a ∨ G.adj v₁ a) ∧ a ≠ v₀ ∧ a ≠ v₁) :=
 
   and.intro (
-    λ p, (third_vertex_in_walk_induction v₀ v₁ w hv hv₀w hv₁w p.length).1 p rfl
+    λ p, (third_vertex_in_walk_induction v₀ v₁ w hv₀w hv₁w p.length).1 p rfl
   ) (
-    λ p, (third_vertex_in_walk_induction v₀ v₁ w hv hv₀w hv₁w p.length).2 p rfl
+    λ p, (third_vertex_in_walk_induction v₀ v₁ w hv₀w hv₁w p.length).2 p rfl
   )
+
