@@ -1,0 +1,70 @@
+import algebra.ring.boolean_ring
+import data.fintype.basic
+import tactic.fin_cases
+import data.vector
+import data.fintype.vector
+
+/-
+In the following we prove A_N(0110)=3 and similar facts using dec_trivial.
+-/
+
+def is_witness {n b:ℕ} (x : vector (fin b) n) (q:ℕ) (h : vector (fin q) n.succ): Prop :=
+  ∀ g : vector (fin q) n.succ,
+    g.1.nth 0 = h.1.nth 0 →
+    g.1.nth n = h.1.nth n →
+    ∀ y : vector (fin b) n, (
+      ∀ k : fin n, ∃ l : fin n,
+        [h.nth l.1, h.nth l.1.succ] =
+        [g.nth k.1, g.nth k.1.succ] ∧ x.nth l = y.nth k
+    ) → 
+    g=h ∧ x=y
+
+
+
+instance {n b:ℕ}  (x : vector (fin b) n) (q:ℕ) (h : vector (fin q) n.succ):
+decidable (is_witness x q h) := 
+decidable_of_iff (
+  ∀ g : vector (fin q) n.succ,
+    g.1.nth 0 = h.1.nth 0 →
+    g.1.nth n = h.1.nth n →
+    ∀ y : vector (fin b) n, (
+      ∀ k : fin n, ∃ l : fin n,
+        [h.nth l.1, h.nth l.1.succ] =
+        [g.nth k.1, g.nth k.1.succ] ∧ x.nth l = y.nth k
+    ) → 
+    g=h ∧ x=y
+) (by rw is_witness)
+
+
+def A_N_bounded_by
+  {n b :ℕ}
+  (x : vector (fin b) n)
+  (q:ℕ) : Prop :=
+∃ h : vector (fin q) n.succ, is_witness x q h 
+
+instance   {n b :ℕ}
+  (x : vector (fin b) n)
+  (q:ℕ) : decidable (A_N_bounded_by x q) := decidable_of_iff (
+∃ h : vector (fin q) n.succ, is_witness x q h 
+  ) (by rw A_N_bounded_by)
+
+
+def complexity_equals {n:ℕ} (x:vector (fin 2) n) (k:ℕ) : Prop :=
+A_N_bounded_by x k ∧ ¬ A_N_bounded_by x (k-1) 
+
+instance {n:ℕ} (x:vector (fin 2) n) (k:ℕ) : decidable (complexity_equals x k) :=
+decidable_of_iff (
+A_N_bounded_by x k ∧ ¬ A_N_bounded_by x (k-1) 
+) (by rw complexity_equals)
+
+
+#eval (∀ i ∈ [
+  (complexity_equals (⟨[0,0,0,0], rfl⟩ : vector (fin 2) 4) 1 : bool),
+  (complexity_equals (⟨[0,0,0,1], rfl⟩ : vector (fin 2) 4) 2 : bool),
+  (complexity_equals (⟨[0,0,1,0], rfl⟩ : vector (fin 2) 4) 3 : bool),
+  (complexity_equals (⟨[0,0,1,1], rfl⟩ : vector (fin 2) 4) 3 : bool),
+  (complexity_equals (⟨[0,1,0,0], rfl⟩ : vector (fin 2) 4) 3 : bool),
+  (complexity_equals (⟨[0,1,0,1], rfl⟩ : vector (fin 2) 4) 2 : bool),
+  (complexity_equals (⟨[0,1,1,0], rfl⟩ : vector (fin 2) 4) 3 : bool),
+  (complexity_equals (⟨[0,1,1,1], rfl⟩ : vector (fin 2) 4) 2 : bool)
+], i = tt : bool)
