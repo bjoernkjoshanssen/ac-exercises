@@ -8,8 +8,28 @@ import data.fintype.vector
 In the following we prove A_N(0110)=3 and similar facts using dec_trivial.
 -/
 
+
+
+def slow {n:ℕ} {q:ℕ} (h : vector (fin q) n.succ): Prop :=
+(h.nth 0).1 = 0 ∧
+∀ j : fin q, ∃ i : fin q, i.1 < j.1.succ ∧ (h.nth j.1.succ).1 ≤ (h.nth i.1).succ
+
+instance {n b:ℕ}  (x : vector (fin b) n) (q:ℕ) (h : vector (fin q) n.succ):
+decidable (slow h) := 
+decidable_of_iff (
+(h.nth 0).1 = 0 ∧
+∀ j : fin q, ∃ i : fin q, i.1 < j.1.succ ∧ (h.nth j.1.succ).1 ≤ (h.nth i.1).succ
+) (by rw slow)
+
+
 def is_witness {n b:ℕ} (x : vector (fin b) n) (q:ℕ) (h : vector (fin q) n.succ): Prop :=
+-- (
+--   (h.nth 0).1 = 0 ∧
+-- ∀ j : fin q, ∃ i : fin q, i.1 < j.1.succ ∧ (h.nth j.1.succ).1 ≤ (h.nth i.1).succ
+
+-- ) ∧
   ∀ g : vector (fin q) n.succ,
+    -- slow g →
     g.1.nth 0 = h.1.nth 0 →
     g.1.nth n = h.1.nth n →
     ∀ y : vector (fin b) n, (
@@ -20,11 +40,17 @@ def is_witness {n b:ℕ} (x : vector (fin b) n) (q:ℕ) (h : vector (fin q) n.su
     g=h ∧ x=y
 
 
-
 instance {n b:ℕ}  (x : vector (fin b) n) (q:ℕ) (h : vector (fin q) n.succ):
 decidable (is_witness x q h) := 
 decidable_of_iff (
+--   (
+--     (h.nth 0).1 = 0 ∧
+-- ∀ j : fin q, ∃ i : fin q, i.1 < j.1.succ ∧ (h.nth j.1.succ).1 ≤ (h.nth i.1).succ
+
+--   ) ∧
   ∀ g : vector (fin q) n.succ,
+    -- slow g →
+
     g.1.nth 0 = h.1.nth 0 →
     g.1.nth n = h.1.nth n →
     ∀ y : vector (fin b) n, (
@@ -68,3 +94,23 @@ A_N_bounded_by x k ∧ ¬ A_N_bounded_by x (k-1)
   (complexity_equals (⟨[0,1,1,0], rfl⟩ : vector (fin 2) 4) 3 : bool),
   (complexity_equals (⟨[0,1,1,1], rfl⟩ : vector (fin 2) 4) 2 : bool)
 ], i = tt : bool)
+
+#eval (∀ i ∈ [
+  (complexity_equals (⟨[0,0,0,0,0], rfl⟩ : vector (fin 2) 5) 1 : bool),
+  (complexity_equals (⟨[0,0,0,0,1], rfl⟩ : vector (fin 2) 5) 2 : bool),
+  (complexity_equals (⟨[0,0,0,1,0], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,0,0,1,1], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,0,1,0,0], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,0,1,0,1], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,0,1,1,0], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,0,1,1,1], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,1,0,0,0], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,1,0,0,1], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,1,0,1,0], rfl⟩ : vector (fin 2) 5) 2 : bool),
+  (complexity_equals (⟨[0,1,0,1,1], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,1,1,0,0], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,1,1,0,1], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,1,1,1,0], rfl⟩ : vector (fin 2) 5) 3 : bool),
+  (complexity_equals (⟨[0,1,1,1,1], rfl⟩ : vector (fin 2) 5) 2 : bool)
+], i = tt : bool)
+
