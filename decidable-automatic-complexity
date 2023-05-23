@@ -83,7 +83,7 @@ decidable_of_iff (
 A_N_bounded_by x k ∧ ¬ A_N_bounded_by x (k-1) 
 ) (by rw complexity_equals)
 
-
+/-
 #eval (∀ i ∈ [
   (complexity_equals (⟨[0,0,0,0], rfl⟩ : vector (fin 2) 4) 1 : bool),
   (complexity_equals (⟨[0,0,0,1], rfl⟩ : vector (fin 2) 4) 2 : bool),
@@ -112,5 +112,40 @@ A_N_bounded_by x k ∧ ¬ A_N_bounded_by x (k-1)
   (complexity_equals (⟨[0,1,1,0,1], rfl⟩ : vector (fin 2) 5) 3 : bool),
   (complexity_equals (⟨[0,1,1,1,0], rfl⟩ : vector (fin 2) 5) 3 : bool),
   (complexity_equals (⟨[0,1,1,1,1], rfl⟩ : vector (fin 2) 5) 2 : bool)
+], i = tt : bool)
+-/
+#eval (∀ i ∈ [
+  (complexity_equals (⟨[0,0,0,0,0,0], rfl⟩ : vector (fin 2) 6) 1 : bool),
+  (complexity_equals (⟨[0,0,0,0,0,1], rfl⟩ : vector (fin 2) 6) 2 : bool),
+  (complexity_equals (⟨[0,0,0,0,1,0], rfl⟩ : vector (fin 2) 6) 3 : bool),
+  (complexity_equals (⟨[0,0,0,0,1,1], rfl⟩ : vector (fin 2) 6) 3 : bool),
+  (complexity_equals (⟨[0,0,0,1,0,0], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,0,0,1,0,1], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,0,0,1,1,0], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,0,0,1,1,1], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,0,1,0,0,0], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,0,1,0,0,1], rfl⟩ : vector (fin 2) 6) 3 : bool),
+  (complexity_equals (⟨[0,0,1,0,1,0], rfl⟩ : vector (fin 2) 6) 3 : bool),
+  (complexity_equals (⟨[0,0,1,0,1,1], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,0,1,1,0,0], rfl⟩ : vector (fin 2) 6) 3 : bool), -- !
+  (complexity_equals (⟨[0,0,1,1,0,1], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,0,1,1,1,0], rfl⟩ : vector (fin 2) 6) 3 : bool), -- !
+  (complexity_equals (⟨[0,0,1,1,1,1], rfl⟩ : vector (fin 2) 6) 3 : bool),
+  (complexity_equals (⟨[0,1,0,0,0,0], rfl⟩ : vector (fin 2) 6) 3 : bool),
+  (complexity_equals (⟨[0,1,0,0,0,1], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,1,0,0,1,0], rfl⟩ : vector (fin 2) 6) 3 : bool),
+  (complexity_equals (⟨[0,1,0,0,1,1], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,1,0,1,0,0], rfl⟩ : vector (fin 2) 6) 3 : bool),
+  (complexity_equals (⟨[0,1,0,1,0,1], rfl⟩ : vector (fin 2) 6) 2 : bool),
+  (complexity_equals (⟨[0,1,0,1,1,0], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,1,0,1,1,1], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,1,1,0,0,0], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,1,1,0,0,1], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,1,1,0,1,0], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,1,1,0,1,1], rfl⟩ : vector (fin 2) 6) 3 : bool),
+  (complexity_equals (⟨[0,1,1,1,0,0], rfl⟩ : vector (fin 2) 6) 3 : bool), -- !
+  (complexity_equals (⟨[0,1,1,1,0,1], rfl⟩ : vector (fin 2) 6) 4 : bool),
+  (complexity_equals (⟨[0,1,1,1,1,0], rfl⟩ : vector (fin 2) 6) 3 : bool),
+  (complexity_equals (⟨[0,1,1,1,1,1], rfl⟩ : vector (fin 2) 6) 2 : bool)
 ], i = tt : bool)
 
