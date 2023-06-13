@@ -137,7 +137,7 @@ theorem E_N_two {b:ℕ} : E_N_bounded_by ([0,0] : list (fin b.succ)) 1 :=
     
     existsi M,split,
  -- Cardinality:
-    simp,rw tidy_one,simp,
+    simp,rw prod_eq_zero,simp,
     
     split,
      /- No duplicate edges: -/
