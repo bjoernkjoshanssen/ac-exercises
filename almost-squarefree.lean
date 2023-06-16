@@ -12,7 +12,7 @@ def occurs_in {α:Type} (y w : list α)
   ∃ x z : list α, w = x ++ y ++ z
 
 
-def properly_occurs_squared_in {α:Type} (y w : list α) : Prop :=
+def nonnil_occurs_squared_in {α:Type} (y w : list α) : Prop :=
   (y ≠ list.nil) ∧
   occurs_in (y ++ y) w
 
@@ -20,16 +20,16 @@ def abstract_almost_square_free
   (a b : fin 2)(h: a ≠ b)
   (w : list (fin 2))
   : Prop := 
-  ∀ y : list (fin 2), properly_occurs_squared_in y w
+  ∀ y : list (fin 2), nonnil_occurs_squared_in y w
                     → y ∈ ({  [a], [b], [a,b]}: set (list (fin 2)))
 
 def almost_square_free (w : list (fin 2)): Prop :=
   abstract_almost_square_free 0 1 fin.zero_ne_one w
 
 def generalized_almost_square_free {α:Type} (w : list α) : Prop :=
-  (∀ a b : α, ¬ (properly_occurs_squared_in [a,b] w ∧ properly_occurs_squared_in [b,a] w))
+  (∀ a b : α, ¬ (nonnil_occurs_squared_in [a,b] w ∧ nonnil_occurs_squared_in [b,a] w))
   ∧
-  ∀ y : list α, properly_occurs_squared_in y w →  (∃ a : α, y = [a]) ∨ ∃ a b :α, y= [a,b]
+  ∀ y : list α, nonnil_occurs_squared_in y w →  (∃ a : α, y = [a]) ∨ ∃ a b :α, y= [a,b]
 
 lemma cons_ne_nil' {a b c :  (fin 2)} : [a,b] ≠ [c] :=
   λ h, list.cons_ne_nil b list.nil (list.tail_eq_of_cons_eq h)
@@ -128,4 +128,31 @@ example: not_overlapfree ctrex := by {
   existsi (0:fin 2),
   existsi list.nil,
   existsi list.nil,simp,refl,
+}
+
+example: ¬ almost_square_free ([0,1,1,0,1,1] : list (fin 2)) := by {
+  let ex := ([0,1,1] : list (fin 2)),
+  let target := ([0,1,1,0,1,1] : list (fin 2)),
+  have hl: ex.length = 3, from rfl,
+  intro hcontra,
+  let h := hcontra ex,
+  have h1 : nonnil_occurs_squared_in ex target, by {
+    split,
+    intro hex,have h2 : 3 = 0, from congr_arg list.length hex,
+    exact nat.succ_ne_zero 2 h2,
+    existsi list.nil,existsi list.nil,simp,
+  },
+  have h2 : ex ∈ ({[0], [1], [0,1]} : set (list (fin 2))), from h h1,
+  cases h2,
+  have h3: 3 = 1, from congr_arg list.length h2,
+  exact nat.succ_ne_zero 1 (nat.succ_injective h3),
+  cases h2,
+  have h3: 3 = 1, from congr_arg list.length h2,
+  exact nat.succ_ne_zero 1 (nat.succ_injective h3),
+  have h2': ex = ([0,1]:list (fin 2)), from h2,
+
+  have h3: 3 = 2, from calc 3 = ex.length: rfl
+                          ... = ([0,1]:list (fin 2)).length: by rw h2'
+                          ... = 2: rfl,
+  exact nat.succ_ne_zero 0 (nat.succ_injective (nat.succ_injective h3)),  
 }
