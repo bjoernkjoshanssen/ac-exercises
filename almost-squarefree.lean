@@ -80,18 +80,21 @@ lemma cons_append_length {a b : fin 2} {x u z : list (fin 2)} :
   }
 
 lemma square_length_ge_four {x z u: list (fin 2)} {a b : fin 2}:
-  (x ++ ((a :: (b :: u)) ++ (a::(b::u))) ++ z).length ≥ 4 := calc
-    _ = x.length + u.length.succ.succ + u.length.succ.succ + z.length : cons_append_length
-  ... ≥ x.length + u.length.succ.succ + u.length.succ.succ            : le_self_add
-  ... = x.length + (u.length.succ.succ + u.length.succ.succ)          : add_assoc _ _ _
-  ... ≥            u.length.succ.succ + u.length.succ.succ            : le_add_self
-  ... =            2*u.length + 4                                     : by ring
-  ... ≥ _                                                             : le_add_self
+  (x ++ ((a :: (b :: u)) ++ (a::(b::u))) ++ z).length ≥ 4 :=
+  let n := u.length.succ.succ in
+  calc
+    _ = x.length + n + n + z.length : cons_append_length
+  ... ≥ x.length + n + n            : le_self_add
+  ... = x.length + (n + n)          : add_assoc _ _ _
+  ... ≥            n + n            : le_add_self
+  ... =            2*u.length + 4   : by ring
+  ... ≥ _                           : le_add_self
 
-theorem ctrex_ne {x z : list (fin 2)} {a b : fin 2}: ctrex ≠ (x ++ ([a,b] ++ [a,b]) ++ z) :=
+theorem ctrex_ne {x z : list (fin 2)} {a b : fin 2}:
+  ctrex ≠ (x ++ ([a,b] ++ [a,b]) ++ z) :=
   λh, have ctrex.length ≥ 4, from
-  calc ctrex.length = (x ++ ([a,b] ++ [a,b]) ++ z).length: by rw h
-                ... ≥ 4: square_length_ge_four,
+  calc _ = (x ++ ([a,b] ++ [a,b]) ++ z).length: by rw h
+     ... ≥ 4: square_length_ge_four,
   nat.not_succ_le_self 3 this
 
 example: generalized_almost_square_free ctrex := by {
