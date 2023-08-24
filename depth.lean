@@ -4,6 +4,9 @@ import ring_theory.principal_ideal_domain
 def sat_eq (a: ℤ×ℤ) (n: ℤ) (x: ℤ×ℤ) : Prop :=
 a.1*x.1+a.2*x.2=n
 
+def sat_eq3 (a b c: ℤ) (n: ℤ) (x y z: ℤ) : Prop :=
+a*x+b*y+c*z=n
+
 theorem depth1 {a b x y k n : ℤ}
   (hsat:sat_eq (a,b) n (x,y)):
   sat_eq (a,b) n (x-k*b,y+k*a) :=
@@ -33,3 +36,19 @@ by {
   intro k,
   exact depth1 hxy
 }
+
+theorem solve3 (a b c n : ℤ) (
+  h : gcd_monoid.gcd (gcd_monoid.gcd a b) c = 1)
+  : ∃ x y z : ℤ, sat_eq3 a b c n x y z :=
+  by {
+  have h1: ∃ x y : ℤ, sat_eq ((gcd_monoid.gcd a b),c) n (x,y), from depth2 h,
+  have h2: ∃ u v : ℤ, gcd a b = a*u+b*v, from exists_gcd_eq_mul_add_mul _ _,
+  cases h1 with x hx,
+  cases hx with y hxy,
+  cases h2 with u hu,
+  cases hu with v huv,
+  have : (a*u+b*v) * x + c*y = n, by rwa huv at hxy,
+  existsi [u*x, v*x, y],
+  exact calc _ =  (a*u+b*v) * x + c*y: by ring
+           ... = _: this
+  }
