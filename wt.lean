@@ -1,67 +1,67 @@
-import ring_theory.int.basic
+import Mathlib.Data.Set.Finite
 
-def wt {n:ℕ} : list (fin n) → ℕ :=
-λ x, finset.card (list.to_finset x)
+def width {n:Nat} : List (Fin n) → Nat :=
+fun x ↦ Finset.card (List.toFinset x)
 
-/- The following results characterize wt -/
-
-theorem wt_nil {n:ℕ}:
-wt (list.nil : list (fin n)) = 0 :=
+theorem width_nil {n:ℕ}:
+width (List.nil : List (Fin n)) = 0 :=
 by {
-  unfold wt,
-  rw list.to_finset_nil,
-  exact rfl,
+  unfold width
+  rw [List.toFinset_nil]
+  exact rfl
 }
 
-theorem wt_single {n:ℕ} (a:fin n.succ):
-wt ([a]) = 1 :=
+theorem width_single {n:ℕ} (a:Fin n.succ):
+width ([a]) = 1 :=
 by {
-  unfold wt,
-  rw list.to_finset_cons,
-  rw list.to_finset_nil,
-  refl,
+  unfold width
+  rw [List.toFinset_cons,List.toFinset_nil]
+  exact rfl
 }
 
-theorem wt_stay {n:ℕ} (a:fin n.succ) (x: list (fin n.succ)) (h: a ∈ x.to_finset):
-wt (a :: x) = wt x :=
+theorem width_stay {n:ℕ} (a:Fin n.succ) (x: List (Fin n.succ)) (h: a ∈ x.toFinset):
+width (a :: x) = width x :=
 by {
-  unfold wt,
-  have h1: has_insert.insert a x.to_finset = x.to_finset, from finset.insert_eq_of_mem h,
-  have h2: (a :: x).to_finset = has_insert.insert a x.to_finset, from list.to_finset_cons,
-  have h3: (a :: x).to_finset = x.to_finset, from eq.trans h2 h1,
-  rw h3,
+  unfold width
+  have h1: insert a x.toFinset = x.toFinset := Finset.insert_eq_of_mem h
+  have h2: (a :: x).toFinset = insert a x.toFinset := List.toFinset_cons
+  have h3: (a :: x).toFinset = x.toFinset:= Eq.trans h2 h1
+  rw [h3]
 }
 
-def disjoint_lists {α:Type} [decidable_eq α] (x y : list α) : Prop :=
-  disjoint (list.to_finset x) (list.to_finset y)
+def disjoint_lists {α:Type} [DecidableEq α] (x y : List α) : Prop :=
+  Disjoint (List.toFinset x) (List.toFinset y)
 
-theorem wt_disjoint {n:ℕ} (x y : list (fin n))
+theorem width_disjoint {n:ℕ} (x y : List (Fin n))
   (h: disjoint_lists x y) :
-wt (x++y) = wt x + wt y :=
+width (x++y) = width x + width y :=
 by {
-  unfold wt,
-  rw list.to_finset_append,
-  rwa finset.card_disjoint_union
+  unfold width
+  rw [List.toFinset_append]
+  rwa [Finset.card_disjoint_union]
 }
 
-/- End of results characterizing wt -/
+/- End of results characterizing width -/
 
-theorem wt_comm {n:ℕ} (x y : list (fin n)):
-wt (x++y) = wt (y++x) :=
+theorem width_comm {n:ℕ} (x y : List (Fin n)):
+width (x++y) = width (y++x) :=
 by {
-  unfold wt,
-  repeat{rw list.to_finset_append},
-  rw finset.union_comm,
+  unfold width
+  repeat{rw[List.toFinset_append]}
+  have : List.toFinset (x ++ y) = List.toFinset (y ++ x) := by
+      refine List.toFinset_eq_of_perm (x ++ y) (y ++ x) ?h
+      exact List.perm_append_comm
+  rw [this]
 }
 
-theorem wt_append {n:ℕ} (x y : list (fin n)):
-wt (x++y) ≤ wt x + wt y :=
+theorem width_append {n:ℕ} (x y : List (Fin n)):
+width (x++y) ≤ width x + width y :=
 by {
-  unfold wt,
-  rw list.to_finset_append,
-  exact finset.card_union_le _ _
+  unfold width
+  rw [List.toFinset_append]
+  exact Finset.card_union_le _ _
 }
 
 
 
-#eval wt  ([0,1,1,1,0]: list (fin 5))
+#eval width  ([0,1,1,1,0]: List (Fin 5))
