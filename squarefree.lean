@@ -1,16 +1,16 @@
-import data.vector
-import data.nat.basic
-import data.pnat.prime
+import Mathlib.Data.Nat.Basic
+import Mathlib.Data.Vector.Basic
+import Mathlib.Data.Fintype.Vector
 
-def squarefree {k:ℕ} (w: vector (fin 2) k) : Prop :=
-∀ l:ℕ, l < w.length → ∀ v : vector (fin 2) l,
-v.1 ≠ list.nil → ¬ list.is_infix (v.1 ++ v.1) w.1
+def squarefree {k:ℕ} (w: Vector (Fin 2) k) : Prop :=
+∀ l:ℕ, l < w.length → ∀ v : Vector (Fin 2) l,
+v.1 ≠ List.nil → ¬ List.IsInfix (v.1 ++ v.1) w.1
 
-instance (w : vector (fin 2) 4) : decidable (squarefree w)
+instance (w : Vector (Fin 2) 4) : Decidable (squarefree w)
 :=
-decidable_of_iff (∀ l:ℕ, l < w.length → ∀ v : vector (fin 2) l,
-v.1 ≠ list.nil → ¬ list.is_infix (v.1 ++ v.1) w.1
-) (by rw squarefree)
+decidable_of_iff (∀ l:ℕ, l < w.length → ∀ v : Vector (Fin 2) l,
+v.1 ≠ List.nil → ¬ List.IsInfix (v.1 ++ v.1) w.1
+) (by rw [squarefree])
 
-example : ∀ w : vector (fin 2) 4,
-¬ squarefree w := dec_trivial
+example : ∀ w : Vector (Fin 2) 4,
+¬ squarefree w := by decide
