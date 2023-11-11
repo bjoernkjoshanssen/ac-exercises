@@ -8,7 +8,7 @@ import Mathlib.Topology.MetricSpace.Basic
 axiom α : Type /- For example α could be 0{0,1}^{n-1} -/
 
 axiom A_cond : α → α → PNat /- A_N(x ∣ y) -/
-noncomputable def A : α → α → Real := λ x y ↦ ((A_cond x y) : Real) 
+noncomputable def A : α → α → Real := λ x y ↦ ((A_cond x y) : Real)
 
 noncomputable def dis : α → α → Real :=
   λ x y ↦ Real.log ((A x y) * (A y x))
@@ -17,12 +17,12 @@ noncomputable def dis_max : α → α → Real :=
   λ x y ↦ max (Real.log (A x y))
              (Real.log (A y x))
 
-axiom f : Real → Real → Real  
+axiom f : Real → Real → Real
 axiom f00 : f 0 0 = 0
 axiom fcomm: Commutative f
-axiom fonly: ∀ x y, f x y = 0 → x = 0 ∧ y = 0 
-axiom fmonotone:    ∀ a b c d, a ≤ b → c ≤ d → f a c ≤ f b d   
-axiom fsubadditive: ∀ a b c d, f (a+b) (c+d) ≤ f a c + f b d 
+axiom fonly: ∀ x y, f x y = 0 → x = 0 ∧ y = 0
+axiom fmonotone:    ∀ a b c d, a ≤ b → c ≤ d → f a c ≤ f b d
+axiom fsubadditive: ∀ a b c d, f (a+b) (c+d) ≤ f a c + f b d
 
 noncomputable def dis_f : α → α → Real :=
   λ x y ↦ f (Real.log (A x y))
@@ -82,7 +82,7 @@ lemma le_of_ge {x y: Real} (hx:1 ≤x )(hy:1 ≤ y)(h1:1 =x*y): x≤1  :=
   calc
   x = x*1   := (mul_one _).symm
   _ ≤ x * y := mul_le_mul_of_nonneg_left hy this
-  _ = 1     := h1.symm 
+  _ = 1     := h1.symm
 
 theorem dis_comm: ∀ (x y : α), dis x y = dis y x :=
   λ x y ↦ by {unfold dis;rw [mul_comm]}
@@ -104,7 +104,7 @@ theorem dis_max_eq_of : ∀ (x y : α), dis_max x y = 0 → x = y :=
   λ x y h₁ ↦
   by {
     have K: max (Real.log (A x y)) (Real.log (A y x)) = 0 := h₁
-    
+
     have G: Real.log (A x y) ≤ Real.log 1 := calc
                            _ ≤  max (Real.log (A x y)) (Real.log (A y x)) := le_max_left _ _
                          _ = 0 := K
@@ -160,7 +160,7 @@ theorem triangle_f: ∀ (x y z : α), dis_f x z ≤ dis_f x y + dis_f y z :=
 let r := Real.log
 λ x y z ↦ by {
   unfold dis_f
-  exact calc 
+  exact calc
       f (r (A x z))             (r (A z x))
     ≤ f (r (A x y) + r (A y z)) (r (A z x))             := fmonotone _ _ _ _ R (le_refl _)
 _ ≤ f (r (A x y) + r (A y z)) (r (A z y) + r (A y x)) := fmonotone _ _ _ _ (le_refl _) R
@@ -192,13 +192,11 @@ _ = max (Real.log (A x y) + Real.log (A y z))
 
 
 noncomputable instance automatic_complexity_metric : MetricSpace α :=
-{
-        dist               := dis
-        dist_self          := dis_self
-        eq_of_dist_eq_zero := dis_eq_of
-        dist_comm          := dis_comm
-        dist_triangle      := triangle
-        edist_dist         := sorry
-    }
--- The definition of metric space has changed in Lean 4.
--- We only provide the fields needed according to Lean 3.
+  {
+    dist               := dis
+    dist_self          := dis_self
+    eq_of_dist_eq_zero := dis_eq_of
+    dist_comm          := dis_comm
+    dist_triangle      := triangle
+    edist_dist         := (λ x y ↦ by exact (ENNReal.ofReal_eq_coe_nnreal _).symm)
+  }
