@@ -1,12 +1,15 @@
-import ring_theory.int.basic
+import Mathlib.Data.Nat.Basic
 
-example (a₁ a₂ b₁ b₂ : ℕ) (h₁ : a₁ ≥ b₁) (h₂ : a₂ ≥ b₂) (h : a₁+a₂ = b₁+b₂) :
+example (a₁ a₂ b₁ b₂ : Nat) (h₁ : a₁ ≥ b₁) (h₂ : a₂ ≥ b₂) (h : a₁+a₂ = b₁+b₂) :
 a₁ = b₁ := by {
-  have g : a₁ = b₁ ∨ a₁ > b₁, from eq_or_gt_of_le h₁,
-  cases g,
-  exact g,
-  have gg: a₁ + a₂ > b₁ + b₂, from add_lt_add_of_lt_of_le g h₂,
-  have : b₁ + b₂ > b₁ + b₂, by {rwa h at gg,},
-  exfalso,
-  exact (lt_self_iff_false (b₁+b₂)).mp this,
+  have g : a₁ = b₁ ∨ b₁ < a₁ := eq_or_gt_of_le h₁
+  rcases g with p1 | p2
+  exact p1
+  exfalso
+  have gg: a₁ + a₂ > b₁ + b₂ := by {
+    calc b₁ + b₂ < a₁ + b₂ := Nat.add_lt_add_right p2 b₂
+    _            ≤ a₁ + a₂ := Nat.add_le_add_left h₂ a₁
+  }
+  have : b₁ + b₂ > b₁ + b₂ := by {rw [h] at gg;exact gg}
+  exact (lt_self_iff_false (b₁+b₂)).mp this
 }
