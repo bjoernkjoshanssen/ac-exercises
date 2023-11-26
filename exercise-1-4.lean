@@ -1,6 +1,8 @@
 import Mathlib.Tactic.Ring
 import Mathlib.Data.Real.Basic
 
+-- Solution to Exercise 1.4.
+
 theorem SW_15_induction (x:ℝ) (k:ℕ) (h0: 0 ≤ x) (h1: x ≤ 1):
   1 - (k:ℝ) * x ≤ (1 - x)^k := Nat.recOn k ( -- Base for induction
     calc 1 - (0:ℕ) * x = 1 - 0*x := by rw [Nat.cast_zero]
