@@ -1,5 +1,7 @@
 import Mathlib.Computability.DFA
 
+-- Solution to Exercise 1.14.
+
 open List
 /-
 In this file we quite simply prove that the automatic complexity of a "repeat" word like
