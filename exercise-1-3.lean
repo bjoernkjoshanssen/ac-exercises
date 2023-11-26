@@ -1,5 +1,7 @@
 import Mathlib.Tactic.Ring
--- Lemma 1.52, 2022-10-02 version, "Automatic complexity: a measure of irregularity"
+
+-- Solution to Exercise 1.3 in "Automatic complexity: a measure of irregularity"
+
 theorem lemma_1_52 (r x y:ℤ)(hr:0<r)(hy:0 ≤ y)(hx:0 ≤ x) :
   2 * r^2 = (x+y)*r+(y+1) ↔ (x,y) = (r,r-1) :=
   -- General facts:
