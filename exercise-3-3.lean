@@ -3,6 +3,8 @@ import Mathlib.Tactic.Ring
 import Mathlib.Algebra.GCDMonoid.Basic
 import Mathlib.RingTheory.Int.Basic
 
+-- Solution to Exercise 3.3.
+
 def sat_eq (a: ℤ×ℤ) (n: ℤ) (x: ℤ×ℤ) : Prop :=
 a.1*x.1+a.2*x.2=n
 
