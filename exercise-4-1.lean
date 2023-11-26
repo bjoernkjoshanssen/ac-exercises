@@ -1,4 +1,6 @@
-import Mathlib.Computability.DFA --computability.NA
+import Mathlib.Computability.DFA
+
+-- Solution to Exercise 4.1.
 
 def collatz_function (n : ℕ) : ℕ :=
   if n % 2 = 0 then n / 2 else 3 * n + 1
