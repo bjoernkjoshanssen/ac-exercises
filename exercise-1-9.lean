@@ -4,6 +4,9 @@ import Mathlib.Data.Set.Lattice
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Fintype.Sum
 import Mathlib.Init.Data.Nat.Lemmas
+
+-- Solution to Exercise 1.9.
+
 axiom alpha:ℕ
 -- def α := Fin alpha -- (Fin alpha) is the input alphabet
 
