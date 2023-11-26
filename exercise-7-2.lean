@@ -1,5 +1,7 @@
 import Mathlib.Data.Set.Finite
 
+-- Solution to Exercise 7.2.
+
 def width {n:Nat} : List (Fin n) → Nat :=
 fun x ↦ Finset.card (List.toFinset x)
 
