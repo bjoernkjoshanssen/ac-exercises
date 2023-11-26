@@ -1,5 +1,6 @@
 import Mathlib.Tactic.Ring
--- import algebra.ring.boolean_ring
+
+-- Solution to Exercise 1.5.
 
 theorem decide_diophantine2_1 (a b n x y : ℕ): a*x+b*y =n → 0 < a → x < n/a + 1 :=
   λ h ↦ λ ha: 0 < a ↦
