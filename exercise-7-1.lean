@@ -1,5 +1,7 @@
 import Mathlib.Data.Nat.Basic
 
+-- Solution to Exercise 7.1.
+
 example (a₁ a₂ b₁ b₂ : Nat) (h₁ : a₁ ≥ b₁) (h₂ : a₂ ≥ b₂) (h : a₁+a₂ = b₁+b₂) :
 a₁ = b₁ := by {
   have g : a₁ = b₁ ∨ b₁ < a₁ := eq_or_gt_of_le h₁
