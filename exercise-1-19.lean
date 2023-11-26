@@ -1,3 +1,5 @@
+-- Solution to Exercise 1.19.
+
 structure digraph (σ:Type) := (edge : σ → σ → Prop)
 
 inductive walk_digraph {σ : Type} (M : digraph σ) : σ → σ  → Type 0
