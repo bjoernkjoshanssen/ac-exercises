@@ -2,6 +2,7 @@ import Mathlib.Data.Nat.Basic
 import Mathlib.Data.Vector.Basic
 import Mathlib.Data.List.Defs
 import Mathlib.Data.Fintype.Vector
+
 /-
 In the following we prove A_N(0110)=3 and similar facts using dec_trivial.
 -/
