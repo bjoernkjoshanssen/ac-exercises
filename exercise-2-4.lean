@@ -4,6 +4,8 @@ import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Fintype.Prod
 import Mathlib.Algebra.Order.WithZero
 
+-- Solution to Exercise 2.4.
+
 set_option tactic.hygienic false
 
 structure labeled_digraph (α:Type) (σ:Type) := (edge : σ × σ × α → Prop)
