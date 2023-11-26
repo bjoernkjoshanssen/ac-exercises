@@ -1,0 +1,21 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Automatic complexity exercises
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Bjørn
+    family-names: Kjos-Hanssen
+    email: bjoernkh@hawaii.edu
+    affiliation: University of Hawaii at Manoa
+    orcid: 'https://orcid.org/0000-0002-6199-1755'
+repository-code: 'https://github.com/bjoernkjoshanssen/ac-exercises'
+abstract: >-
+  Exercise solutions in Lean 4 for the book "Automatic
+  complexity: a computable measure of irregularity", De
+  Gruyter, 2024.
+license: CC-BY-NC-SA-4.0
