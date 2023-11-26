@@ -2,6 +2,8 @@ import Std.Logic
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.LibrarySearch
 
+-- Solution to Exercise 2.1.
+
 def φ : Prop :=
   ∀ x : Fin 19, ∀ y : Fin 30, ∀ z : Fin 35,
   143 * x.1 + 91 * y.1 + 77 * z.1 = 2692 ↔ x.1 = 6 ∧ y.1 = 10 ∧ z.1 = 12
