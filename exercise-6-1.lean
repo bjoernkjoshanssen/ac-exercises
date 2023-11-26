@@ -1,5 +1,8 @@
 import Mathlib.Data.Nat.Basic
 import Mathlib.Tactic.Ring
+
+-- Solution to Exercise 6.1.
+
 lemma max_left {a b b' c c' : ℕ} (h: a ≤ b * c):
     a ≤ (max b b') * max c c' := calc
     a ≤ b * c:= h
