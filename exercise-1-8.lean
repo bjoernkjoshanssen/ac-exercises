@@ -1,6 +1,10 @@
 import Mathlib.Data.Int.Basic
 import Mathlib.Tactic.LibrarySearch 
 
+-- Solution to Exercise 1.8.
+
+-- Based on a class project by Aleksander Fedorynski.
+
 theorem obvious_fact_1 (n : ℤ): n ≥ 1 → ∀ (x : ℤ), x + n ≠ x :=
 λ h: n ≥ 1 ↦
 λ x ↦
