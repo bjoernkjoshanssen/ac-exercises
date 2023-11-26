@@ -1,4 +1,4 @@
--- This is nfa-edges-kayleigh2-only.lean
+-- Solution to Exercise 2.3.
 import Mathlib.Tactic.Basic
 import Mathlib.Data.Vector.Basic
 import Mathlib.Data.Nat.Basic
