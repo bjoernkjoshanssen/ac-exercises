@@ -2,6 +2,8 @@ import Std.Classes.Dvd
 import Mathlib.Data.Int.ModEq
 import Mathlib.RingTheory.Coprime.Basic
 
+-- Solution to Exercise 1.7.
+
 -- Based on class project by Rukiyah Walker
 
 --lemma 1.64: Let x₀, y₀, a, b be positive integers with a and b relatively prime, x₀ < b, and y₀ < a.
