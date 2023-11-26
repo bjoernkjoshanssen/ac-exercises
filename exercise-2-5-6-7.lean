@@ -1,5 +1,7 @@
 import Mathlib.Tactic.Ring
 
+-- Solutions to Exercises 2.5, 2.6, and 2.7.
+
 /- We prove that generalized almost square-free-ness is the same as (abstract)
 almost squarefreeness for binary words.
 
