@@ -1,5 +1,7 @@
 import Mathlib.CombiNatorics.SimpleGraph.Connectivity
 
+-- Solution to Exercise 4.2.
+
 theorem reverse_cons_length {V : Type} {G : SimpleGraph V} (a v₀ w : V)
   (p' : G.Walk a  w)
   (p  : G.Walk v₀ w)
