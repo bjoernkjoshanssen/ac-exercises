@@ -1,5 +1,7 @@
 import Mathlib.Tactic.LibrarySearch
 
+-- Solution to Exercise 4.3.
+
 def π : List (Fin 3) → List (Fin 2) :=
   λ y ↦ match y with
   |List.nil => List.nil
