@@ -1,7 +1,9 @@
 import Mathlib.Data.List.Basic
 import Mathlib.Tactic.Ring
 
-/- We deFine primitive words and prove that
+-- Solution to Exercise 1.11.
+
+/- We define primitive words and prove that
 
 * List.replicate a k.succ.succ is not primitive,
 * any word of length 0 or 1 is primitive
