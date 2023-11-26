@@ -1,6 +1,6 @@
 import Mathlib.Data.Nat.Basic
 
--- Solution to Exercise 3.1.
+-- Solution to Exercises 3.1 and 3.2.
 
 def sat_eq (a: ℕ×ℕ) (n: ℕ) (x: ℕ×ℕ) : Prop :=
 a.1*x.1+a.2*x.2=n
