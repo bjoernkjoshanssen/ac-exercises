@@ -124,6 +124,55 @@ theorem get_add_mod_three (f:ℕ → ℕ)
     rw [mod32 h_1];exact g
   }
 
+theorem get_add_mod_three' {three:ℕ} (f:ℕ → ℕ)
+  -- A more general version of get_add_mod_three that doesn't use mod_up
+  (h2s: ∀ i t, f t = 2 + (i%three) → f t.succ = 2 + (i.succ %three))
+  (t: ℕ)
+  (ht2: f t.succ = 2)
+  (s:ℕ)
+  : f (t.succ+s) = 2 + s%three := by {
+    induction s;exact ht2
+    let g := h2s n (t.succ+n) n_ih
+    exact g
+  }
+theorem get_mod_three' {three:ℕ} {f:ℕ → ℕ}
+-- Going through the second cycle:
+  (h2s: ∀ i t, f t = 2 + (i%three) → f t.succ = 2 + (i.succ %three))
+(u v: ℕ)
+(hu: f u.succ = 2)
+(hv: f v.succ = 2)
+(huv: u ≤ v)
+: u.succ % three = v.succ % three := by {
+  have he : ∃ s, v = u + s := by exact Nat.exists_eq_add_of_le huv
+  rcases he with ⟨s,hs⟩
+  have : f (u.succ + s) = 2 + s%three := get_add_mod_three' _ h2s _ hu _
+  rw [hs]
+  rw [Nat.succ_add] at this
+  rw [← hs] at this
+  rw [hv] at this
+  have hz : 0 = s % three := by exact Nat.add_left_cancel this
+  have hN : Nat.succ (u + s) % three = (Nat.succ u + s) % three := by rw[Nat.succ_add]
+  have : (Nat.succ u + s) % three = ((Nat.succ u % three) + s % three) % three:= Nat.add_mod _ _ _
+  rw [hN]
+  rw [this]
+  rw [← hz]
+  rw [Nat.add_zero]
+  exact (Nat.mod_mod _ _).symm
+}
+theorem get_multiple_three' {three:ℕ} {f:ℕ → ℕ}
+  -- Going through the second cycle:
+  (h2s: ∀ i t, f t = 2 + (i%three) → f t.succ = 2 + (i.succ %three))
+  (u v: ℕ)
+  (hu: f u.succ = 2)
+  (hv: f v.succ = 2)
+  (huv: u ≤ v)
+  : ∃ k, v.succ = u.succ + three * k := by {
+    have han : (u.succ) % three = v.succ % three := get_mod_three' h2s _ _ hu hv huv
+    have huv' : u.succ ≤ v.succ := Nat.succ_le_succ huv
+    exact get_equation _ _ _ huv' han.symm
+  }
+
+
 theorem get_mod_three {f:ℕ → ℕ}
 -- Going through the second cycle:
 (h2: ∀ t, f t = 2 → f t.succ = 3)
@@ -250,6 +299,49 @@ theorem two_of_01   (f:ℕ → ℕ)
     exact h1 n h
     exact ht₀.1
   }
+
+theorem get_diophantine'  (f:ℕ → ℕ)
+-- And here we have the equation 2x+3y=7
+  {three : ℕ} -- it works for any cycle length, not just three
+  (h00 : f 0 = 0)
+  (h0: ∀ t, f t = 0 → f t.succ = 1 ∨ f t.succ = 2)
+  (h1: ∀ t, f t = 1 → f t.succ = 0)
+  (h2s: ∀ i t, f t = 2 + (i%three) → f t.succ = 2 + (i.succ %three))
+  (u: ℕ)
+  (hu : f u.succ = 2)
+  : ∃ k₀ k₁, u.succ = k₀ * 2 + 1 + k₁ * three  := by {
+    have : ∃ t₀, (∀ s, s ≤ t₀ → f s = 0 ∨ f s = 1) ∧ f t₀.succ = 2 := two_of_01 _ h00 h0 h1 u hu
+    rcases this with ⟨t₀,ht₀⟩
+    let h := ht₀.1
+    let ht2 := ht₀.2
+    have ht₀u : t₀ ≤ u := by {
+      have : t₀ ≤ u ∨ u < t₀ := by exact le_or_gt t₀ u
+      cases this
+      exact h_1
+      have : u.succ ≤ t₀ := by exact h_1
+      let g := h u.succ this
+      cases g
+      exfalso
+      have h02 : 0 = 2 := Eq.trans h_2.symm hu
+      have : ¬ 0 = 2 := by exact Nat.ne_of_beq_eq_false rfl
+      exact this h02
+      have h12 : 1 = 2 := Eq.trans h_2.symm hu
+      have : ¬ 1 = 2 := by exact Nat.ne_of_beq_eq_false rfl
+      exfalso
+      exact this h12
+      }
+    have : ∃ k, t₀ = 0 + 2 * k := get_mul_two h00 h0 h1 _ h ht2
+    rcases this with ⟨k₀,hk₀⟩
+    exists k₀
+    have : ∃ k, u.succ = t₀.succ + three * k := get_multiple_three' h2s _ _ ht2 hu ht₀u
+    rcases this with ⟨k₁,hk₁⟩
+    exists k₁
+    rw [hk₁]
+    rw [hk₀]
+    rw [zero_add]
+    linarith
+  }
+
 
 theorem get_diophantine  (f:ℕ → ℕ)
 -- And here we have the equation 2x+3y=7
