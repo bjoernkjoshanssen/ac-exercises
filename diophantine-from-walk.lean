@@ -31,6 +31,18 @@ theorem mod32 {n:ℕ} (h: n % 3 = 2) : n.succ % 3 = 0 := calc
 
 
 
+theorem explicit_formula {two:ℕ} {f:ℕ → ℕ}
+-- Now we add the possibility of going to state 2... but also rule it out
+(h00 : f 0 = 0)
+(h0: ∀ t, f t = 0 → f t.succ = 1 ∨ f t.succ = two)
+(h1: ∀ i t : ℕ, i % two ≠ 0 → f t = i % two → f t.succ = (i.succ) % two)
+(t: ℕ)
+:
+(∀ s, s ≤ t → f s < two) →
+ f t = t % two  := by {
+  sorry -- try to generalize from 2 to "two"
+ }
+
 theorem explicit_formula' {f:ℕ → ℕ}
 -- Now we add the possibility of going to state 2... but also rule it out
 (h00 : f 0 = 0)
