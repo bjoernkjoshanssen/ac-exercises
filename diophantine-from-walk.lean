@@ -312,7 +312,7 @@ theorem two_of_01'' {two:ℕ}
   }
 
 
-theorem get_diophantine''  (f:ℕ → ℕ)
+theorem knapsack_ℕ_ℕ  (f:ℕ → ℕ)
 -- like get_diophantine' but with two and three instead of 2 and 3 [MAIN THEOREM]
   {two three : ℕ}
   (htwo : 1 < two)
@@ -320,7 +320,7 @@ theorem get_diophantine''  (f:ℕ → ℕ)
   (h0: ∀ t, f t = 0 → f t.succ = 1 ∨ f t.succ = two)
   (h1: ∀ i t : ℕ, i % two ≠ 0 → f t = i % two → f t.succ = (i.succ) % two)
   (h2s: ∀ i t, f t = two + (i%three) → f t.succ = two + (i.succ %three))
-  (u: ℕ)
+  {u: ℕ}
   (hu : f u.succ = two)
   : ∃ k₀ k₁, u.succ = k₀ * two + 1 + k₁ * three  := by {
     have : ∃ t₀, (∀ s, s ≤ t₀ → f s < two) ∧ f t₀.succ = two := two_of_01'' htwo h00 h0 h1 hu
@@ -345,32 +345,32 @@ theorem get_diophantine''  (f:ℕ → ℕ)
     linarith
   }
 
-  theorem get_diophantine''' -- replace two by zero.succ.succ in order to synthesize 0 and 1 instances
-    (zero three : ℕ)
-  (F:ℕ → Fin ((zero+three).succ.succ))
-  -- like get_diophantine'' but working with a Fin type
-  (h00 : (λ k ↦ (F k).1) 0 = 0)
-  (h0: ∀ t, (λ k ↦ (F k).1) t = 0 → (λ k ↦ (F k).1) t.succ = 1 ∨ (λ k ↦ (F k).1) t.succ = zero.succ.succ)
-  (h1: ∀ i t : ℕ, i % zero.succ.succ ≠ 0 → (λ k ↦ (F k).1) t = i % zero.succ.succ → (λ k ↦ (F k).1) t.succ = (i.succ) % zero.succ.succ)
-  (h2s: ∀ i t, (λ k ↦ (F k).1) t = zero.succ.succ + (i%three) → (λ k ↦ (F k).1) t.succ = zero.succ.succ + (i.succ %three))
-  (u: ℕ)
-  (hu : (λ k ↦ (F k).1) u.succ = zero.succ.succ)
-  : ∃ k₀ k₁, u.succ = k₀ * zero.succ.succ + 1 + k₁ * three  :=
-by {
-  have htwo : 1 < zero.succ.succ := Nat.one_lt_succ_succ zero
-  exact get_diophantine'' (λ k ↦ (F k).1) htwo h00 h0 h1 h2s _ hu
-}
+--   theorem get_diophantine''' -- replace two by zero.succ.succ in order to synthesize 0 and 1 instances
+--     (zero three : ℕ)
+--   (F:ℕ → Fin ((zero+three).succ.succ))
+--   -- like get_diophantine'' but working with a Fin type
+--   (h00 : (λ k ↦ (F k).1) 0 = 0)
+--   (h0: ∀ t, (λ k ↦ (F k).1) t = 0 → (λ k ↦ (F k).1) t.succ = 1 ∨ (λ k ↦ (F k).1) t.succ = zero.succ.succ)
+--   (h1: ∀ i t : ℕ, i % zero.succ.succ ≠ 0 → (λ k ↦ (F k).1) t = i % zero.succ.succ → (λ k ↦ (F k).1) t.succ = (i.succ) % zero.succ.succ)
+--   (h2s: ∀ i t, (λ k ↦ (F k).1) t = zero.succ.succ + (i%three) → (λ k ↦ (F k).1) t.succ = zero.succ.succ + (i.succ %three))
+--   (u: ℕ)
+--   (hu : (λ k ↦ (F k).1) u.succ = zero.succ.succ)
+--   : ∃ k₀ k₁, u.succ = k₀ * zero.succ.succ + 1 + k₁ * three  :=
+-- by {
+--   have htwo : 1 < zero.succ.succ := Nat.one_lt_succ_succ zero
+--   exact get_diophantine'' (λ k ↦ (F k).1) htwo h00 h0 h1 h2s _ hu
+-- }
 
 
 -- assume zero=0 and three=3 in the following
-def mystep : Fin 5 → Set (Fin 5)
+def myNFA_step : Fin 5 → Set (Fin 5)
 | 0 => {1,2}
 | 1 => {0}
 | 2 => {3}
 | 3 => {4}
 | 4 => {2}
 
-def mystep' : Fin 5 → Fin 5
+def myNFA_step_choice : Fin 5 → Fin 5
 | 0 => 1
 | 1 => 0
 | 2 => 3
@@ -380,19 +380,12 @@ def mystep' : Fin 5 → Fin 5
 
 
 def myNFA : NFA (Fin 1) (Fin 5) := {
-  step := λ q _ ↦ mystep q
+  step := λ q _ ↦ myNFA_step q
   start := {0}
   accept := {2}
 }
 
-theorem ease : (k: Fin 5) → mystep' k ∈ mystep k
-| 0 => by {left;rfl}
-| 1 => rfl
-| 2 => rfl
-| 3 => rfl
-| 4 => rfl
-
-theorem ease' : (k: Fin 5) → mystep' k ∈ myNFA.step k 0
+theorem myNFA_choice_valid : (k: Fin 5) → myNFA_step_choice k ∈ myNFA.step k 0
 | 0 => by {left;rfl}
 | 1 => rfl
 | 2 => rfl
@@ -403,105 +396,55 @@ theorem ease' : (k: Fin 5) → mystep' k ∈ myNFA.step k 0
 def walk_in_myNFA (f : ℕ → Fin 5)                     := f 0 ∈ myNFA.start ∧ ∀ k,         f k.succ ∈ myNFA.step (f k) 0
 def fin_walk_in_myNFA {q:ℕ} (F : (Fin q.succ) → Fin 5) := F 0 ∈ myNFA.start ∧ ∀ k : Fin q, F (Fin.succ k) ∈ myNFA.step (F (Fin.castSucc k)) 0
 
-
-
 def basic_extender (a : Fin 5) (n : ℕ) : Fin 5 := by {
   induction n
   exact a
-  exact mystep' n_ih
+  exact myNFA_step_choice n_ih
 }
-theorem extend''_walk :
-  walk_in_myNFA (basic_extender 0) := by {
-    constructor
-    rfl
-    intro k
-    induction k
-    left
-    rfl
-    exact ease' _
-}
+theorem basic_extender_is_walk :
+  walk_in_myNFA (basic_extender 0) := by {constructor;rfl;intro k;induction k;left;rfl;exact myNFA_choice_valid _}
 
-def extender' {q:ℕ} (F: Fin q.succ → Fin 5) (n : ℕ) : Fin 5 :=
-ite (n < q.succ)
-  (F n)
-  (basic_extender (F q) (n-q)) -- in this case ¬ n < q.succ ↔ n ≥ q.succ ↔ n > q
+def extender {q:ℕ} (F: Fin q.succ → Fin 5) (n : ℕ) : Fin 5 :=
+  ite (n < q.succ) (F n) (basic_extender (F q) (n-q)) -- in this case ¬ n < q.succ ↔ n ≥ q.succ ↔ n > q
 
-
-
-
-
-theorem extend'_walk {q:ℕ}  (F: Fin q.succ → Fin 5) (hw : fin_walk_in_myNFA F) : walk_in_myNFA (extender' F) := by {
+theorem extender_extends_walk {q:ℕ}  (F: Fin q.succ → Fin 5) (hw : fin_walk_in_myNFA F) :
   -- The extender does extend a walk in myNFA to another walk in myNFA.
-  -- Next, can use this to get the 2x+3y=7 result for finite walks as well.
-  constructor
-  unfold extender'
-  let g := hw.1
-  have : 0 < q.succ := Nat.succ_pos q
-  rw [if_pos this]
-  exact g
+  walk_in_myNFA (extender F) := by {
+  constructor; unfold extender;rw [if_pos (Nat.succ_pos q)];exact hw.1
 
-  intro k
-  by_cases (k.succ < q.succ)
-  unfold extender'
-  rw [if_pos h]
-  have : k < q.succ := Nat.lt_of_succ_lt h
-  rw [if_pos this]
-  have hkq: k < q := Nat.succ_lt_succ_iff.mp h
-  let g := hw.2 ⟨k,hkq⟩
-  rename k < q.succ => hkqs
-
+  intro k; by_cases (k.succ < q.succ); unfold extender
+  rw [if_pos h]; have hkqs : k < q.succ := Nat.lt_of_succ_lt h
+  rw [if_pos hkqs]; have hkq: k < q := Nat.succ_lt_succ_iff.mp h
   have : (@Nat.cast (Fin (q.succ)) Semiring.toNatCast (k.succ) : Fin q.succ) =
          (@Fin.succ q { val := k, isLt := hkq } : Fin q.succ) := Fin.eq_of_veq (Fin.val_cast_of_lt h)
   rw [this]
-  have : (k:Fin q.succ)   = (Fin.castSucc ⟨k,hkq⟩)   := Fin.eq_of_veq (Fin.val_cast_of_lt hkqs)
-  rw [this]
-  exact g
+  have : (k:Fin q.succ) = (Fin.castSucc ⟨k,hkq⟩) := Fin.eq_of_veq (Fin.val_cast_of_lt hkqs)
+  rw [this]; exact hw.2 ⟨k,hkq⟩
 
-  unfold extender'
-  rw [if_neg h]
-  rename ¬ k.succ < q.succ => hren
-  have : k.succ ≥ q.succ := Nat.not_lt.mp hren
-  have : q ≤ k := Nat.lt_succ.mp this
+  unfold extender;rw [if_neg h]
+  rename ¬ k.succ < q.succ => hren;
+  have hkq : q ≤ k := Nat.lt_succ.mp (Nat.not_lt.mp hren)
   by_cases (k < q.succ)
-  rw [if_pos h]
+  rw [if_pos h]; have : k = q := Nat.eq_of_le_of_lt_succ hkq h; subst this
+  have : k.succ - k = 1 := tsub_eq_of_eq_add_rev rfl; rw [this]; exact myNFA_choice_valid _
 
-  have : k = q := Nat.eq_of_le_of_lt_succ this h
-  subst this
-  have : k.succ - k = 1 := tsub_eq_of_eq_add_rev rfl
-  rw [this]
-  exact ease' _
-
-  rename q ≤ k => hkq
-  rw [if_neg h]
-  have : k ≥ q.succ := Nat.not_lt.mp h
-  have : k.succ - q = (k-q).succ := Nat.succ_sub hkq
-  rw [this]
-  exact ease' _
+  rw [if_neg h]; have : k.succ - q = (k-q).succ := Nat.succ_sub hkq
+  rw [this]; exact myNFA_choice_valid _
 }
 
-
-def myF : Fin 4 → Fin 5
-| 0 => 0
-| 1 => 1
-| 2 => 0
-| 3 => 2
-
-#eval [extender' myF 0, extender' myF 1, extender' myF 2, extender' myF 3, extender' myF 4, extender' myF 5, extender' myF 6, extender' myF 7]
-
-
-theorem h00 (F : ℕ → Fin 5) (hw : walk_in_myNFA F) : (λ k ↦ (F k).1) 0 = 0 := by {
+theorem h00_ℕ_fin_walk {F : ℕ → Fin 5} (hw : walk_in_myNFA F) : (λ k ↦ (F k).1) 0 = 0 := by {
   have : F 0 = 0 := Set.eq_of_mem_singleton hw.1
   simp; rw [this]; simp
 }
 
-theorem h0 (F : ℕ → Fin 5) (hw : walk_in_myNFA F) :
+theorem h0_ℕ_fin_walk {F : ℕ → Fin 5} (hw : walk_in_myNFA F) :
   (∀ t, (λ k ↦ (F k).1) t = 0 → (λ k ↦ (F k).1) t.succ = 1 ∨ (λ k ↦ (F k).1) t.succ = 2)
 := by {
   intro t ht; let g := hw.2 t; have : F t = 0 := by {simp at ht;exact Fin.ext ht}
   rw [this] at g; cases g;left;simp;rw [h];exact rfl;right;simp;rw [h];exact rfl
 }
 
-theorem h1 (F : ℕ → Fin 5) (hw : walk_in_myNFA F) :
+theorem h1_ℕ_fin_walk {F : ℕ → Fin 5} (hw : walk_in_myNFA F) :
   (∀ i t : ℕ, i % 2 ≠ 0 → (λ k ↦ (F k).1) t = i % 2 → (λ k ↦ (F k).1) t.succ = (i.succ) % 2)
 := by {
   intro i t hi ht; have : i % 2 = 1 := Nat.mod_two_ne_zero.mp hi
@@ -523,7 +466,7 @@ by {
     exact hnz this; exact h h_2; exact hnt h_1
   }
 
-theorem h2s (F : ℕ → Fin 5) (hw : walk_in_myNFA F) :
+theorem h2s_ℕ_fin_walk {F : ℕ → Fin 5} (hw : walk_in_myNFA F) :
   (∀ i t, (λ k ↦ (F k).1) t = 2 + (i%3) → (λ k ↦ (F k).1) t.succ = 2 + (i.succ %3))
 := by {
   intro i t hit
@@ -552,18 +495,20 @@ theorem h2s (F : ℕ → Fin 5) (hw : walk_in_myNFA F) :
   rw [this] at g; rw [Set.eq_of_mem_singleton g]; simp
 }
 
-theorem get_diophantine_NFA
+theorem knapsack_of_ℕ_fin_walk
   (F:ℕ → Fin 5) (hw : walk_in_myNFA F)
   -- A walk in myNFA that visits the state 2 must do so at a time of form 2k₀+1+3k₁
-  (u: ℕ)
+  {u: ℕ}
   (hu : (λ k ↦ (F k).1) u.succ = 2)
   : ∃ k₀ k₁, u.succ = k₀ * 2 + 1 + k₁ * 3  :=
-by {
-  have htwo : 1 < 2 := Nat.one_lt_succ_succ 0
-  exact get_diophantine'' (λ k ↦ (F k).1) htwo (h00 _ hw) (h0 F hw) (h1 F hw) (h2s F hw) _ hu
-}
 
-theorem fin_get_diophantine_NFA
+  knapsack_ℕ_ℕ
+    (λ k ↦ (F k).1) (Nat.one_lt_succ_succ 0)
+    (h00_ℕ_fin_walk hw) (h0_ℕ_fin_walk hw) (h1_ℕ_fin_walk hw) (h2s_ℕ_fin_walk hw)
+    hu
+
+
+theorem knapsack_of_fin_fin_walk
 {q:ℕ}  (F: Fin q.succ → Fin 5) (hw : fin_walk_in_myNFA F)
   -- A fully finite walk in myNFA that visits the state 2 must do so at a time of form 2k₀+1+3k₁
   -- We prove this by extending F to the type ℕ → Fin 5, and then lifting that to the type ℕ → ℕ!
@@ -571,12 +516,76 @@ theorem fin_get_diophantine_NFA
   (hu : (λ k ↦ (F k).1) u.succ = 2)
   : ∃ k₀ k₁, u.succ = k₀ * 2 + 1 + k₁ * 3  := by {
     have aux₀ : u.succ < q.succ := by exact Nat.lt_succ.mpr aux
-    have : @Fin.val 5 (extender' F u.succ) = 2 := by {
-      unfold extender'
-      rw [if_pos aux₀]
-      simp at hu
-      rw [← hu]
-      simp
+    have : @Fin.val 5 (extender F u.succ) = 2 := by {
+      unfold extender;rw [if_pos aux₀];simp at hu;rw [← hu];simp
     }
-    exact get_diophantine_NFA (extender' F) (extend'_walk _ hw) _ this
+    exact knapsack_of_ℕ_fin_walk (extender F) (extender_extends_walk _ hw) this
   }
+
+def mywalk : Fin 9 → Fin 5
+-- To illustrate the logical depth chapter this should be defined in a more compact way
+| 0 => 0
+| 1 => 1
+| 2 => 0
+| 3 => 1
+| 4 => 0
+| 5 => 2
+| 6 => 3
+| 7 => 4
+| 8 => 2
+
+def covers_myNFA {q:ℕ} (w : Fin q.succ → Fin 5) :=
+  ∀ ab : Fin 5 × Fin 5 , ab.2 ∈ myNFA.step ab.1 0 → ∃ k, w k = ab.1 ∧ w k.succ = ab.2
+
+example (a:ℕ) : a ≠ a.succ := by exact Ne.symm (Nat.succ_ne_self a)
+
+theorem mywalk_covers_nyNFA : covers_myNFA mywalk
+-- This should be dec_trivial
+| (0,1) => by {intro;exists 0;}
+| (1,0) => by {intro;exists 1;}
+| (0,2) => by {intro;exists 4;}
+| (2,3) => by {intro;exists 5;}
+| (3,4) => by {intro;exists 6;}
+| (4,2) => by {intro;exists 7;}
+| (0,0) => by {intro h;exfalso;cases h;simp at h_1; simp at h_1;}
+| (0,3) => by {intro h;exfalso;cases h;simp at h_1; simp at h_1;}
+| (0,4) => by {intro h;exfalso;cases h;simp at h_1; simp at h_1;}
+| (1,1) => by {intro h;exfalso;cases h;}
+| (1,2) => by {intro h;exfalso;cases h;}
+| (1,3) => by {intro h;exfalso;cases h;}
+| (1,4) => by {intro h;exfalso;cases h;}
+| (2,0) => by {intro h;exfalso;cases h;}
+| (2,1) => by {intro h;exfalso;cases h;}
+| (2,2) => by {intro h;exfalso;cases h;}
+| (2,4) => by {intro h;exfalso;cases h;}
+| (3,0) => by {intro h;exfalso;cases h;}
+| (3,1) => by {intro h;exfalso;cases h;}
+| (3,2) => by {intro h;exfalso;cases h;}
+| (3,3) => by {intro h;exfalso;cases h;}
+| (4,0) => by {intro h;exfalso;cases h;}
+| (4,1) => by {intro h;exfalso;cases h;}
+| (4,3) => by {intro h;exfalso;cases h;}
+| (4,4) => by {intro h;exfalso;cases h;}
+
+-- A simple demonstration of how extender works:
+def extmy := extender mywalk
+#eval [extmy 0, extmy 1, extmy 2, extmy 3, extmy 4, extmy 5, extmy 6,
+extmy 7, extmy 8, extmy 9, extmy 10, extmy 11, extmy 12]
+
+
+theorem mywalk_walks : (k : Fin 8) → mywalk (Fin.succ k) ∈ NFA.step myNFA (mywalk (Fin.castSucc k)) 0
+| 0 => by {left;rfl}
+| 1 => rfl
+| 2 => by {left;rfl}
+| 3 => rfl
+| 4 => by {right;rfl}
+| 5 => rfl
+| 6 => rfl
+| 7 => rfl
+
+theorem mywalk_walk : fin_walk_in_myNFA mywalk := by {
+  constructor;rfl;exact mywalk_walks
+}
+
+theorem knapsack_cursive_NFA_example : ∃ k₀ k₁, 8 = k₀ * 2 + 1 + k₁ * 3 :=
+knapsack_of_fin_fin_walk mywalk mywalk_walk _ (Nat.lt.base 7) (by simp)
