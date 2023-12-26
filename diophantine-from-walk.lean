@@ -12,8 +12,8 @@ set_option maxHeartbeats 10000000
 section general
 
 theorem unique_iff_of_bijective {α β : Type}
-(P:α → Prop) (Q:β → Prop)
-(f:{a : α // P a}  → {b :β // Q b})
+{P:α → Prop} {Q:β → Prop}
+{f:{a : α // P a}  → {b :β // Q b}}
 (h : Function.Bijective f) :
 (∃! a, P a) ↔ (∃! b, Q b) := by {
   constructor
@@ -518,7 +518,7 @@ theorem getk2 {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.su
     exact unique_walk_C₂₃ hw (ne_first hk hw ht₀)
   }
 
-theorem l_unique (k l₁ l₂ : ℕ) (he: 2*k + 1 + 3*l₁ = 2*k + 1 + 3*l₂) : l₁=l₂
+theorem l_unique {k l₁ l₂ : ℕ} (he: 2*k + 1 + 3*l₁ = 2*k + 1 + 3*l₂) : l₁=l₂
   := by {
     have :  3 * l₁ = 3 * l₂ := Nat.add_left_cancel he
     exact Nat.eq_of_mul_eq_mul_left (Nat.succ_pos 2) this
@@ -673,7 +673,7 @@ Function.Injective (λ p ↦ walk_of_solution T p) := by {
   unfold walk_of_solution at hp
   simp at hp
   have h₁₁: p₁.1.1 = p₂.1.1 := walk__injective p₁.1.1 p₂.1.1 hp
-  have h₁₂: p₁.1.2 = p₂.1.2 := l_unique p₁.1.1 _ _ (Eq.trans p₁.2.symm (by {rw [h₁₁]; exact p₂.2}))
+  have h₁₂: p₁.1.2 = p₂.1.2 := l_unique (Eq.trans p₁.2.symm (by {rw [h₁₁]; exact p₂.2}))
   exact SetCoe.ext (Prod.ext h₁₁ h₁₂)
 }
 
@@ -695,4 +695,4 @@ Function.Bijective (λ p ↦ walk_of_solution T p) := by {
 }
 
 theorem main {T:ℕ} : (∃! p : ℕ×ℕ, T.succ = 2 * p.1 + 1 + 3 * p.2) ↔ (∃! w, walk_in_C₂₃ w ∧ w T.succ = 2)
-  := unique_iff_of_bijective _ _ _ (walk_of_solution_bijective T)
+  := unique_iff_of_bijective (walk_of_solution_bijective T)
