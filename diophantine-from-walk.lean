@@ -97,7 +97,6 @@ structure C₂₃ish (n₂ n₃ :ℕ) (f:ℕ → ℕ) where
 
 theorem walk_mod2 {n₂ n₃:ℕ}(hn₂: 1 < n₂){f:ℕ → ℕ}(ish : C₂₃ish n₂ n₃ f)(t: ℕ) (hs : ∀ s, s ≤ t → f s < n₂) : f t = t % n₂
   := by {
-  -- like walk_mod2' but with n₂ instead of 2
   induction t
   rw [ish.h00]
   rfl
@@ -124,9 +123,6 @@ theorem walk_mod2 {n₂ n₃:ℕ}(hn₂: 1 < n₂){f:ℕ → ℕ}(ish : C₂₃i
 
 theorem get_even {n₂ n₃:ℕ}(hn₂: 1 < n₂){f:ℕ → ℕ}(ish : C₂₃ish n₂ n₃ f)(t: ℕ) (h : (∀ s, s ≤ t → f s < n₂)) (h2: f t.succ = n₂): t % n₂ = 0
   := by {
-  -- (h00 : f 0 = 0)
-  -- (h0: ∀ t, f t = 0 → f t.succ = 1 ∨ f t.succ = n₂)
-  -- (h1: ∀ i t : ℕ, i % n₂ ≠ 0 → f t = i % n₂ → f t.succ = (i.succ) % n₂)
   have ftt : f t = t % n₂ := walk_mod2 hn₂ ish (by {
     exact t
   }) h
@@ -292,8 +288,6 @@ theorem keep_arriving (k l : ℕ) : walk_ k (2*k + 1 + 3*l) = 2 :=
 
 theorem unique_walk_C₂₃_helper {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) (k : ℕ) (hwk: w (2*k).succ = 2 ∧ ∀ n < (2*k).succ, w n ≠ 2)
   : ∀ n < (2*k).succ, w n < 2 := by {
-  -- December 24, 2023. Next w n < 2 should become w n ≠ 2 by connecting
-  -- with a different part of the document.
   intro n
   induction n
   intro; rw [hw.1]; exact Fin.coe_sub_iff_lt.mp rfl
@@ -324,8 +318,6 @@ theorem unique_walk_C₂₃_helper {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) (
 
 theorem unique_walk_C₂₃ {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) {k : ℕ} (hwk': w (2*k).succ = 2 ∧ ∀ n < (2*k).succ, w n ≠ 2) :
   w = walk_ k :=
-  -- December 24, 2023.
-  -- next, prove that if w reaches state 2 at some time then it is walk_ for some k
   by {
   have hwk : w (2*k).succ = 2 ∧ ∀ n < (2*k).succ, w n < 2 :=
     by {
@@ -469,8 +461,6 @@ noncomputable def getk1 {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu:
       exact Fin.mk_eq_mk.mp ht₀.1
     }
     let ish := getish w hw
-    -- have hne :  ∀ (s : ℕ), s ≤ t₀ → (w s).1 ≠ 2 := ne_of_le hw ht₀
-    -- have h12 : 1 < 2 := Nat.lt_succ_self _
     have hlt :  ∀ (s : ℕ), s ≤ t₀ → (w s).1 < 2 := by {
       intro _ hs
       exact strengthen (Nat.lt_succ_self _) ish (ne_of_le hw ht₀) _ hs
@@ -488,8 +478,6 @@ theorem getk2 {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.su
       exact Fin.mk_eq_mk.mp ht₀.1
     }
     let ish := getish w hw
-    -- have hne :  ∀ (s : ℕ), s ≤ t₀ → (w s).1 ≠ 2 := ne_of_le hw ht₀
-    -- have h12 : 1 < 2 := Nat.lt_succ_self _
     have hlt :  ∀ (s : ℕ), s ≤ t₀ → (w s).1 < 2 := by {
       intro _ hs
       exact strengthen (Nat.lt_succ_self _) ish (ne_of_le hw ht₀) _ hs
@@ -498,26 +486,17 @@ theorem getk2 {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.su
     let hk := (get_equation' (Nat.zero_le _) h02).2
 
     rw [zero_add] at hk
-    -- have hf : w (2*k).succ = 2 ∧ ∀ n, n < (2*k).succ → w n ≠ 2 :=
-    -- ne_first hk hw ht₀
-    -- have hwa : w = walk_ k := unique_walk_C₂₃ w hw hf
     exact unique_walk_C₂₃ hw (ne_first hk hw ht₀)
   }
 
 noncomputable def getk {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.succ u) = 2) : {k // w = walk_ k }
   := by {
-  -- getk1 and getk2 in a package
-  -- maybe break this up into one function that outputs k,
-  -- and one that proves that the output has the property? in order to unfold the former more easily
-
     let t₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = 2) u hu).1
     let ht₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = 2) u hu).2
     have h2 : ((w (Nat.succ t₀))).1 = 2 := by {
       exact Fin.mk_eq_mk.mp ht₀.1
     }
     let ish := getish w hw
-    -- have hne :  ∀ (s : ℕ), s ≤ t₀ → (w s).1 ≠ 2 := ne_of_le hw ht₀
-    -- have h12 : 1 < 2 := Nat.lt_succ_self _
     have hlt :  ∀ (s : ℕ), s ≤ t₀ → (w s).1 < 2 := by {
       intro _ hs
       exact strengthen (Nat.lt_succ_self _) ish (ne_of_le hw ht₀) _ hs
@@ -527,9 +506,6 @@ noncomputable def getk {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: 
     let hk := (get_equation' (Nat.zero_le _) h02).2
 
     rw [zero_add] at hk
-    -- have hf : w (2*k).succ = 2 ∧ ∀ n, n < (2*k).succ → w n ≠ 2 :=
-    -- ne_first hk hw ht₀
-    -- have hwa : w = walk_ k := unique_walk_C₂₃ w hw hf
     exact ⟨k,unique_walk_C₂₃ hw (ne_first hk hw ht₀)⟩
   }
 
@@ -605,7 +581,7 @@ theorem keep_arriving_when' {k n:ℕ} : walk_ k n = 2 → ∃ l, n = 2*k + 1 + 3
 
 theorem walk_walks (k:ℕ) : walk_in_C₂₃ (walk_ k) :=
   by {
-    -- December 23, 2023: For any k, the walk that goes 0->1->0 k times
+    -- For any k, the walk that goes 0->1->0 k times
     -- and then goes 2->3->4->2 forever, is a walk in C₂₃.
     -- Most interesting aspect was to avoid % casting to Fin 5 too soon :)
     constructor
@@ -693,8 +669,6 @@ theorem walk_walks (k:ℕ) : walk_in_C₂₃ (walk_ k) :=
   }
 
 theorem walk__injective (k₁ k₂ : ℕ) (he : walk_ k₁ = walk_ k₂) : k₁ = k₂ :=
-  -- December 23, 2023: if these are the same walk for k₁ and k₂
-  -- then k₁=k₂.
   by {
     contrapose he
     have : k₁ < k₂ ∨ k₂ < k₁ := Ne.lt_or_lt he
@@ -704,12 +678,7 @@ theorem walk__injective (k₁ k₂ : ℕ) (he : walk_ k₁ = walk_ k₂) : k₁ 
   }
 
 theorem every_walk_is_walk_ {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) (hw2: ∃ u, w (Nat.succ u) = 2) : ∃ k, w = walk_ k :=
-  -- December 24, 2023.
   -- if w reaches state 2 at some time then it is walk_ for some k
-  -- so now we can prove that if any walk reaches state 2 at time T,
-  -- then it is walk_ k for some k, and then T = 2 * k + 1 + 3*l for some (unique given k) l.
-  -- so if the equation has a unique solution then the walk is unique
-  -- and conversely
     by {
       rcases hw2 with ⟨u,hu⟩
       let ⟨k,hk⟩ := getk hw hu
@@ -779,7 +748,7 @@ theorem main_mpr {T:ℕ}
     exact keep_arriving _ _
   }
 
-  theorem main {T:ℕ} : -- December 25, 2023
+  theorem main {T:ℕ} :
   (∃! w, walk_in_C₂₃ w ∧ w T.succ = 2) ↔ ∃! p : ℕ×ℕ, T.succ = 2 * p.1 + 1 + 3 * p.2 := by {
     constructor
     intro h
