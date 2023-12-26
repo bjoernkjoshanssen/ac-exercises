@@ -11,6 +11,52 @@ set_option maxHeartbeats 10000000
 -- rename tactics are useful while proving, but after the fact better to avoid
 section general
 
+theorem unique_iff_of_bijective {α β : Type}
+(P:α → Prop) (Q:β → Prop)
+(f:{a : α // P a}  → {b :β // Q b})
+(h : Function.Bijective f) :
+(∃! a, P a) ↔ (∃! b, Q b) := by {
+  constructor
+  intro hQ
+  rcases hQ with ⟨a,ha⟩
+  exists f ⟨a,ha.1⟩
+  constructor
+
+  exact (f ⟨a,ha.1⟩).2
+
+  intro b hQb
+  let surj := h.2 ⟨b,hQb⟩
+  rcases surj with ⟨a'pair,ha'pair⟩
+  let a' := a'pair.1
+  let heq := ha.2 a'pair a'pair.2
+
+  have : a' = a'pair.1 := rfl
+  rw [← this] at heq
+  have hae: a'pair = ⟨a,ha.1⟩ := Subtype.coe_eq_of_eq_mk heq
+  rw [hae] at ha'pair
+  exact congr_arg (λ x ↦ x.1) ha'pair.symm
+
+  intro hunique
+  rcases hunique with ⟨b,hb⟩
+  let surj := h.2 ⟨b,hb.1⟩
+  rcases surj with ⟨apair,ha⟩
+  exists apair
+  constructor
+  exact apair.2
+  intro a' ha'
+  let a'pair := (⟨a',ha'⟩ : { a // P a})
+  have hqfa': Q (f a'pair) := by {
+    exact (f a'pair).2
+  }
+  have h₁: f a'pair = b := by {
+    exact hb.2 (f a'pair) hqfa'
+  }
+  have h₁': f a'pair = ⟨b,hb.1⟩ := Subtype.coe_eq_of_eq_mk h₁
+  have h₃: f a'pair = f apair := Eq.trans h₁' ha.symm
+  have : a'pair = apair := h.1 h₃
+  exact congr_arg (λ x ↦ x.1) this
+}
+
   def find_spec_le
     (Z : ℕ → Prop)  (u:ℕ) (hu: Z u) [DecidablePred Z] : {t₀ // Z t₀ ∧ ∀ v, Z v → t₀ ≤ v}
     := ⟨Nat.find (Exists.intro u hu),by {
@@ -325,17 +371,11 @@ theorem unique_walk_C₂₃ {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) {k : ℕ
       exact hwk'.1
       exact (unique_walk_C₂₃_helper hw _ hwk')
     }
-  apply funext
-  intro x
-  induction x
-  unfold walk_in_C₂₃ at hw
-  unfold walk_
-  rw [if_neg _]
-  simp
-  exact hw.1
+  apply funext; intro x; induction x
+  unfold walk_in_C₂₃ at hw; unfold walk_
+  rw [if_neg _]; simp; exact hw.1
 
-  intro hcontra
-  simp at hcontra
+  intro hcontra; simp at hcontra
 
   by_cases hnk : (n.succ ≥ (2*k).succ)
   unfold walk_
@@ -352,14 +392,11 @@ theorem unique_walk_C₂₃ {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) {k : ℕ
 
   rw [if_pos hnks] at g; simp at g; by_cases hnz : ((n - (2*k).succ) % 3 = 0)
   rw [hnz] at g; simp at g; rw [g]
-
-  have : (n - 2 * k) % 3 = 1 := by {rw [← h₄,Nat.add_mod,hnz]; simp}
-
-  rw [this]
-  simp
+  rw [← h₄,Nat.add_mod,hnz]; simp
   by_cases hno : ((n - (2*k).succ) % 3 = 1)
-  have : (n - (2 * k)) % 3 = 2 := by {rw [← h₄,Nat.add_mod,hno];simp}
-  rw [this]; rw [hno] at g; simp at g; rw [g]; simp
+
+  rw [← h₄,Nat.add_mod,hno];
+  rw [hno] at g; simp at g; rw [g]; simp
   have hns : (n - Nat.succ (2 * k)) % 3 = 2 := mod3_cases hnz hno
   have : (n - (2 * k)) % 3 = 0 := by {rw [← h₄,Nat.add_mod,hns,];simp}
   rw [this]; simp; rw [hns] at g; simp at g; exact g
@@ -368,12 +405,10 @@ theorem unique_walk_C₂₃ {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) {k : ℕ
   have : 2 ∣ n := Dvd.intro k (id hn2k.symm)
   have : n % 2 = 0 := Nat.mod_eq_zero_of_dvd this
   rw [this] at g
-  cases g
-  exact hwk.1
+  cases g; exact hwk.1
 
   rw [hn2k] at h
-  exact h
-  exact hnk
+  exact h; exact hnk
   unfold walk_
   rw [if_neg hnk]
   unfold walk_ at n_ih
@@ -424,10 +459,7 @@ theorem ne_of_le {w : ℕ → Fin 5}
       rw [gg] at hcontra
       exact Nat.succ_ne_zero 1 hcontra.symm
       intro hcontra
-      have : w n.succ = 2 := by {
-        exact Fin.eq_of_veq hcontra
-      }
-      let g := ht₀.2 n this
+      let g := ht₀.2 n (Fin.eq_of_veq hcontra)
       have : n < n := Nat.succ_le.mp (le_trans hs g)
       exact LT.lt.false this
     }
@@ -436,19 +468,16 @@ theorem ne_first {w : ℕ → Fin 5} {t₀ k:ℕ} (hk: t₀ = 2 * k) (hw: walk_i
   (ht₀ : w (Nat.succ t₀) = 2 ∧ ∀ (v : ℕ), w (Nat.succ v) = 2 → t₀ ≤ v)
   :w (2*k).succ = 2 ∧ ∀ n, n < (2*k).succ → w n ≠ 2 :=
     by {
-      constructor
-      rw [hk] at ht₀
-      exact ht₀.1
+      constructor; rw [hk] at ht₀; exact ht₀.1
 
-      intro u hu hu2
-      cases u
+      intro u hu hu2; cases u
       let g := hw.1
       rw [hu2] at g
       exact Nat.succ_ne_zero 1 (Fin.mk_eq_mk.mp g)
 
       have : 2*k < 2*k := calc
-        _ = t₀ := id hk.symm
-        _ ≤ n := ht₀.2 n hu2
+        _ = t₀  := id hk.symm
+        _ ≤ n   := ht₀.2 n hu2
         _ < 2*k := Nat.succ_lt_succ_iff.mp hu
       exact LT.lt.false this
     }
@@ -487,26 +516,6 @@ theorem getk2 {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.su
 
     rw [zero_add] at hk
     exact unique_walk_C₂₃ hw (ne_first hk hw ht₀)
-  }
-
-noncomputable def getk {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.succ u) = 2) : {k // w = walk_ k }
-  := by {
-    let t₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = 2) u hu).1
-    let ht₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = 2) u hu).2
-    have h2 : ((w (Nat.succ t₀))).1 = 2 := by {
-      exact Fin.mk_eq_mk.mp ht₀.1
-    }
-    let ish := getish w hw
-    have hlt :  ∀ (s : ℕ), s ≤ t₀ → (w s).1 < 2 := by {
-      intro _ hs
-      exact strengthen (Nat.lt_succ_self _) ish (ne_of_le hw ht₀) _ hs
-    }
-    have h02 : t₀ % 2 = 0 % 2 := get_even (Nat.lt_succ_self _) ish _ hlt h2
-    let k := (get_equation' (Nat.zero_le _) h02).1
-    let hk := (get_equation' (Nat.zero_le _) h02).2
-
-    rw [zero_add] at hk
-    exact ⟨k,unique_walk_C₂₃ hw (ne_first hk hw ht₀)⟩
   }
 
 theorem l_unique (k l₁ l₂ : ℕ) (he: 2*k + 1 + 3*l₁ = 2*k + 1 + 3*l₂) : l₁=l₂
@@ -548,9 +557,7 @@ theorem getl {k n:ℕ} (hmod₀: walk_ k n = 2) :  {l : ℕ // n = 2*k + 1 + 3*l
       exact hz
 
       by_cases (L % 3 = 1)
-      rw [h] at hmod₀
-      exfalso
-      simp at hmod₀
+      rw [h] at hmod₀; exfalso; simp at hmod₀
       have : L % 3 = 2 := mod3_cases hz h
       rw [this] at hmod₀
       exfalso
@@ -563,59 +570,40 @@ theorem getl {k n:ℕ} (hmod₀: walk_ k n = 2) :  {l : ℕ // n = 2*k + 1 + 3*l
     }
     let l := L / 3
     have : n = 2 * k + 1 + 3 * l := by {
-      have : l = L / 3 := rfl
-      rw [this]
       rw [← h₂]
       exact hL
     }
     exact ⟨l,this⟩
   }
 
-theorem keep_arriving_when' {k n:ℕ} : walk_ k n = 2 → ∃ l, n = 2*k + 1 + 3*l
-  := by {
-    intro hh
-    let g := getl hh
-    exists g.1
-    exact g.2
-  }
-
 theorem walk_walks (k:ℕ) : walk_in_C₂₃ (walk_ k) :=
   by {
-    -- For any k, the walk that goes 0->1->0 k times
-    -- and then goes 2->3->4->2 forever, is a walk in C₂₃.
-    -- Most interesting aspect was to avoid % casting to Fin 5 too soon :)
     constructor
     unfold walk_
     have : ¬ 0 ≥ Nat.succ (2 * k) := of_decide_eq_false rfl
     rw [if_neg this]
     exact rfl
-    intro k_1
-    induction k_1
-    unfold walk_
+    intro k_1; induction k_1; unfold walk_
     have : ¬ Nat.zero ≥ Nat.succ (2 * k) := of_decide_eq_false rfl
     rw [if_neg this]
     by_cases (k=0)
-    have : Nat.succ Nat.zero ≥ Nat.succ (2 * k) := Nat.succ_le_succ (Nat.le_zero.mpr (mul_eq_zero_of_right 2 h))
-    rw [if_pos this]
-    rw [h]
+    have : Nat.succ Nat.zero ≥ Nat.succ (2 * k)
+      := Nat.succ_le_succ (Nat.le_zero.mpr (mul_eq_zero_of_right 2 h))
+    rw [if_pos this,h]
     right
     exact rfl
     have h₁: ¬ Nat.zero = (2 * k) := by {
       intro hcontra
-      have h₂: 2 = 0 ∨ k = 0 := Nat.zero_eq_mul.mp hcontra
-      cases h₂
-      exact Nat.succ_ne_zero 1 h_1
-      exact h h_1
+      cases Nat.zero_eq_mul.mp hcontra
+      exact Nat.succ_ne_zero 1 h_1; exact h h_1
     }
     have h₂: ¬ Nat.zero ≥ (2 * k) := by {
       intro hcontra
-      have : 2*k = 0 := Nat.le_zero.mp hcontra
-      exact h₁ (id this.symm)
+      exact h₁ (id (Nat.le_zero.mp hcontra).symm)
     }
     have : ¬ Nat.succ Nat.zero ≥ Nat.succ (2 * k) := by {
       intro hcontra
-      have : 0 ≥2*k := Nat.lt_succ.mp hcontra
-      exact h₂ this
+      exact h₂ (Nat.lt_succ.mp hcontra)
     }
     rw [if_neg this]; left; rfl
     unfold walk_
@@ -628,11 +616,7 @@ theorem walk_walks (k:ℕ) : walk_in_C₂₃ (walk_ k) :=
     have h₂ : n + 1 - 2*k = n - 2*k + 1 := Nat.sub_add_comm h₁
 
     by_cases hnz : (((n - 2 * k) % 3) = 0)
-    have : (((n + 1 - 2 * k) % 3) = 1) := by {
-      rw [h₂,Nat.add_mod,hnz]
-      simp
-    }
-    rw [hnz,this]
+    rw [hnz,h₂,Nat.add_mod,hnz]
     exact rfl
     by_cases hno : (((n - 2 * k) % 3) = 1)
     rw [h₂,Nat.add_mod,hno]; exact rfl
@@ -672,163 +656,43 @@ theorem walk__injective (k₁ k₂ : ℕ) (he : walk_ k₁ = walk_ k₂) : k₁ 
   by {
     contrapose he
     have : k₁ < k₂ ∨ k₂ < k₁ := Ne.lt_or_lt he
-    cases this
-    exact walk__injective' h
-    exact (walk__injective' h).symm
+    cases this; exact walk__injective' h; exact (walk__injective' h).symm
   }
 
-theorem every_walk_is_walk_ {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) (hw2: ∃ u, w (Nat.succ u) = 2) : ∃ k, w = walk_ k :=
-  -- if w reaches state 2 at some time then it is walk_ for some k
-    by {
-      rcases hw2 with ⟨u,hu⟩
-      let ⟨k,hk⟩ := getk hw hu
-      exists k
-    }
-
-theorem main_mp {T:ℕ}
-  (h : ∀ w₁ w₂, walk_in_C₂₃ w₁ → walk_in_C₂₃ w₂ → w₁ T.succ = 2 → w₂ T.succ = 2 → w₁ = w₂)
-  {k₁ l₁ k₂ l₂ : ℕ} (h₁ : T.succ = 2 * k₁ + 1 + 3 * l₁) (h₂ : T.succ = 2 * k₂ + 1 + 3 * l₂)
-  : k₁=k₂ ∧ l₁ = l₂
-  :=  by {
-    have H₁: walk_ k₁ (2 * k₁ + 1 + 3 * l₁) = 2 := keep_arriving _ _
-    have H₂: walk_ k₂ (2 * k₂ + 1 + 3 * l₂) = 2 := keep_arriving _ _
-    have W₁: walk_ k₁ T.succ = 2 := by {rw [← h₁] at H₁;exact H₁}
-    have W₂: walk_ k₂ T.succ = 2 := by {rw [← h₂] at H₂;exact H₂}
-    have : walk_ k₁ = walk_ k₂
-      := h _ _ (walk_walks _) (walk_walks _) W₁ W₂
-    have he: k₁ = k₂ := walk__injective _ _ this
-    constructor
-    exact he
-    exact l_unique k₁ _ _ (by {
-      nth_rewrite 2 [he]
-      exact Eq.trans h₁.symm h₂
-    })
-  }
-theorem main_mpr {T:ℕ}
-  (h : ∀ (k₁ l₁ k₂ l₂ : ℕ),
-        T.succ = 2 * k₁ + 1 + 3 * l₁ → T.succ = 2 * k₂ + 1 + 3 * l₂ → k₁=k₂ ∧ l₁ = l₂) :
-       ∀ w₁ w₂, walk_in_C₂₃ w₁ → walk_in_C₂₃ w₂ → w₁ T.succ = 2 → w₂ T.succ = 2 → w₁ = w₂
-  :=  by {
-    intro w₁ w₂ hw₁ hw₂ hT₁ hT₂
-    have : ∃ k₁, w₁ = walk_ k₁ := every_walk_is_walk_ hw₁ (by {exists T})
-    rcases this with ⟨k₁,hk₁⟩
-    have : ∃ k₂, w₂ = walk_ k₂ := every_walk_is_walk_ hw₂ (by {exists T})
-    rcases this with ⟨k₂,hk₂⟩
-    have : ∃l₁, T.succ = 2*k₁ + 1 + 3*l₁ := keep_arriving_when' (by {rw [hk₁] at hT₁; exact hT₁})
-    rcases this with ⟨l₁,hl₁⟩
-    have : ∃l₂, T.succ = 2*k₂ + 1 + 3*l₂ := keep_arriving_when' (by {rw [hk₂] at hT₂; exact hT₂})
-    rcases this with ⟨l₂,hl₂⟩
-    have : k₁ = k₂ := (h k₁ l₁ k₂ l₂ hl₁ hl₂).1
-    subst this
-    exact Eq.trans hk₁ hk₂.symm
+def walk_of_solution (T:ℕ)
+  : {p : ℕ×ℕ // T.succ = 2 * p.1 + 1 + 3 * p.2} → {w : ℕ → Fin 5 // walk_in_C₂₃ w ∧ w T.succ = 2}
+  := by {
+    intro p; let k := p.1.1
+    exists walk_ k; constructor; exact walk_walks k; rw [p.2]; exact keep_arriving _ _
   }
 
-  theorem main_existence {T:ℕ} :
-  (∃ w, walk_in_C₂₃ w ∧ w T.succ = 2) ↔ ∃ k l, T.succ = 2 * k + 1 + 3 * l := by {
-    constructor
-    intro h
-    rcases h with ⟨w,hww⟩
-    let hw := hww.1
-    let hT := hww.2
-    have : ∃ k, w = walk_ k := every_walk_is_walk_ hw (by {exists T})
-    rcases this with ⟨k,hk⟩
-    exists k
-    exact keep_arriving_when' (by {
-      subst hk
-      exact hT
-    })
+theorem walk_of_solution_injective (T:ℕ) :
+Function.Injective (λ p ↦ walk_of_solution T p) := by {
+  unfold Function.Injective
+  intro p₁ p₂ hp
+  unfold walk_of_solution at hp
+  simp at hp
+  have h₁₁: p₁.1.1 = p₂.1.1 := walk__injective p₁.1.1 p₂.1.1 hp
+  have h₁₂: p₁.1.2 = p₂.1.2 := l_unique p₁.1.1 _ _ (Eq.trans p₁.2.symm (by {rw [h₁₁]; exact p₂.2}))
+  exact SetCoe.ext (Prod.ext h₁₁ h₁₂)
+}
 
-    intro h
-    rcases h with ⟨k,hk⟩
-    exists (walk_ k)
-    constructor
-    exact walk_walks k
-    rcases hk with ⟨l,hl⟩
-    rw [hl]
-    exact keep_arriving _ _
-  }
+theorem walk_of_solution_surjective (T:ℕ) :
+Function.Surjective (λ p ↦ walk_of_solution T p) := by {
+  unfold Function.Surjective
+  intro wpair
+  let ⟨hw,hT⟩ := wpair.2; let k := getk1 hw hT
+  have hwp : wpair.1 = walk_ k := getk2 _ _
+  rw [hwp] at hT
+  rename wpair.1 (Nat.succ T) = 2 => hTold
+  let lpair := (getl hT); let l := lpair.1
+  exists ⟨(k,l), lpair.2⟩; exact SetCoe.ext (id hwp.symm)
+}
 
-  theorem main {T:ℕ} :
-  (∃! w, walk_in_C₂₃ w ∧ w T.succ = 2) ↔ ∃! p : ℕ×ℕ, T.succ = 2 * p.1 + 1 + 3 * p.2 := by {
-    constructor
-    intro h
-    rcases h with ⟨w,hww⟩
-    let hw := hww.1.1
-    let hT := hww.1.2
-    let h := hww.2
-    have : ∃ k l, T.succ = 2 * k + 1 + 3 * l := main_existence.mp (by {exists w})
-    rcases this with ⟨k,hk⟩
-    rcases hk with ⟨l,hl⟩
-    exists (k,l)
-    constructor
-    exact hl
+theorem walk_of_solution_bijective (T:ℕ) :
+Function.Bijective (λ p ↦ walk_of_solution T p) := by {
+  constructor; exact walk_of_solution_injective _; exact walk_of_solution_surjective _
+}
 
-    intro q hq
-    have : q.1 = k ∧ q.2 = l := main_mp (by {
-      intro w₁ w₂ hw₁ hw₂ hT₁ hT₂
-      have he₁: w₁ = w := h _ (by {constructor; exact hw₁; exact hT₁})
-      have he₂: w₂ = w := h _ (by {constructor; exact hw₂; exact hT₂})
-      exact Eq.trans he₁ he₂.symm
-    }) hq hl
-    exact Prod.ext_iff.mpr this
-
-    intro h
-    rcases h with ⟨p,hp⟩
-    let k := p.1
-    let l := p.2
-    exists (walk_ k)
-    constructor
-    constructor
-    exact walk_walks _
-    rw [hp.1]
-    have : k = p.1 := rfl
-    rw [← this]
-    exact keep_arriving _ _
-    intro w hww
-    let hw := hww.1
-    let hT := hww.2
-
-    have : ∃ k', w = walk_ k' := every_walk_is_walk_ hw (by {exists T})
-    rcases this with ⟨k',hk'⟩
-    rw [hk'] at hT
-
-    have : ∃ l', T.succ = 2 * k' + 1 + 3 * l' := keep_arriving_when' hT
-    rcases this with ⟨l',hl'⟩
-    let useful := hp.2 (k',l') hl'
-    have : k' = k := congr_arg (λ x ↦ x.1) useful
-    rw [hk']
-    rw [this]
-  }
-
-/-
-Theorem: Suppose
-(i) There is at most one walk w such that hT: w T.succ = 2.
-Then
-the equation T.succ = 2 * k₁ + 1 + 3 * l₁ has at most one solution.
-
-Reformulated:
-
-Theorem: Suppose
-(i) There is at most one walk w such that hT: w T.succ = 2.
-(ii) T.succ = 2 * k₁ + 1 + 3 * l₂ = 2 * k₂ + 1 + 3 * l₂.
-
-Then k₁ = k₂. (By l_unique it will also follow that l₁ = l₂.)
-
-Proof:
-By keep_arriving, walk_ k₁ (2 * k₁ + 1 + 3 * l₁) = 2.
-              and walk_ k₂ (2 * k₂ + 1 + 3 * l₂) = 2.
-By (ii),
-walk_ k₁ T.succ = 2
-walk_ k₂ T.succ = 2
-By (i),
-walk_ k₁ = walk_ k₂.
-By walk_injective, k₁ = k₂. []
-
-
-For the converse, suppose there are two distinct walks w₁, w₂ with w_i T.succ = 2.
-By every_walk_is_walk_, w₁ = walk_ k₁ and w₂ = walk_ k₂ for some k₁ and k₂.
-Of course, since w₁ ≠ w₂, k₁ ≠ k₂.
-Since walk_ k₁ T.succ = 2, we have T.succ = 2*k₁ + 1 + 3*l₁ for some l₁ by keep_arriving_when'
-Since walk_ k₂ T.succ = 2, we have T.succ = 2*k₂ + 1 + 3*l₂ for some l₂ by keep_arriving_when'
-Since k₁ ≠ k₂, this gives the two distinct solutions.
--/
+theorem main {T:ℕ} : (∃! p : ℕ×ℕ, T.succ = 2 * p.1 + 1 + 3 * p.2) ↔ (∃! w, walk_in_C₂₃ w ∧ w T.succ = 2)
+  := unique_iff_of_bijective _ _ _ (walk_of_solution_bijective T)
