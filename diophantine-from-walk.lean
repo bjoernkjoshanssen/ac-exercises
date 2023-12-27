@@ -67,7 +67,7 @@ theorem unique_iff_of_bijective {α β : Type}
     }⟩
 
   -- To eventually get uniqueness we want to turn ∃ results into functional results:
-  theorem get_equation'' {a n : ℕ} (han : (a) % n = 0): {k // a = n * k} :=
+  def get_equation'' {a n : ℕ} (han : (a) % n = 0): {k // a = n * k} :=
   by {
     have : n ∣ a := Nat.modEq_zero_iff_dvd.mp han
     have : a / n * n = a := Nat.div_mul_cancel this
@@ -75,7 +75,7 @@ theorem unique_iff_of_bijective {α β : Type}
     exact ⟨(a)/n,this.symm⟩
   }
 
-  theorem get_equation' {a b n : ℕ} (hab: a ≤ b) (han : (b) % n = a % n): {k // b = a + n * k} :=
+  def get_equation' {a b n : ℕ} (hab: a ≤ b) (han : (b) % n = a % n): {k // b = a + n * k} :=
   by {
     have : (b - a) % n = 0 := Nat.sub_mod_eq_zero_of_mod_eq han
     have pair : {k // b-a = n*k} := get_equation'' this
@@ -482,7 +482,7 @@ theorem ne_first {w : ℕ → Fin 5} {t₀ k:ℕ} (hk: t₀ = 2 * k) (hw: walk_i
       exact LT.lt.false this
     }
 
-noncomputable def getk1 {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.succ u) = 2) : ℕ
+ def getk1 {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.succ u) = 2) : ℕ
   := by {
     let t₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = 2) u hu).1
     let ht₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = 2) u hu).2
