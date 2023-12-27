@@ -12,11 +12,10 @@ a walk in a digraph that has a cycle of length a₀ followed by a cycle of lengt
 
 def c₀ : ℕ := 10
 def c₁ : ℕ := 15 -- c₀ and c₁ can be anything, try it! December 27, 2023.
-def a₀ : ℕ := c₀.succ.succ -- if we make this just c₀.succ, it's still true but we get another case distinction.
+def a₀ : ℕ := c₀.succ
 def a₁ : ℕ := c₁.succ
 
 theorem ha₀pos : 0 < a₀ := Nat.zero_lt_succ _
-theorem h1a₀: 1 < a₀    := Nat.succ_lt_succ_iff.mpr (Nat.zero_lt_succ _)
 
 -- Our running example will be the "cursive" NFA that has a cycle of length a₀ and then a cycle of length a₁.
 -- We implement it as an infinite NFA where only the first a₀+a₁ states are reachable,
@@ -140,50 +139,72 @@ theorem unique_iff_of_bijective {α β : Type}
 end general
 
 
-theorem walk_mod_a₀ {a₀ a₁:ℕ}(ha₀: 1 < a₀){f:ℕ → ℕ}(ish : cursiveish a₀ a₁ f)(t: ℕ)
+theorem walk_mod_a₀ {f:ℕ → ℕ}(ish : cursiveish a₀ a₁ f)(t: ℕ)
 (hs : ∀ s, s ≤ t → f s < a₀) : f t = t % a₀
   := by {
   induction t
   rw [ish.h00]
   rfl
   have hfn : f n = n % a₀ := n_ih (λ s hsn ↦ hs s (Nat.le_step hsn))
-  by_cases (n % a₀ = 0)
-  rw [h] at hfn
+  by_cases hna : (n % a₀ = 0)
+  rw [hna] at hfn
   let g := ish.h0 n hfn
   cases g
-  rw [h_1]
+  rename f n.succ = 1 => cg
+  rw [cg]
   have : (n+1) % a₀ = (n % a₀ + 1 % a₀) % a₀ := Nat.add_mod _ _ _
-  rw [h,zero_add,Nat.mod_mod] at this
-  have ht: 1 % a₀ = 1 := Nat.mod_eq_of_lt ha₀
+  rw [hna,zero_add,Nat.mod_mod] at this
+
+  by_cases (1 < a₀)
+  have ht: 1 % a₀ = 1 := Nat.mod_eq_of_lt h
   rw [ht] at this
   exact this.symm
+  have : a₀ ≤ 1 := by exact Nat.not_lt.mp h
+  have : a₀ < 1 ∨ a₀ = 1 := by exact Nat.lt_or_eq_of_le this
+  cases this
 
+  have ha₀0: a₀ = 0 := by exact Nat.lt_one_iff.mp h_1
+
+  rw [ha₀0] at hna
+  have : n=0 := by exact Nat.modEq_zero_iff.mp hna
+  rw [this]
+  rw [ha₀0]
+  rfl
   rw [h_1]
+  rw [Nat.mod_one]
+  exfalso
+
+  let G := hs n.succ (le_refl _)
+  rw [h_1] at G
+  have : 1 < 1 := by exact Eq.trans_lt (id cg.symm) G
+  exact LT.lt.false this
+
+  rw [h]
   exfalso
   let gg := hs n.succ (le_refl _)
-  have : a₀ < a₀ := Eq.trans_lt (id h_1.symm) gg
+  have : a₀ < a₀ := Eq.trans_lt (id h.symm) gg
   exact LT.lt.false this
-  let g := ish.h1 n n h hfn
+  let g := ish.h1 n n hna hfn
   exact g
  }
 
-theorem get_a₀dvd
-{a₀ a₁:ℕ}(ha₀: 1 < a₀){f:ℕ → ℕ}(ish : cursiveish a₀ a₁ f)(t: ℕ)
+theorem get_a₀dvd {f:ℕ → ℕ}(ish : cursiveish a₀ a₁ f)(t: ℕ)
 (h : (∀ s, s ≤ t → f s < a₀)) (h2: f t.succ = a₀): t % a₀ = 0
   := by {
-  have ftt : f t = t % a₀ := walk_mod_a₀ ha₀ ish (by {
+  have ftt : f t = t % a₀ := walk_mod_a₀ ish (by {
     exact t
   }) h
   by_contra hcontra
   let g := ish.h1 t t hcontra ftt
   have ht1: t.succ % a₀ = a₀ := Eq.trans g.symm h2
-  have ht2: t.succ % a₀ < a₀ := Nat.mod_lt _ (Nat.zero_lt_of_lt ha₀)
+  have ht2: t.succ % a₀ < a₀ := Nat.mod_lt _ ha₀pos
   have : a₀ < a₀ := Eq.trans_lt ht1.symm ht2
   exact LT.lt.false this
  }
 
 
-theorem strengthen {a₀ a₁ t₀:ℕ} (ha₀: 1 < a₀) {f:ℕ → ℕ} (ish : cursiveish a₀ a₁ f) (ht₀ : (∀ s, s ≤ t₀ → f s ≠ a₀)) :  ∀ s, s ≤ t₀ → f s < a₀
+theorem strengthen {t₀:ℕ} {f:ℕ → ℕ}
+  (ish : cursiveish a₀ a₁ f) (ht₀ : (∀ s, s ≤ t₀ → f s ≠ a₀)) :  ∀ s, s ≤ t₀ → f s < a₀
   := by {
     induction t₀
     intro s
@@ -191,7 +212,7 @@ theorem strengthen {a₀ a₁ t₀:ℕ} (ha₀: 1 < a₀) {f:ℕ → ℕ} (ish :
     have : s = 0 := Nat.le_zero.mp a
     rw [this]
     rw [ish.h00]
-    exact Nat.zero_lt_of_lt ha₀
+    exact ha₀pos
 
     intro s hs
     cases hs
@@ -204,7 +225,18 @@ theorem strengthen {a₀ a₁ t₀:ℕ} (ha₀: 1 < a₀) {f:ℕ → ℕ} (ish :
     let gg := ish.h0 n h
     cases gg
     rw [h_1]
-    exact ha₀
+
+    let G := ht₀ n.succ (le_refl _)
+    rw [h_1] at G
+    by_contra hcontra
+    have : a₀ ≤ 1 := by exact Nat.not_lt.mp hcontra
+    have : a₀ < 1 ∨ a₀ = 1 := by exact Nat.lt_or_eq_of_le this
+    cases this
+    have : a₀ ≤ 0 := by exact Nat.lt_succ.mp h_2
+    have : 0 < a₀ := ha₀pos
+    exact Nat.le_lt_antisymm this h_2
+    exact G h_2.symm
+
     let ggg := ht₀ n.succ (le_refl _)
     exfalso
     exact ggg h_1
@@ -213,13 +245,13 @@ theorem strengthen {a₀ a₁ t₀:ℕ} (ha₀: 1 < a₀) {f:ℕ → ℕ} (ish :
       contrapose h
       simp
       simp at h
-      exact zero_of_mod (Nat.one_le_iff_ne_zero.mpr (Nat.not_eq_zero_of_lt ha₀)) h g
+      exact zero_of_mod (Nat.one_le_iff_ne_zero.mpr (Nat.not_eq_zero_of_lt ha₀pos)) h g
     }) (by {
       exact (Nat.mod_eq_of_lt g).symm
     })
     rw [g1]
 
-    exact Nat.mod_lt _ (Nat.zero_lt_of_lt ha₀)
+    exact Nat.mod_lt _ (ha₀pos)
     let g := n_ih (by {
       intro s hsn
       exact ht₀ _ (Nat.le_step hsn)
@@ -264,9 +296,9 @@ theorem getish (F:ℕ → ℕ) (hw : walk_in_cursive F) : cursiveish a₀ a₁ (
       have : F t ≠ 0 := by exact Eq.trans_ne ht hi
       rw [if_neg this] at g
       have : i % a₀ < a₀ := Nat.mod_lt _ (by {
-        have : a₀ = c₀.succ.succ := rfl
+        have : a₀ = c₀.succ := rfl
         rw [this]
-        exact Nat.succ_pos (c₀ + 1)
+        exact Nat.succ_pos (c₀)
       })
       rw [← ht] at this
       rw [if_pos this] at g
@@ -293,7 +325,7 @@ theorem walk__injective' {k₁ k₂ : ℕ} (hk : k₁ < k₂) : walk_ k₁ ≠ w
   have h₀: ¬ (k₂) ≤ (k₁) := Nat.not_le.mpr hk
   have : ¬ (a₀ * k₂) ≤ (a₀ * k₁) := by {
     intro hcontra
-    have : k₂ ≤ k₁ := Nat.le_of_mul_le_mul_left hcontra (Nat.succ_pos c₀.succ)
+    have : k₂ ≤ k₁ := Nat.le_of_mul_le_mul_left hcontra (Nat.succ_pos c₀)
     exact h₀ this
   }
   have : ¬ Nat.succ (a₀ * k₂) ≤ Nat.succ (a₀ * k₁) := by {
@@ -301,7 +333,7 @@ theorem walk__injective' {k₁ k₂ : ℕ} (hk : k₁ < k₂) : walk_ k₁ ≠ w
     exact this (Nat.succ_le_succ_iff.mp hcontra)
   }
   rw [if_neg this] at g
-  have : ∀ x : ℕ, x % a₀ < a₀ := by {intro x;exact Nat.mod_lt _ (Nat.succ_pos c₀.succ)}
+  have : ∀ x : ℕ, x % a₀ < a₀ := by {intro x;exact Nat.mod_lt _ (Nat.succ_pos c₀)}
   let G := this (a₀*k₁).succ
   rw [← g] at G
   exact LT.lt.false G
@@ -334,7 +366,16 @@ theorem unique_walk_cursive_helper {w : ℕ → ℕ} (hw: walk_in_cursive w) (k 
   rw [if_pos h] at g
   cases g
   rw [h_1]
-  exact Nat.one_lt_succ_succ c₀
+  have : 0 < a₀ := ha₀pos
+  have : 1 ≤ a₀ := by exact this
+  have : 1 < a₀ ∨ 1 = a₀ := by exact Nat.lt_or_eq_of_le this
+  cases this
+  exact h_2
+  exfalso
+  rw [← h_2] at G
+  exact G h_1
+
+
   exfalso
   exact G h_1
   rw [if_neg h] at g
@@ -454,7 +495,7 @@ theorem ne_of_le {w : ℕ → ℕ}
       let gg := hw.1
       simp at gg
       rw [gg] at hcontra
-      exact Nat.succ_ne_zero c₀.succ hcontra.symm
+      exact Nat.succ_ne_zero c₀ hcontra.symm
       intro hcontra
       let g := ht₀.2 n (hcontra)
       have : n < n := Nat.succ_le.mp (le_trans hs g)
@@ -471,7 +512,7 @@ theorem ne_first {w : ℕ → ℕ} {t₀ k:ℕ} (hk: t₀ = a₀ * k) (hw: walk_
       intro u hu hu2; cases u
       let g := hw.1
       rw [hu2] at g
-      exact Nat.succ_ne_zero c₀.succ (g)
+      exact Nat.succ_ne_zero c₀ g
 
       have : a₀*k < a₀*k := calc
         _ = t₀  := id hk.symm
@@ -487,9 +528,9 @@ theorem ne_first {w : ℕ → ℕ} {t₀ k:ℕ} (hk: t₀ = a₀ * k) (hw: walk_
     let ish := getish w hw
     have hlt :  ∀ (s : ℕ), s ≤ t₀ → (w s) < a₀ := by {
       intro _ hs
-      exact strengthen (h1a₀) ish (ne_of_le hw ht₀) _ hs
+      exact strengthen ish (ne_of_le hw ht₀) _ hs
     }
-    have h02 : t₀ % a₀ = 0 % a₀ := get_a₀dvd (h1a₀) ish _ hlt ht₀.1
+    have h02 : t₀ % a₀ = 0 % a₀ := get_a₀dvd ish _ hlt ht₀.1
     let k := (get_equation' (Nat.zero_le _) h02).1
     exact k
   }
@@ -501,9 +542,9 @@ theorem getk2 {w : ℕ → ℕ} {u:ℕ} (hw: walk_in_cursive w) (hu: w (Nat.succ
     let ish := getish w hw
     have hlt :  ∀ (s : ℕ), s ≤ t₀ → (w s) < a₀ := by {
       intro _ hs
-      exact strengthen (h1a₀) ish (ne_of_le hw ht₀) _ hs
+      exact strengthen ish (ne_of_le hw ht₀) _ hs
     }
-    have h02 : t₀ % a₀ = 0 % a₀ := get_a₀dvd (h1a₀) ish _ hlt ht₀.1
+    have h02 : t₀ % a₀ = 0 % a₀ := get_a₀dvd ish _ hlt ht₀.1
     let hk := (get_equation' (Nat.zero_le _) h02).2
 
     rw [zero_add] at hk
@@ -571,9 +612,9 @@ theorem walk_walks (k:ℕ) : walk_in_cursive (walk_ k) :=
     have h₁: ¬ Nat.zero = (a₀ * k) := by {
       intro hcontra
       cases Nat.zero_eq_mul.mp hcontra
-      have : 1 < a₀ := h1a₀
+      have : 0 < a₀ := ha₀pos
       rw [h_1] at this
-      exact Nat.not_succ_le_zero 1 this
+      exact Nat.not_succ_le_zero 0 this
       exact h h_1
     }
     have h₂: ¬ Nat.zero ≥ (a₀ * k) := by {
