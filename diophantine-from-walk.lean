@@ -9,11 +9,10 @@ set_option tactic.hygienic false
 Connect the diophantine equation a₀x+a₁y=n with
 a walk in a digraph that has a cycle of length a₀ followed by a cycle of length a₁.
 -/
-
-def c₀ : ℕ := 10
-def c₁ : ℕ := 15 -- c₀ and c₁ can be anything, try it! December 27, 2023.
-def a₀ : ℕ := c₀.succ
-def a₁ : ℕ := c₁.succ
+axiom c₀ : ℕ
+axiom c₁ : ℕ
+noncomputable def a₀ : ℕ := c₀.succ
+noncomputable def a₁ : ℕ := c₁.succ
 
 theorem ha₀pos : 0 < a₀ := Nat.zero_lt_succ _
 
@@ -22,7 +21,7 @@ theorem ha₀pos : 0 < a₀ := Nat.zero_lt_succ _
 -- in order to avoid type casting issues.
 def cursive_step : ℕ → Set (ℕ) :=
 λ q ↦ ite (q=0)
-  {1,a₀}
+  {1 % a₀,a₀}
   (ite (q<a₀)
     {(q+1) % a₀}
     {((a₀ + (((q-a₀+1) % a₁))):ℕ)}
@@ -37,7 +36,7 @@ def cursive : NFA (Fin 1) (ℕ) := {
 -- Some properties of walks in cursive NFAs:
 structure cursiveish (a₀ a₁ :ℕ) (f:ℕ → ℕ) where
  (h00 : f 0 = 0)
- (h0: ∀ t, f t = 0 → f t.succ = 1 ∨ f t.succ = a₀)
+ (h0: ∀ t, f t = 0 → f t.succ = 1 % a₀ ∨ f t.succ = a₀)
  (h1: ∀ i t : ℕ, i % a₀ ≠ 0 → f t = i % a₀ → f t.succ = (i.succ) % a₀)
  (h2s: ∀ i t, f t = a₀ + (i%a₁) → f t.succ = a₀ + (i.succ %a₁))
 
@@ -150,34 +149,12 @@ theorem walk_mod_a₀ {f:ℕ → ℕ}(ish : cursiveish a₀ a₁ f)(t: ℕ)
   rw [hna] at hfn
   let g := ish.h0 n hfn
   cases g
-  rename f n.succ = 1 => cg
+  rename f n.succ = 1 % a₀ => cg
   rw [cg]
   have : (n+1) % a₀ = (n % a₀ + 1 % a₀) % a₀ := Nat.add_mod _ _ _
   rw [hna,zero_add,Nat.mod_mod] at this
 
-  by_cases (1 < a₀)
-  have ht: 1 % a₀ = 1 := Nat.mod_eq_of_lt h
-  rw [ht] at this
-  exact this.symm
-  have : a₀ ≤ 1 := by exact Nat.not_lt.mp h
-  have : a₀ < 1 ∨ a₀ = 1 := by exact Nat.lt_or_eq_of_le this
-  cases this
-
-  have ha₀0: a₀ = 0 := by exact Nat.lt_one_iff.mp h_1
-
-  rw [ha₀0] at hna
-  have : n=0 := by exact Nat.modEq_zero_iff.mp hna
-  rw [this]
-  rw [ha₀0]
-  rfl
-  rw [h_1]
-  rw [Nat.mod_one]
-  exfalso
-
-  let G := hs n.succ (le_refl _)
-  rw [h_1] at G
-  have : 1 < 1 := by exact Eq.trans_lt (id cg.symm) G
-  exact LT.lt.false this
+  exact id this.symm
 
   rw [h]
   exfalso
@@ -228,14 +205,7 @@ theorem strengthen {t₀:ℕ} {f:ℕ → ℕ}
 
     let G := ht₀ n.succ (le_refl _)
     rw [h_1] at G
-    by_contra hcontra
-    have : a₀ ≤ 1 := by exact Nat.not_lt.mp hcontra
-    have : a₀ < 1 ∨ a₀ = 1 := by exact Nat.lt_or_eq_of_le this
-    cases this
-    have : a₀ ≤ 0 := by exact Nat.lt_succ.mp h_2
-    have : 0 < a₀ := ha₀pos
-    exact Nat.le_lt_antisymm this h_2
-    exact G h_2.symm
+    exact Nat.mod_lt _ ha₀pos
 
     let ggg := ht₀ n.succ (le_refl _)
     exfalso
@@ -259,7 +229,8 @@ theorem strengthen {t₀:ℕ} {f:ℕ → ℕ}
     exact g
   }
 
-def walk_in_cursive (f : ℕ → ℕ) := f 0 ∈ cursive.start ∧ ∀ k, f k.succ ∈ cursive.step (f k) 0
+def walk_in_cursive (f : ℕ → ℕ) := f 0 ∈ cursive.start
+∧ ∀ k, f k.succ ∈ cursive.step (f k) 0
 
 
 theorem generalh2s (F: ℕ → ℕ)
@@ -284,7 +255,8 @@ theorem getish (F:ℕ → ℕ) (hw : walk_in_cursive F) : cursiveish a₀ a₁ (
     }
     h0 := by {
       intro t ht; let g := hw.2 t;
-      rw [ht] at g; cases g;left;rw [h];right;rw [h];
+      rw [ht] at g; cases g;left;rw [h];
+      right;rw [h];
     }
     h1 := by {
       intro i t hi ht;
@@ -311,7 +283,7 @@ theorem getish (F:ℕ → ℕ) (hw : walk_in_cursive F) : cursiveish a₀ a₁ (
     h2s := generalh2s _ hw
   }
 
-def walk_ (k:ℕ) (i: ℕ) : ℕ :=
+noncomputable def walk_ (k:ℕ) (i: ℕ) : ℕ :=
 ite (i ≥ (a₀*k).succ)
   ((a₀ + ((i-(a₀*k).succ) % a₁)))
   (i % a₀)
@@ -364,27 +336,49 @@ theorem unique_walk_cursive_helper {w : ℕ → ℕ} (hw: walk_in_cursive w) (k 
   rw [if_pos gg] at g
   by_cases (w n_1=0)
   rw [if_pos h] at g
+  simp at g
+  -- When a₀ = 1 these cases get smooshed, so let's
+  -- stop using the "axiom" and instead pass in a₀.
   cases g
   rw [h_1]
-  have : 0 < a₀ := ha₀pos
-  have : 1 ≤ a₀ := by exact this
-  have : 1 < a₀ ∨ 1 = a₀ := by exact Nat.lt_or_eq_of_le this
-  cases this
-  exact h_2
-  exfalso
-  rw [← h_2] at G
-  exact G h_1
-
+  exact Nat.mod_lt _ ha₀pos
 
   exfalso
   exact G h_1
-  rw [if_neg h] at g
+  let H := hw.2 n_1
+  rw [if_neg h] at H
+  rw [if_pos gg] at H
+  simp at H
+  rw [H]
+  exact Nat.mod_lt _ ha₀pos
+
+
+
+  let g := hw.2 n_1
+
+  unfold cursive at g
+  unfold cursive_step at g
+  simp at g
+  have : n_1 < (a₀*k).succ := by exact Nat.lt_of_succ_lt hn_1
+  let G := n_ih this
+  rw [if_pos G] at g
+  have : w n_1 ≠ 0 := by {
+    intro hcontra
+    rw [if_pos hcontra] at g
+    simp at g
+    cases g
+    exact h this
+    let H := hwk.2 n_1.succ hn_1
+    exact H h_1
+  }
+  rw [if_neg _] at g
   simp at g
   rw [g]
-  exact Nat.mod_lt _ (Nat.zero_lt_succ _)
-  exfalso
-  have : n_1 < (a₀*k).succ := Nat.lt_of_succ_lt hn_1
-  exact h this
+  exact Nat.mod_lt _ ha₀pos
+
+  exact this
+
+
   }
 
 
@@ -457,7 +451,7 @@ theorem unique_walk_cursive {w : ℕ → ℕ} (hw: walk_in_cursive w) {k : ℕ} 
   rw [if_pos this] at g₂
   by_cases (n % a₀ = 0)
   rw [if_pos h] at g₂
-  have h1: n.succ % a₀ = 1 := by {
+  have h1: n.succ % a₀ = 1 % a₀ := by {
     rw [Nat.succ_eq_add_one,Nat.add_mod,h,]
     simp
   }
@@ -521,7 +515,7 @@ theorem ne_first {w : ℕ → ℕ} {t₀ k:ℕ} (hk: t₀ = a₀ * k) (hw: walk_
       exact LT.lt.false this
     }
 
- def getk1 {w : ℕ → ℕ} {u:ℕ} (hw: walk_in_cursive w) (hu: w (Nat.succ u) = a₀) : ℕ
+noncomputable def getk1 {w : ℕ → ℕ} {u:ℕ} (hw: walk_in_cursive w) (hu: w (Nat.succ u) = a₀) : ℕ
   := by {
     let t₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = a₀) u hu).1
     let ht₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = a₀) u hu).2
@@ -594,6 +588,7 @@ theorem getl {k n:ℕ} (hmod₀: walk_ k n = a₀) :  {l : ℕ // n = a₀*k + 1
 
 
 theorem walk_walks (k:ℕ) : walk_in_cursive (walk_ k) :=
+  -- is this correct if a₀ = 1?
   by {
     constructor
     unfold walk_
@@ -607,8 +602,10 @@ theorem walk_walks (k:ℕ) : walk_in_cursive (walk_ k) :=
     have : Nat.succ Nat.zero ≥ Nat.succ (a₀ * k)
       := Nat.succ_le_succ (Nat.le_zero.mpr (mul_eq_zero_of_right a₀ h))
     rw [if_pos this,h]
+    simp
     right
     exact rfl
+    -- This doesn't seem true if a₀=k=1?
     have h₁: ¬ Nat.zero = (a₀ * k) := by {
       intro hcontra
       cases Nat.zero_eq_mul.mp hcontra
@@ -625,7 +622,11 @@ theorem walk_walks (k:ℕ) : walk_in_cursive (walk_ k) :=
       intro hcontra
       exact h₂ (Nat.lt_succ.mp hcontra)
     }
-    rw [if_neg this]; left; rfl
+    rw [if_neg this];
+
+    left;
+    rfl
+
     unfold walk_
     by_cases hss : (Nat.succ (Nat.succ n) ≥ Nat.succ (a₀ * k))
     rw [if_pos hss]
@@ -654,7 +655,7 @@ theorem walk_walks (k:ℕ) : walk_in_cursive (walk_ k) :=
     rw [if_neg this]
     by_cases (n.succ % a₀ = 0)
     rw [h];
-    have : n.succ.succ % a₀ = 1 := by {
+    have : n.succ.succ % a₀ = 1 % a₀ := by {
       rw [Nat.succ_eq_add_one,Nat.add_mod,h,];simp
     }
     rw [this]; left; exact rfl
@@ -676,7 +677,7 @@ theorem walk__injective (k₁ k₂ : ℕ) (he : walk_ k₁ = walk_ k₂) : k₁ 
     cases this; exact walk__injective' h; exact (walk__injective' h).symm
   }
 
-def walk_of_solution (T:ℕ)
+noncomputable def walk_of_solution (T:ℕ)
   : {p : ℕ×ℕ // T.succ = a₀ * p.1 + 1 + a₁ * p.2} → {w : ℕ → ℕ // walk_in_cursive w ∧ w T.succ = a₀}
   := by {
     intro p; let k := p.1.1
