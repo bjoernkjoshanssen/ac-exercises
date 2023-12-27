@@ -122,18 +122,69 @@ theorem unique_iff_of_bijective {α β : Type}
 end general
 
 -- Our running example will be C₂₃, the cursive NFA that has a cycle of length 2 and then a cycle of length 3.
-def C₂₃_step : Fin 5 → Set (Fin 5)
+-- The old definition was as follows but does not generalize so we replace it by the
+-- equivalent one below.
+
+-- def C₂₃ : NFA (Fin 1) (Fin (three.succ.succ)) := {
+--   step := λ q _ ↦ C₂₃_step q
+--   start := {0}
+--   accept := {2}
+-- }
+
+def c₁ : ℕ := 2
+def three : ℕ := c₁.succ
+-- axiom three : ℕ -- leads to problems like: is (2: Fin three.succ.succ) = 2?
+
+
+def C₂₃_step : Fin (three.succ.succ) → Set (Fin (three.succ.succ)) :=
+λ q ↦ ite (q=0)
+  {1,2}
+  (ite (q<2)
+    {(q+1) % 2}
+    --{((2 + (((q-2+1) % three):ℕ)):Fin three.succ.succ)}-- causes problems although sanity check still works
+    {((2 + (((q-2+1) % three))):Fin three.succ.succ)}
+  )
+
+def C₂₃'_step : Fin (three.succ.succ) → Set (Fin (three.succ.succ))
 | 0 => {1,2}
 | 1 => {0}
 | 2 => {3}
 | 3 => {4}
 | 4 => {2}
 
-def C₂₃ : NFA (Fin 1) (Fin 5) := {
+-- Since C₂₃' uses % in a suspicious way, it is good to prove this:
+theorem sanity_check : C₂₃_step = C₂₃'_step :=
+by {
+  apply funext; intro x; by_cases hz : (x=0)
+  rw [hz]; rfl
+  by_cases (x<2); unfold C₂₃_step
+  rw [if_pos h,if_neg hz]
+  have : x = 1 := by {
+    have : x < 1 ∨ x = 1 := by exact lt_or_eq_of_le (Fin.succ_le_succ_iff.mp h)
+    cases this;exfalso; exact hz (Fin.le_zero_iff.mp (Fin.succ_le_succ_iff.mp h_1));exact h_1
+  }
+  rw [this]; rfl; unfold C₂₃_step; rw [if_neg h,if_neg hz]
+  by_cases h2 : (x=2); rw [h2]; simp; rfl
+  by_cases h3: (x=3); rw [h3]; rfl
+  have : x = 4 := by {
+    have : x < 4 ∨ x = 4 := by exact lt_or_eq_of_le (Fin.le_last x)
+    cases this
+    have : x < 3 ∨ x = 3 := by exact lt_or_eq_of_le (Fin.succ_le_succ_iff.mp h_1)
+    cases this
+    have : x < 2 ∨ x = 2 := by exact lt_or_eq_of_le (Fin.succ_le_succ_iff.mp h_2)
+    cases this;exfalso;exact h h_3;exfalso;exact h2 h_3;exfalso;exact h3 h_2;exact h_1
+  }
+  rw [this];rfl
+}
+
+def C₂₃ : NFA (Fin 1) (Fin (three.succ.succ)) := {
   step := λ q _ ↦ C₂₃_step q
   start := {0}
   accept := {2}
 }
+
+
+
 
 structure C₂₃ish (n₂ n₃ :ℕ) (f:ℕ → ℕ) where
  (h00 : f 0 = 0)
@@ -227,9 +278,38 @@ theorem strengthen {n₂ n₃ t₀:ℕ} (hn₂: 1 < n₂) {f:ℕ → ℕ} (ish :
     exact g
   }
 
-def walk_in_C₂₃ (f : ℕ → Fin 5)                     := f 0 ∈ C₂₃.start ∧ ∀ k,         f k.succ ∈ C₂₃.step (f k) 0
+def walk_in_C₂₃ (f : ℕ → Fin (three.succ.succ))                     := f 0 ∈ C₂₃.start ∧ ∀ k,         f k.succ ∈ C₂₃.step (f k) 0
 
-theorem getish (F:ℕ → Fin 5) (hw : walk_in_C₂₃ F) : C₂₃ish 2 3 (λ n ↦ (F n).1)
+
+-- theorem newh2s (F: ℕ → Fin (Nat.succ (Nat.succ three)))
+-- (hw: walk_in_C₂₃ F)
+-- : ∀ (i t : ℕ), (F t) = 2 + i % three → (F (Nat.succ t)) = 2 + Nat.succ i % three
+-- := by {
+--   intro i t hit
+--   let g := hw.2 t
+--   unfold walk_in_C₂₃ at g
+--   rw [hit] at g
+--   unfold C₂₃ at g
+--   unfold C₂₃_step at g
+--   have : 2 + (i:Fin three.succ.succ) %(three : Fin three.succ.succ) ≠ 0 := sorry
+--   simp at g
+--   rw [if_neg this] at g
+--   have : ¬ 2 + (i:Fin three.succ.succ) %(three : Fin three.succ.succ) < 2 := sorry
+--   rw [if_neg this] at g
+--   simp at g
+--   rw [g]
+--   simp
+--   -- have : three = c₁.succ := rfl
+--   -- have : (three : Fin three.succ.succ) = (c₁.succ : Fin three.succ.succ) := by exact rfl
+--   -- rw [this]
+--   -- simp
+--   have : (1:Fin three.succ.succ) = 1 % three := sorry
+--   nth_rewrite 1 [this]
+
+--   sorry
+-- }
+
+theorem getish (F:ℕ → Fin (three.succ.succ)) (hw : walk_in_C₂₃ F) : C₂₃ish 2 three (λ n ↦ (F n).1)
   := {
     h00 := by {
       have : F 0 = 0 := Set.eq_of_mem_singleton hw.1
@@ -250,23 +330,24 @@ theorem getish (F:ℕ → Fin 5) (hw : walk_in_C₂₃ F) : C₂₃ish 2 3 (λ n
     }
     h2s := by {
       intro i t hit
-      by_cases hz : (i%3 = 0)
+      -- The following proof does not generalize if three ≠ 3:
+      by_cases hz : (i%three = 0)
       rw [hz] at hit
       simp at hit
-      have : i.succ % 3 = 1 := by {
+      have : i.succ % three = 1 := by {
         rw [Nat.succ_eq_add_one,Nat.add_mod,hz];simp;
       }
       rw [this];have : F t = 2 := Fin.ext hit
       rw [← Nat.succ_eq_add_one]; let g := hw.2 t; rw [this] at g; exact Fin.mk_eq_mk.mp g
-      by_cases ho : (i%3 = 1)
+      by_cases ho : (i%three = 1)
       rw [ho] at hit;
-      have : i.succ % 3 = 2 := by {
+      have : i.succ % three = 2 := by {
         rw [Nat.succ_eq_add_one,Nat.add_mod,ho];simp
       }
-      rw [this]; have : F t = 3 := Fin.ext hit
+      rw [this]; have : F t = three := Fin.ext hit
       let g := hw.2 t; rw [this] at g; rw [Set.eq_of_mem_singleton g]; simp
-      have hmt : i % 3 = 2 := mod3_cases hz ho; rw [hmt] at hit;
-      have : i.succ % 3 = 0 := by {
+      have hmt : i % three = 2 := mod3_cases hz ho; rw [hmt] at hit;
+      have : i.succ % three = 0 := by {
         rw [Nat.succ_eq_add_one,Nat.add_mod,hmt,];simp
       }
       rw [this]; simp; let g := hw.2 t;
@@ -275,13 +356,14 @@ theorem getish (F:ℕ → Fin 5) (hw : walk_in_C₂₃ F) : C₂₃ish 2 3 (λ n
     }
   }
 
-def walk_ (k:ℕ) (i: ℕ) : Fin 5 :=
+
+def walk_ (k:ℕ) (i: ℕ) : Fin (three.succ.succ) :=
 ite (i ≥ (2*k).succ)
   (by {
-    let u := (i-(2*k).succ) % 3 -- to avoid % casting to Fin 5 too soon
+    let u := (i-(2*k).succ) % three -- to avoid % casting to Fin (three.succ.succ) too soon
     exact (2 + u)
   })
-  (((i % 2): ℕ): Fin 5) -- to avoid % casting to Fin 5 too soon :)
+  (((i % 2): ℕ): Fin (three.succ.succ)) -- to avoid % casting to Fin (three.succ.succ) too soon :)
 
 theorem walk__injective' {k₁ k₂ : ℕ} (hk : k₁ < k₂) : walk_ k₁ ≠ walk_ k₂ := by {
   intro hcontra
@@ -317,7 +399,7 @@ theorem walk__injective' {k₁ k₂ : ℕ} (hk : k₁ < k₂) : walk_ k₁ ≠ w
 
 }
 
-theorem keep_arriving (k l : ℕ) : walk_ k (2*k + 1 + 3*l) = 2 :=
+theorem keep_arriving (k l : ℕ) : walk_ k (2*k + 1 + three*l) = 2 :=
   by {
     induction l
     simp
@@ -329,10 +411,10 @@ theorem keep_arriving (k l : ℕ) : walk_ k (2*k + 1 + 3*l) = 2 :=
     unfold walk_
     rw [if_pos _]
     simp
-    exact Nat.le_add_right (Nat.succ (2 * k)) (3 * Nat.succ _)
+    exact Nat.le_add_right (Nat.succ (2 * k)) (three * Nat.succ _)
   }
 
-theorem unique_walk_C₂₃_helper {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) (k : ℕ) (hwk: w (2*k).succ = 2 ∧ ∀ n < (2*k).succ, w n ≠ 2)
+theorem unique_walk_C₂₃_helper {w : ℕ → Fin (three.succ.succ)} (hw: walk_in_C₂₃ w) (k : ℕ) (hwk: w (2*k).succ = 2 ∧ ∀ n < (2*k).succ, w n ≠ 2)
   : ∀ n < (2*k).succ, w n < 2 := by {
   intro n
   induction n
@@ -362,7 +444,9 @@ theorem unique_walk_C₂₃_helper {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) (
   exact h this
   }
 
-theorem unique_walk_C₂₃ {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) {k : ℕ} (hwk': w (2*k).succ = 2 ∧ ∀ n < (2*k).succ, w n ≠ 2) :
+
+
+theorem unique_walk_C₂₃ {w : ℕ → Fin (three.succ.succ)} (hw: walk_in_C₂₃ w) {k : ℕ} (hwk': w (2*k).succ = 2 ∧ ∀ n < (2*k).succ, w n ≠ 2) :
   w = walk_ k :=
   by {
   have hwk : w (2*k).succ = 2 ∧ ∀ n < (2*k).succ, w n < 2 :=
@@ -390,15 +474,15 @@ theorem unique_walk_C₂₃ {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) {k : ℕ
   have h₃: n - 2*k ≥ 1 := (le_tsub_iff_left h₂).mpr hnks
   have h₄: n - (2*k).succ + 1 = n - 2*k := by {rw [Nat.sub_succ']; exact Nat.sub_add_cancel h₃}
 
-  rw [if_pos hnks] at g; simp at g; by_cases hnz : ((n - (2*k).succ) % 3 = 0)
+  rw [if_pos hnks] at g; simp at g; by_cases hnz : ((n - (2*k).succ) % three = 0)
   rw [hnz] at g; simp at g; rw [g]
   rw [← h₄,Nat.add_mod,hnz]; simp
-  by_cases hno : ((n - (2*k).succ) % 3 = 1)
+  by_cases hno : ((n - (2*k).succ) % three = 1)
 
   rw [← h₄,Nat.add_mod,hno];
   rw [hno] at g; simp at g; rw [g]; simp
-  have hns : (n - Nat.succ (2 * k)) % 3 = 2 := mod3_cases hnz hno
-  have : (n - (2 * k)) % 3 = 0 := by {rw [← h₄,Nat.add_mod,hns,];simp}
+  have hns : (n - Nat.succ (2 * k)) % three = 2 := mod3_cases hnz hno
+  have : (n - (2 * k)) % three = 0 := by {rw [← h₄,Nat.add_mod,hns,];simp}
   rw [this]; simp; rw [hns] at g; simp at g; exact g
   have hn2k: n = 2*k := (Nat.eq_of_lt_succ_of_not_lt hnk hnks).symm
   rw [hn2k]; simp; rw [if_neg hnks] at g
@@ -445,7 +529,8 @@ theorem unique_walk_C₂₃ {w : ℕ → Fin 5} (hw: walk_in_C₂₃ w) {k : ℕ
   rw [h] at g₂; exact g₂
 }
 
-theorem ne_of_le {w : ℕ → Fin 5}
+
+theorem ne_of_le {w : ℕ → Fin (three.succ.succ)}
   {t₀:ℕ}
   (hw: walk_in_C₂₃ w)
   (ht₀ : w (Nat.succ t₀) = 2 ∧ ∀ (v : ℕ), w (Nat.succ v) = 2 → t₀ ≤ v)
@@ -464,7 +549,8 @@ theorem ne_of_le {w : ℕ → Fin 5}
       exact LT.lt.false this
     }
 
-theorem ne_first {w : ℕ → Fin 5} {t₀ k:ℕ} (hk: t₀ = 2 * k) (hw: walk_in_C₂₃ w)
+
+theorem ne_first {w : ℕ → Fin (three.succ.succ)} {t₀ k:ℕ} (hk: t₀ = 2 * k) (hw: walk_in_C₂₃ w)
   (ht₀ : w (Nat.succ t₀) = 2 ∧ ∀ (v : ℕ), w (Nat.succ v) = 2 → t₀ ≤ v)
   :w (2*k).succ = 2 ∧ ∀ n, n < (2*k).succ → w n ≠ 2 :=
     by {
@@ -482,7 +568,9 @@ theorem ne_first {w : ℕ → Fin 5} {t₀ k:ℕ} (hk: t₀ = 2 * k) (hw: walk_i
       exact LT.lt.false this
     }
 
- def getk1 {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.succ u) = 2) : ℕ
+
+
+ def getk1 {w : ℕ → Fin (three.succ.succ)} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.succ u) = 2) : ℕ
   := by {
     let t₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = 2) u hu).1
     let ht₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = 2) u hu).2
@@ -499,7 +587,8 @@ theorem ne_first {w : ℕ → Fin 5} {t₀ k:ℕ} (hk: t₀ = 2 * k) (hw: walk_i
     exact k
   }
 
-theorem getk2 {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.succ u) = 2): w = walk_ (getk1 hw hu)
+
+theorem getk2 {w : ℕ → Fin (three.succ.succ)} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.succ u) = 2): w = walk_ (getk1 hw hu)
   := by {
     let t₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = 2) u hu).1
     let ht₀ := (find_spec_le (λ s ↦ w (Nat.succ s) = 2) u hu).2
@@ -518,9 +607,11 @@ theorem getk2 {w : ℕ → Fin 5} {u:ℕ} (hw: walk_in_C₂₃ w) (hu: w (Nat.su
     exact unique_walk_C₂₃ hw (ne_first hk hw ht₀)
   }
 
-theorem l_unique {k l₁ l₂ : ℕ} (he: 2*k + 1 + 3*l₁ = 2*k + 1 + 3*l₂) : l₁=l₂
+
+
+theorem l_unique {k l₁ l₂ : ℕ} (he: 2*k + 1 + three*l₁ = 2*k + 1 + three*l₂) : l₁=l₂
   := by {
-    have :  3 * l₁ = 3 * l₂ := Nat.add_left_cancel he
+    have :  three * l₁ = three * l₂ := Nat.add_left_cancel he
     exact Nat.eq_of_mul_eq_mul_left (Nat.succ_pos 2) this
   }
 
@@ -530,7 +621,7 @@ def functional_eq_add_of_le  {m n : ℕ} (h : m ≤ n) : {k // n = m + k}
     exact ⟨n-m,property⟩
   }
 
-theorem getl {k n:ℕ} (hmod₀: walk_ k n = 2) :  {l : ℕ // n = 2*k + 1 + 3*l}
+theorem getl {k n:ℕ} (hmod₀: walk_ k n = 2) :  {l : ℕ // n = 2*k + 1 + three*l}
   := by {
     have hge : n ≥ 2*k + 1 := by {
       unfold walk_ at hmod₀
@@ -552,24 +643,24 @@ theorem getl {k n:ℕ} (hmod₀: walk_ k n = 2) :  {l : ℕ // n = 2*k + 1 + 3*l
     simp at hmod₀
     have : L = n - (2*k+1) := rfl
     rw [← this] at hmod₀
-    have hmod : L % 3 = 0 := by {
-      by_cases hz : (L % 3 = 0)
+    have hmod : L % three = 0 := by {
+      by_cases hz : (L % three = 0)
       exact hz
 
-      by_cases (L % 3 = 1)
+      by_cases (L % three = 1)
       rw [h] at hmod₀; exfalso; simp at hmod₀
-      have : L % 3 = 2 := mod3_cases hz h
+      have : L % three = 2 := mod3_cases hz h
       rw [this] at hmod₀
       exfalso
       simp at hmod₀
     }
-    have h₁: (L/3)*3 = L := Nat.div_mul_cancel (Nat.modEq_zero_iff_dvd.mp hmod)
-    have h₂: L = 3 * (L / 3) := by {
+    have h₁: (L/three)*three = L := Nat.div_mul_cancel (Nat.modEq_zero_iff_dvd.mp hmod)
+    have h₂: L = three * (L / three) := by {
       rw [mul_comm] at h₁
       exact h₁.symm
     }
-    let l := L / 3
-    have : n = 2 * k + 1 + 3 * l := by {
+    let l := L / three
+    have : n = 2 * k + 1 + three * l := by {
       rw [← h₂]
       exact hL
     }
@@ -615,13 +706,13 @@ theorem walk_walks (k:ℕ) : walk_in_C₂₃ (walk_ k) :=
     have h₁ : n ≥ 2*k := Nat.succ_le_succ_iff.mp hnk
     have h₂ : n + 1 - 2*k = n - 2*k + 1 := Nat.sub_add_comm h₁
 
-    by_cases hnz : (((n - 2 * k) % 3) = 0)
+    by_cases hnz : (((n - 2 * k) % three) = 0)
     rw [hnz,h₂,Nat.add_mod,hnz]
     exact rfl
-    by_cases hno : (((n - 2 * k) % 3) = 1)
+    by_cases hno : (((n - 2 * k) % three) = 1)
     rw [h₂,Nat.add_mod,hno]; exact rfl
-    have h₁: ((n - 2 * k) % 3) = 2 := mod3_cases hnz hno
-    have h₂: ((n + 1 - 2 * k) % 3) = 0 := by {
+    have h₁: ((n - 2 * k) % three) = 2 := mod3_cases hnz hno
+    have h₂: ((n + 1 - 2 * k) % three) = 0 := by {
       rw [h₂,Nat.add_mod,h₁]
       simp
     }
@@ -652,6 +743,7 @@ theorem walk_walks (k:ℕ) : walk_in_C₂₃ (walk_ k) :=
     rw [this]; exact rfl
   }
 
+
 theorem walk__injective (k₁ k₂ : ℕ) (he : walk_ k₁ = walk_ k₂) : k₁ = k₂ :=
   by {
     contrapose he
@@ -660,11 +752,12 @@ theorem walk__injective (k₁ k₂ : ℕ) (he : walk_ k₁ = walk_ k₂) : k₁ 
   }
 
 def walk_of_solution (T:ℕ)
-  : {p : ℕ×ℕ // T.succ = 2 * p.1 + 1 + 3 * p.2} → {w : ℕ → Fin 5 // walk_in_C₂₃ w ∧ w T.succ = 2}
+  : {p : ℕ×ℕ // T.succ = 2 * p.1 + 1 + three * p.2} → {w : ℕ → Fin (three.succ.succ) // walk_in_C₂₃ w ∧ w T.succ = 2}
   := by {
     intro p; let k := p.1.1
     exists walk_ k; constructor; exact walk_walks k; rw [p.2]; exact keep_arriving _ _
   }
+
 
 theorem walk_of_solution_injective (T:ℕ) :
 Function.Injective (λ p ↦ walk_of_solution T p) := by {
@@ -689,10 +782,12 @@ Function.Surjective (λ p ↦ walk_of_solution T p) := by {
   exists ⟨(k,l), lpair.2⟩; exact SetCoe.ext (id hwp.symm)
 }
 
+
 theorem walk_of_solution_bijective (T:ℕ) :
 Function.Bijective (λ p ↦ walk_of_solution T p) := by {
   constructor; exact walk_of_solution_injective _; exact walk_of_solution_surjective _
 }
 
-theorem main {T:ℕ} : (∃! p : ℕ×ℕ, T.succ = 2 * p.1 + 1 + 3 * p.2) ↔ (∃! w, walk_in_C₂₃ w ∧ w T.succ = 2)
+
+theorem main {T:ℕ} : (∃! p : ℕ×ℕ, T.succ = 2 * p.1 + 1 + three * p.2) ↔ (∃! w, walk_in_C₂₃ w ∧ w T.succ = 2)
   := unique_iff_of_bijective (walk_of_solution_bijective T)
