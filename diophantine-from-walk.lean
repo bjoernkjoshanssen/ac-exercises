@@ -807,6 +807,15 @@ def my_reduction {c:PNat} (i : KnapsackInstance c) : CursiveWalkInstance c :=
   cycleLength := i.weight
 }
 
+def small_lemma (i:Knapsack2.Instance) (s : Knapsack2Solution i):
+  (Nat.succ (Matrix.dotProduct i.weight.val s.val)) =
+             (i.weight.val 0 * s.val 0 + 1 + i.weight.val 1 * s.val 1)
+      := by {
+        have : (i.weight.val 0 * s.val 0 + 1 + i.weight.val 1 * s.val 1) =
+               (i.weight.val 0 * s.val 0 + i.weight.val 1 * s.val 1) + 1 := by ring
+        rw [this]
+        rfl
+      }
 
 def walk_of_solution'' (i:Knapsack2.Instance)
 : Knapsack2Solution i → CursiveWalkSolution (my_reduction i)
@@ -824,12 +833,7 @@ def walk_of_solution'' (i:Knapsack2.Instance)
       rw [s.property]
       have : (Nat.succ (Matrix.dotProduct i.weight.val s.val)) =
              (i.weight.val 0 * s.val 0 + 1 + i.weight.val 1 * s.val 1)
-      := by {
-        have : (i.weight.val 0 * s.val 0 + 1 + i.weight.val 1 * s.val 1) =
-               (i.weight.val 0 * s.val 0 + i.weight.val 1 * s.val 1) + 1 := by ring
-        rw [this]
-        rfl
-      }
+      := small_lemma _ _
       exact congr_arg _ this
     }
   }
@@ -882,7 +886,29 @@ def my_reduction' : Reduction Knapsack2 CursiveWalk := {
     intro h
     rcases h with ⟨p,hp⟩
     exists walk_' i.weight (p 0)
-    sorry
+    unfold CursiveWalk
+    simp
+    unfold Knapsack2 at hp
+    simp at hp
+    rw [hp]
+    constructor
+    exact walk_walks' _ _
+    let g := keep_arriving' i.weight p
+    rw [← g]
+    have : (Nat.succ (Matrix.dotProduct i.weight.val p)) =
+           (PosFun.val i.weight 0 * p 0 + 1 + PosFun.val i.weight 1 * p 1) := small_lemma i ⟨p,hp⟩
+    exact congr_arg _ this
+
+    intro h
+    rcases h with ⟨w,hw⟩
+    unfold Knapsack2
+    simp
+    let k := 0
+    let l := 0
+    -- Actually:
+    -- let k := getk1' _ _
+    -- let l := getl'
+    exists (λ i : Fin 2 ↦ [k,l].get i)
     sorry -- use "main"
   }
 }
