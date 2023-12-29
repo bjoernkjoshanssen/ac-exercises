@@ -22,13 +22,11 @@ a walk in a digraph that has a cycle of length (a.val 0) followed by a cycle of 
   instead of Matrix.dotProduct (λ i ↦ a.val) p
 -/
 
+
 structure PosFun (c:ℕ) where
   val : Fin c → ℕ
   pos : ∀ i, 0 < val i
 
-structure KnapsackInstance (c: ℕ) where
-  target : ℕ
-  weight : PosFun c
 
 -- Some properties of walks in cursive NFAs:
 structure cursiveish (a :PosFun 2) (f:ℕ → ℕ) where
@@ -134,7 +132,6 @@ theorem unique_iff_of_bijective {α β : Type}
     exact LT.lt.false this
   }
 
-
 end general
 
 theorem walk_mod_a0 (a : PosFun 2) {f:ℕ → ℕ}(ish : cursiveish a f)(t: ℕ)
@@ -170,21 +167,6 @@ theorem walk_mod_a0 (a : PosFun 2) {f:ℕ → ℕ}(ish : cursiveish a f)(t: ℕ)
  }
 
 
---  theorem get_a0dvd a.val : Fin 2 → ℕ} (a.pos : ∀ i, 0 < a.val i) {f:ℕ → ℕ}(ish : cursiveish (a.val 0) (a.val 1) f)(t: ℕ)
--- (h : (∀ s, s ≤ t → f s < a.val 0)) (h2: f t.succ = a.val 0): t % a.val 0 = 0
---   := by {
---   let (a.val 0) := a.val 0
---   have ftt : f t = t % (a.val 0) := walk_mod_a0 ish (by {
---     exact t
---   }) h
---   by_contra hcontra
---   let g := ish.h1 t t hcontra ftt
---   have ht1: t.succ % (a.val 0) = (a.val 0) := Eq.trans g.symm h2
---   have ht2: t.succ % (a.val 0) < (a.val 0) := Nat.mod_lt _ (a.pos 0)
---   have : (a.val 0) < (a.val 0) := Eq.trans_lt ht1.symm ht2
---   exact LT.lt.false this
---  }
-
 theorem strengthen {a : PosFun 2}  {t₀:ℕ} {f:ℕ → ℕ}
   (ish : cursiveish a f) (ht₀ : (∀ s, s ≤ t₀ → f s ≠ (a.val 0))) :  ∀ s, s ≤ t₀ → f s < (a.val 0)
   := by {
@@ -217,15 +199,9 @@ theorem strengthen {a : PosFun 2}  {t₀:ℕ} {f:ℕ → ℕ}
 -- We implement it as an infinite NFA where only the first (a.val 0)+(a.val 1) states are reachable,
 -- in order to avoid type casting issues.
 
-def cursive_step (a : PosFun 2)  : ℕ → Set (ℕ) :=
-by {
-  exact (
-  λ q ↦ ite (q=0)
-  {1 % (a.val 0),(a.val 0)}
-  (ite (q<(a.val 0)) {(q+1) % (a.val 0)} {(((a.val 0) + (((q-(a.val 0)+1) % (a.val 1)))):ℕ)}))
-}
 
 def cursive_step' (a : PosFun 2)  : ℕ → Set (ℕ) :=
+-- ideally, define this over Posfun c for any c
   by {
     exact (
       λ q ↦ ite (q=0)
@@ -238,8 +214,90 @@ def cursive' (a : PosFun 2) : NFA (Fin 1) (ℕ) := {
   start := {0}
   accept := {a.val 0}
 }
-def walk_in_cursive' (a : PosFun 2) (f : ℕ → ℕ) := f 0 ∈ (cursive' a).start
-∧ ∀ k, f k.succ ∈ (cursive' a).step (f k) 0
+
+def walk_in_NFA (f : ℕ → ℕ) (M : NFA (Fin 1) ℕ) := f 0 ∈ M.start
+∧ ∀ k, f k.succ ∈ M.step (f k) 0
+
+def walk_in_cursive' (a : PosFun 2) (f : ℕ → ℕ) := walk_in_NFA f (cursive' a)
+
+structure KnapsackInstance (c: ℕ) where
+  target : ℕ
+  weight : PosFun c
+
+structure DecisionProblem where
+  Instance : Type
+  Space : Instance → Type
+  Solution : (Σ i : Instance, Space i) → Prop
+
+structure Solution {P : DecisionProblem} (i : P.Instance) where
+  val : P.Space i
+  property : P.Solution ⟨i,val⟩
+
+
+def Knapsack : DecisionProblem :=
+{
+  Instance := Σ c : ℕ, KnapsackInstance c
+  Space := λ ⟨c,_⟩ ↦ (Fin (c) → ℕ)
+  Solution := λ ⟨i,p⟩ ↦ (i.snd.target = Matrix.dotProduct p i.snd.weight.val)
+}
+
+def KnapsackSolution (i : Knapsack.Instance):= Solution i
+
+def Knapsack2 : DecisionProblem :=
+{
+  Instance := KnapsackInstance 2
+  Space := λ _ ↦ (Fin 2 → ℕ) -- given that the # of items is 2, the space doesn't depend on the instance
+  Solution := λ ⟨i,p⟩ ↦ (i.target = Matrix.dotProduct i.weight.val p)
+}
+structure CursiveWalkInstance (c: PNat) where
+  length : ℕ
+  cycleLength : PosFun c
+
+structure CursiveWalkSolution (i : CursiveWalkInstance 2) where
+  w : ℕ → ℕ
+  walks : walk_in_cursive' (i.cycleLength) w
+  timed : w i.length = i.cycleLength.val 0
+
+def CursiveWalk : DecisionProblem :=
+{
+  Instance := CursiveWalkInstance 2
+  Space := λ _ ↦ (ℕ → ℕ)
+  Solution := λ ⟨i,w⟩ ↦ walk_in_cursive' i.cycleLength w ∧  w i.length = i.cycleLength.val 0
+}
+
+
+def Knapsack2Solution (i : Knapsack2.Instance):= Solution i
+-- make everything work with this version
+
+structure Reduction (P Q : DecisionProblem) where
+  Map : P.Instance → Q.Instance
+  Property : ∀ i : P.Instance, (∃ x, P.Solution ⟨i, x⟩) ↔ (∃ y, Q.Solution ⟨(Map i), y⟩)
+/-
+Wikipedia (https://en.wikipedia.org/wiki/Parsimonious_reduction):
+  "A general reduction from problem A to problem B is a transformation that guarantees that
+  whenever A has a solution B also has at least one solution and vice versa."
+
+  "A parsimonious reduction guarantees that
+  for every solution of A, there exists a unique solution of B and vice versa."
+  "A parsimonious reduction is a transformation from one problem to another (a reduction) that
+  preserves the number of solutions."
+
+  Instead of representing the number of solutions as a number in ℕ,
+  here we just require a bijective function:
+-/
+
+structure ParsimoniousReduction (P Q : DecisionProblem) where
+  Reduction : Reduction P Q
+  Fun : (i : P.Instance) → (P.Space i → Q.Space (Reduction.Map i))  -- or : Fun : Σ i : P.Instance, (P.Space i → Q.Space (Reduction.Map i))
+  Preserves : ∀ i : P.Instance, ∀ v : P.Space i, P.Solution ⟨i,v⟩ → Q.Solution ⟨Reduction.Map i,Fun i v⟩
+  Property : ∀ i : P.Instance, Function.Bijective (
+    (λ v ↦ ⟨Fun i v.1,Preserves i v.1 v.2⟩) :
+      {v : P.Space i           // P.Solution ⟨i,v⟩}
+    → {w : Q.Space (Reduction.Map i) // Q.Solution ⟨Reduction.Map i,w⟩}
+  )
+
+-- We can prove my_reduction is a Reduction
+
 theorem generalh2s' (a : PosFun 2) (F: ℕ → ℕ)
 (hw: walk_in_cursive' a F)
 : ∀ (i t : ℕ), (F t) = a.val 0 + i % a.val 1 → (F (Nat.succ t)) = a.val 0 + Nat.succ i % a.val 1
@@ -273,7 +331,9 @@ cursiveish a (λ n ↦ (F n))
     h1 := by {
       intro i t hi ht;
       unfold walk_in_cursive' at hw; unfold cursive' at hw
-      unfold cursive_step' at hw; simp at hw
+      unfold cursive_step' at hw;
+      unfold walk_in_NFA at hw
+      simp at hw
       let g := hw.2 t
       have : F t ≠ 0 := Eq.trans_ne ht hi
       rw [if_neg this] at g
@@ -300,8 +360,6 @@ theorem walk__injective_lt' (a : PosFun 2) {k₁ k₂ : ℕ} (hk : k₁ < k₂) 
   unfold walk_' at g;
   simp at g
   have h₀: ¬ (k₂) ≤ (k₁) := Nat.not_le.mpr hk
-  -- let (a.val 0) := a.val 0
-  -- let (a.val 1) := a.val 1
   have : ¬ (a.val 0 * k₂) ≤ (a.val 0 * k₁) := by {
     intro hcontra
     have : k₂ ≤ k₁ := Nat.le_of_mul_le_mul_left hcontra ((a.pos 0))
@@ -317,11 +375,18 @@ theorem walk__injective_lt' (a : PosFun 2) {k₁ k₂ : ℕ} (hk : k₁ < k₂) 
   rw [← g] at G; exact LT.lt.false G
 }
 
-theorem keep_arriving' (a : PosFun 2) (k l : ℕ) : walk_' a k (a.val 0*k + 1 + a.val 1*l) = a.val 0 :=
+theorem keep_arriving' (a : PosFun 2) (p : Fin 2 → ℕ)
+: walk_' a (p 0) (a.val 0*(p 0) + 1 + a.val 1*(p 1)) = a.val 0 :=
   by {
-    induction l;
-    unfold walk_'; rw [if_pos _]; simp; exact Nat.le_refl (Nat.succ (a.val 0 * k))
-    unfold walk_'; rw [if_pos _]; simp; exact Nat.le_add_right (Nat.succ (a.val 0 * k)) (a.val 1 * Nat.succ _)
+    let k := p 0
+    let l := p 1
+    unfold walk_'; rw [if_pos _]; simp;
+    rw [add_assoc]
+    have : PosFun.val a 0 * k + (1 + PosFun.val a 1 * l)
+    = (PosFun.val a 0 * k + (PosFun.val a 1 * l)) + 1 := by ring
+    rw [this,← Nat.succ_eq_add_one]
+    apply Nat.succ_le_succ_iff.mpr
+    exact Nat.le_add_right _ _
   }
 
 theorem unique_walk_cursive_helper' (a : PosFun 2) {w : ℕ → ℕ}
@@ -332,7 +397,9 @@ theorem unique_walk_cursive_helper' (a : PosFun 2) {w : ℕ → ℕ}
   intro hn_1; by_cases (n_1 < (a.val 0*k).succ)
   let G:= hwk.2 n_1.succ hn_1
   unfold walk_in_cursive' at hw; unfold cursive' at hw; unfold cursive_step' at hw
-  simp at hw; let g := hw.2 n_1; let gg := n_ih h; rw [if_pos gg] at g
+  unfold walk_in_NFA at hw
+  simp at hw;
+  let g := hw.2 n_1; let gg := n_ih h; rw [if_pos gg] at g
   by_cases (w n_1=0); rw [if_pos h] at g; simp at g; cases g
   rw [h_1]; exact Nat.mod_lt _ (a.pos 0)
 
@@ -607,15 +674,15 @@ theorem walk__injective' (a : PosFun 2) (k₁ k₂ : ℕ)
     exact (walk__injective_lt' a h).symm
   }
 
-def walk_of_solution' (i:KnapsackInstance 2) --(T:ℕ) (a : PosFun 2)
--- Here we see T and a.val together specify an instance
+def walk_of_solution' (i:KnapsackInstance 2)
   : {p : ℕ×ℕ // i.target.succ = i.weight.val 0 * p.1 + 1 + i.weight.val 1 * p.2}
   → {w : ℕ → ℕ // walk_in_cursive' i.weight w ∧ w i.target.succ = i.weight.val 0}
   := by {
     intro p; let k := p.1.1
     exists walk_' i.weight k; constructor
     exact walk_walks' i.weight k; rw [p.2];
-    exact keep_arriving' _ _ _
+    let pfun : Fin 2 → ℕ := λ i ↦ [p.1.1, p.1.2].get i
+    exact keep_arriving' i.weight pfun
   }
 
 theorem walk_of_solution_injective' (i:KnapsackInstance 2) :
@@ -707,7 +774,7 @@ by {
 
 theorem main_dot' {n:ℕ} (a : PosFun 2)
 : (∃! p : Fin 2 → ℕ, n = Matrix.dotProduct a.val p + 1)
-↔ (∃! w, walk_in_cursive' a w ∧ w n = a.val 0) := -- maybe make it in terms of T to look nicer
+↔ (∃! w, walk_in_cursive' a w ∧ w n = a.val 0) :=
 by {
   constructor; intro h; rcases h with ⟨p,hp⟩
   have : (∃! p : Fin 2 → ℕ, n = (a.val 0) * p 0 + 1 + (a.val 1) * p 1) := by {
@@ -732,9 +799,47 @@ by {
   rw [this]; rfl
 }
 
-theorem main_dot_knapsack' (i : KnapsackInstance 2)
+
+def my_reduction {c:PNat} (i : KnapsackInstance c) : CursiveWalkInstance c :=
+-- change this to knapsack.instance
+{
+  length := i.target.succ
+  cycleLength := i.weight
+}
+
+
+def walk_of_solution'' (i:Knapsack2.Instance)
+: Knapsack2Solution i → CursiveWalkSolution (my_reduction i)
+:= by {
+  intro s
+  -- let k := s.solution 0
+  exact {
+    w           := walk_' i.weight (s.val 0)
+    walks       := walk_walks' _ _
+    timed       := by {
+      let g := keep_arriving' i.weight s.val
+      unfold my_reduction
+      simp
+      rw [← g]
+      rw [s.property]
+      have : (Nat.succ (Matrix.dotProduct i.weight.val s.val)) =
+             (i.weight.val 0 * s.val 0 + 1 + i.weight.val 1 * s.val 1)
+      := by {
+        have : (i.weight.val 0 * s.val 0 + 1 + i.weight.val 1 * s.val 1) =
+               (i.weight.val 0 * s.val 0 + i.weight.val 1 * s.val 1) + 1 := by ring
+        rw [this]
+        rfl
+      }
+      exact congr_arg _ this
+    }
+  }
+}
+
+
+
+theorem main_dot_knapsack' (i : Knapsack2.Instance)
 : (∃! p : Fin 2 → ℕ, i.target = Matrix.dotProduct i.weight.val p)
-↔ (∃! w, walk_in_cursive' i.weight w ∧ w i.target.succ = i.weight.val 0) := -- maybe make it in terms of T to look nicer
+↔ (∃! w, walk_in_cursive' i.weight w ∧ w i.target.succ = i.weight.val 0) :=
 by {
   constructor; intro h; rcases h with ⟨p,hp⟩; apply (main_dot' i.weight).mp
   exists p; constructor; simp; simp at hp; exact hp.1
@@ -743,4 +848,41 @@ by {
   intro h
   have : (∃! p : Fin 2 → ℕ, i.target.succ = Matrix.dotProduct i.weight.val p + 1) := (main_dot' i.weight).mpr h
   rcases this with ⟨p,hp⟩; exists p; simp; simp at hp; exact hp
+}
+
+theorem main_dot_knapsack'' (i : Knapsack2.Instance)
+: Nonempty (Unique (Knapsack2Solution i))
+↔ Nonempty (Unique (CursiveWalkSolution (my_reduction i)))
+:=
+by {
+  rw [unique_iff_exists_unique]
+  rw [unique_iff_exists_unique]
+  let H := main_dot_knapsack' i
+  constructor
+  intro h
+
+  unfold KnapsackSolution at h
+  rcases h with ⟨s,hs⟩
+  exists {
+    w := walk_' i.weight (s.val 0)
+    walks := sorry
+    timed := sorry
+  }
+  sorry
+  sorry
+}
+
+def my_reduction' : Reduction Knapsack2 CursiveWalk := {
+  Map := λ i ↦ {
+    length := i.target.succ
+    cycleLength := i.weight
+  }
+  Property := λ i ↦ by {
+    constructor
+    intro h
+    rcases h with ⟨p,hp⟩
+    exists walk_' i.weight (p 0)
+    sorry
+    sorry -- use "main"
+  }
 }
