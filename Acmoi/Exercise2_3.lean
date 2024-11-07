@@ -84,6 +84,7 @@ that the definition of the Kayleigh graph NFA's transition function using ite's
 depends on whether x1=x2.
 -/
 
+    -- have := @walk_labeled.cons (Fin 2) (Fin 2) (kayleigh2_digraph ⟨[x0,x1,x2],rfl⟩)
     refine' walk_labeled.cons _ _
     exact (kayleighsequence2).get 1
     refine' Or.inl _

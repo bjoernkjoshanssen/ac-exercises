@@ -84,10 +84,8 @@ theorem E_N_List_nil {b:ℕ} : E_N_bounded_by (List.nil : List (Fin b)) 0 :=
 def thewalk1 {b:ℕ}:
     let M := ({edge:= (λ x ↦ x.2.2=0)} : labeled_digraph (Fin b.succ) (Fin 1))
     walk_labeled_digraph M 0 0 [0]:= by {
-      refine' walk_labeled_digraph.cons _ _
-      exact 0
-      exact rfl
-      exact walk_labeled_digraph.nil
+      let M := ({edge:= (λ x ↦ x.2.2=0)} : labeled_digraph (Fin b.succ) (Fin 1))
+      exact @walk_labeled_digraph.cons (Fin b.succ) (Fin 1) M 0 0 0 0 [] rfl walk_labeled_digraph.nil
     }
 
 def thewalk2 {b:ℕ}:
