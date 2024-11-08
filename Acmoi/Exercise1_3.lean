@@ -1,5 +1,6 @@
+import Mathlib.Data.Int.ModEq
 import Mathlib.Tactic.Ring
-
+import Mathlib.Tactic.Linarith
 -- Solution to Exercise 1.3 in "Automatic complexity: a measure of irregularity"
 
 theorem lemma_1_52 (r x y:ℤ)(hr:0<r)(hy:0 ≤ y)(hx:0 ≤ x) :
@@ -7,12 +8,12 @@ theorem lemma_1_52 (r x y:ℤ)(hr:0<r)(hy:0 ≤ y)(hx:0 ≤ x) :
   -- General facts:
   have hyy: 0 < y+1 := calc
             0 ≤ y   := hy
-          _ < y+1 := lt_add_one y
+          _ < y+1 := Int.lt_succ y
 
   have hrn: r ≠ 0 := Int.ne_of_gt hr --norm_num.ne_zero_of_pos r hr
   have hlt1: 0 < r+1 := calc
         0 < r:= hr
-      _ < r+1:= lt_add_one r
+      _ < r+1:= Int.lt_succ _
   have hltr: 0 ≤ r := le_of_lt hr
   have hr1: 0 ≤ r+1 := le_of_lt hlt1
 
@@ -22,7 +23,7 @@ theorem lemma_1_52 (r x y:ℤ)(hr:0<r)(hy:0 ≤ y)(hx:0 ≤ x) :
   have hzxy: 0 ≤ x+y := calc
              0 ≤ y:= hy
             _≤ x+y:=h5
-  have h6:y*r ≤ (x+y)*r := mul_le_mul h5 (le_refl r) hltr hzxy
+  have h6:y*r ≤ (x+y)*r := by aesop
   -- Easy direction, just plugging in:
   have h2: (x,y) = (r,r-1) → 2* r^2 = (x+y)*r+(y+1)  := λ h ↦
     have hx: x=r := congr_arg (λ p:ℤ×ℤ ↦ p.1) h

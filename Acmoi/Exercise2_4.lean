@@ -6,7 +6,7 @@ import Mathlib.Data.Fintype.Prod
 
 set_option tactic.hygienic false
 
-structure labeled_digraph (α:Type) (σ:Type) := (edge : σ × σ × α → Prop)
+structure labeled_digraph (α:Type) (σ:Type) where (edge : σ × σ × α → Prop)
 
 def no_duplicate_edges {q:ℕ}{b : ℕ} (M : labeled_digraph (Fin b) (Fin q)) : Prop :=
   ∀ q1 q2: Fin q, ∀ a b: Fin b, M.edge (q1, q2, a) → M.edge (q1, q2, b) → a = b
@@ -120,6 +120,7 @@ theorem prod_eq_zero {b:ℕ} : -- by tidy
       tauto
       intro h
       rw [h]
+      simp
 
 theorem E_N_one {b:ℕ} : E_N_bounded_by ([0] : List (Fin b.succ)) 1 := by
     exists 1, 0, 0, {edge:= (λ x ↦ x.2.2=0)}

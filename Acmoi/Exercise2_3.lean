@@ -1,7 +1,7 @@
 -- Solution to Exercise 2.3.
 import Mathlib.Tactic.Basic
 import Mathlib.Data.Vector.Basic
-
+-- import Acmoi.Basic
 set_option tactic.hygienic false
 
 /-
@@ -25,17 +25,18 @@ a_nice_case_of_hyde_theorem
 
 -/
 
-structure labeled_digraph (α:Type) (σ:Type) := (edge : σ → σ → α → Prop)
+/-- A slightly different signature from `labeled_digraph` in `Exercise2_4` -/
+structure labeled_digraph' (α:Type) (σ:Type) where (edge : σ → σ → α → Prop)
 
 -- @[derive decidable_eq]
-inductive walk_labeled  {α : Type} {σ : Type} (M : labeled_digraph α σ) :
+inductive walk_labeled  {α : Type} {σ : Type} (M : labeled_digraph' α σ) :
 σ → σ → List α → Type 0
 | nil {u : σ} : walk_labeled M u u List.nil
 | cons {u v w: σ} {a:α} {x: List α}
   (h : M.edge u v a) (p : walk_labeled M v w x) :
                             walk_labeled M u w (a::x)
 
-inductive walk  {α : Type} {σ : Type} (M : labeled_digraph α σ) : σ → σ  → Type 0
+inductive walk  {α : Type} {σ : Type} (M : labeled_digraph' α σ) : σ → σ  → Type 0
 | nil {u : σ} : walk M u u
 | cons {u v w: σ}
   (h : ∃ a:α, M.edge u v a) (p : walk M v w) :
@@ -43,7 +44,7 @@ inductive walk  {α : Type} {σ : Type} (M : labeled_digraph α σ) : σ → σ 
 
 noncomputable def walk_of_walk_labeled {α : Type} {σ : Type}
 /- We remove the labels from the walk: -/
-{M : labeled_digraph α σ} {u w : σ} {x : List α}
+{M : labeled_digraph' α σ} {u w : σ} {x : List α}
 (wa : walk_labeled M u w x) :
       walk M u w :=
 walk_labeled.recOn wa walk.nil (
@@ -59,7 +60,7 @@ walk_labeled.recOn wa walk.nil (
   }
 )
 
-def kayleigh2_digraph (x : Mathlib.Vector (Fin 2) 3) : labeled_digraph (Fin 2) (Fin 2) := {
+def kayleigh2_digraph (x : Mathlib.Vector (Fin 2) 3) : labeled_digraph' (Fin 2) (Fin 2) := {
   edge := (λ q1 q2 b ↦
     (q1,q2,b) = (0, 1, x.get 0) ∨
     (q1,q2,b) = (1, 1, x.get 1) ∨
@@ -108,11 +109,11 @@ depends on whether x1=x2.
 
 /- This should sometimes be included or else a_nice_case_of_hyde_theorem
 doesn't mean much: -/
-def no_duplicate_edges (M : labeled_digraph (Fin 2) (Fin 2)) : Prop :=
+def no_duplicate_edges' (M : labeled_digraph' (Fin 2) (Fin 2)) : Prop :=
   ∀ q1 q2 a b: Fin 2, M.edge q1 q2 a → M.edge q1 q2 b → a = b
 
 theorem kayleigh2_no_duplicates  (x0 x1 x2 : Fin 2):
-no_duplicate_edges (kayleigh2_digraph ⟨[x0,x1,x2],rfl⟩) := by {
+no_duplicate_edges' (kayleigh2_digraph ⟨[x0,x1,x2],rfl⟩) := by {
   intros x_0 x_1 x_2 a ha hb
   rcases ha with hha | pp
   rcases hha with hhha | ppp

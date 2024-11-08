@@ -1,6 +1,6 @@
 import Mathlib.Data.Int.ModEq
 import Mathlib.RingTheory.Coprime.Basic
-
+import Mathlib.Tactic.Linarith
 -- Solution to Exercise 1.7.
 
 -- Based on class project by Rukiyah Walker

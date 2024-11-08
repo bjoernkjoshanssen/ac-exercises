@@ -1,4 +1,4 @@
-import Mathlib.Combinatorics.SimpleGraph.Connectivity
+import Mathlib.Combinatorics.SimpleGraph.Connectivity.WalkCounting
 
 -- Solution to Exercise 4.2.
 

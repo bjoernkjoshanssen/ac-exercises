@@ -6,7 +6,7 @@ import Mathlib.Data.Fintype.Prod
 
 def sat_eq (a: ℕ×ℕ) (n: ℕ) (x: ℕ×ℕ) : Prop :=
 a.1*x.1+a.2*x.2=n
-
+-- ALREADY DID A BIT MORE OF THIS IN EDINBURGH
 def unique_sol (a : ℕ×ℕ) (n : ℕ) : Prop :=
   ∃! x : ℕ×ℕ, sat_eq a n x
 

@@ -2,7 +2,7 @@ import Mathlib.Computability.DFA
 import Mathlib.Data.Set.Lattice
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Fintype.Sum
-import Mathlib.Init.Data.Nat.Lemmas
+import Mathlib.Data.Nat.ModEq
 
 -- Solution to Exercise 1.9.
 
@@ -15,7 +15,7 @@ NA' = NA with a single start state and a single accept state.
 For automatic complexity we are more interested in NA' than in NA, to simplify proofs
 -/
 
-structure NA' (α : Type ) (σ : Type ) :=
+structure NA' (α : Type ) (σ : Type ) where
 mk :: (step : σ → α → Set σ) (start :  σ) (accept :  σ)
 
 
@@ -287,13 +287,10 @@ theorem accepts_only {δ:Type} [u:Fintype δ] {N: NA' (Fin alpha) δ} {a:(Fin al
         exact (eval.from_empty M y).symm
       }
 
-
-      Set.not_mem_empty M.accept (Eq.subst (eval.from_empty M y) (
-        by {
-          rw [if_neg hnot] at h_ite
-          exact h_ite
-        }
-      ))
+      have h₀ := Set.not_mem_empty M.accept
+      have h₁ := eval.from_empty M y
+      by
+        aesop
     )
     have h01: M.step M.start b = {Sum.inr N.start} :=         by {
       exact if_pos hab

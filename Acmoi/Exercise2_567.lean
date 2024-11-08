@@ -17,8 +17,9 @@ def nonnil_occurs_squared_in {α:Type} (y w : List α) : Prop :=
   (y ≠ List.nil) ∧
   occurs_in (y ++ y) w
 
+/-- This is only interesting if a ≠ b so maybe that should be baked in. -/
 def abstract_almost_square_free
-  (a b : Fin 2)(h: a ≠ b)
+  (a b : Fin 2) (_ : a ≠ b)
   (w : List (Fin 2))
   : Prop :=
   ∀ y : List (Fin 2), nonnil_occurs_squared_in y w
