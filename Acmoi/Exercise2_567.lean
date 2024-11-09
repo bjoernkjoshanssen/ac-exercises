@@ -1,4 +1,7 @@
 import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Linarith
+
+open List
 
 -- Solutions to Exercises 2.5, 2.6, and 2.7.
 
@@ -14,8 +17,22 @@ def occurs_in {α:Type} (y w : List α)
 
 
 def nonnil_occurs_squared_in {α:Type} (y w : List α) : Prop :=
-  (y ≠ List.nil) ∧
+  (y ≠ nil) ∧
   occurs_in (y ++ y) w
+
+def pre_abstract_almost_square_free
+  (a b : Fin 2)
+  (w : List (Fin 2))
+  : Prop :=
+  ∀ y : List (Fin 2), nonnil_occurs_squared_in y w
+                    → y = [a] ∨ y = [b] ∨ y = [a,b]
+
+def abstractAlmostSquareFree (w : List (Fin 2)) :=
+  pre_abstract_almost_square_free 0 1 w ∨
+  pre_abstract_almost_square_free 1 0 w
+
+def almostSquareFree (w : List (Fin 2)): Prop :=
+  pre_abstract_almost_square_free 0 1 w
 
 /-- This is only interesting if a ≠ b so maybe that should be baked in. -/
 def abstract_almost_square_free
@@ -29,180 +46,97 @@ def almost_square_free (w : List (Fin 2)): Prop :=
   abstract_almost_square_free 0 1 Fin.zero_ne_one w
 
 def generalized_almost_square_free {α:Type} (w : List α) : Prop :=
-  (∀ a b : α, ¬ (nonnil_occurs_squared_in [a,b] w ∧ nonnil_occurs_squared_in [b,a] w))
+  (∀ a b, ¬ (nonnil_occurs_squared_in [a,b] w ∧ nonnil_occurs_squared_in [b,a] w))
   ∧
-  ∀ y : List α, nonnil_occurs_squared_in y w →  (∃ a : α, y = [a]) ∨ ∃ a b :α, y= [a,b]
+  ∀ y, nonnil_occurs_squared_in y w → (∃ a, y = [a]) ∨ ∃ a b, y= [a,b]
 
 theorem cons_ne_nil' {a : Fin 2}
-{b : Fin 2} {c : Fin 2} : [a,b] ≠ [c] :=
-  λ h ↦ List.cons_ne_nil b List.nil (List.tail_eq_of_cons_eq h)
+{b : Fin 2} {c : Fin 2} : [a,b] ≠ [c] := by simp
 
 theorem eq_cons_ne_nil {a b c d : Fin 2}
   (hcd: [c,d] = [a] ∨ [c,d] = [b] ∨ [c,d] = [a,b])
-  (hdc: [d,c] = [a] ∨ [d,c] = [b] ∨ [d,c] = [a,b]): a=b :=
-  by {
-    rcases hcd with u | v
-    rcases hdc
-    exfalso
-    exact cons_ne_nil' u
-    exfalso
-    exact cons_ne_nil' u
-    rcases v with u | v
-    rcases hdc
-    exfalso
-    have : 2 = 1 := congr_arg List.length u
-    have : 1 = 0 := Nat.succ_injective this
-    exact zero_ne_one this.symm
-    exfalso
-    have : 2 = 1 := congr_arg List.length u
-    have : 1 = 0 := Nat.succ_injective this
-    exact zero_ne_one this.symm
-    rcases hdc with hx | hy
-    exfalso
-    have : 2 = 1 := congr_arg List.length hx
-    have : 1 = 0 := Nat.succ_injective this
-    exact zero_ne_one this.symm
-    rcases hy with hj | hk
-    exfalso
-    have : 2 = 1 := congr_arg List.length hj
-    have : 1 = 0 := Nat.succ_injective this
-    exact zero_ne_one this.symm
-
-    exact
-    calc a = d := (List.head_eq_of_cons_eq hk).symm
-    _ = b :=  List.head_eq_of_cons_eq (List.tail_eq_of_cons_eq v)
-  }
+  (hdc: [d,c] = [a] ∨ [d,c] = [b] ∨ [d,c] = [a,b]): a=b := by
+  cases hcd with
+  | inl h => simp at h
+  | inr h => cases h with
+    | inl h => simp at h
+    | inr h => cases hdc with
+      | inl h => simp at h
+      | inr h => cases h with
+        | inl h₀ => simp at h₀
+        | inr h₀ => simp only [cons.injEq, and_true] at *; exact Eq.trans h.1.symm h₀.2
 
 theorem generalized (w : List (Fin 2)) (a b : Fin 2)
   (hab : a ≠ b)
   (hsqf: abstract_almost_square_free a b hab w) :
-  generalized_almost_square_free w := by {
+  generalized_almost_square_free w := by
     constructor
-
-    intros c d hcontra
-    rcases hcontra with ⟨hcontra_left, hcontra_right⟩
-    exact hab (eq_cons_ne_nil (hsqf _ hcontra_left) (hsqf _ hcontra_right))
-
+    intros c d hc
+    exact hab (eq_cons_ne_nil (hsqf _ hc.1) (hsqf _ hc.2))
     intros y hy
     have hin: y = [a] ∨ (y = [b] ∨ y = [a,b]) := hsqf _ hy
-
-    rcases hin with  hb | ha -- !!
-    left
-    exists a
-    cases ha
-    left
-    exists b
-    right
-    exists a
-    exists b
-  }
-
-def not_overlapfree (w : List (Fin 2)) : Prop :=
-∃ y : List (Fin 2), ∃ a : Fin 2, occurs_in ((a :: y) ++ (a ::y) ++ [a]) w
+    aesop
 
 def overlapfree (w : List (Fin 2)) : Prop :=
-¬ not_overlapfree w
+∀ y : List (Fin 2), ∀ a : Fin 2, ¬ occurs_in ((a :: y) ++ (a ::y) ++ [a]) w
 
-def ctrex := ([0,0,0]: List (Fin 2))
+
 
 theorem cons_append_length {a b : Fin 2} {x u z : List (Fin 2)} :
   (x       ++ ((a :: (b :: u))   ++ (a :: (b :: u)))   ++ z).length =
-  x.length +  u.length.succ.succ +  u.length.succ.succ +  z.length :=
-  by {
-    rw [List.append_assoc]
-    rw [List.append_assoc]
-    rw [List.length_append]
-    rw [List.length_append]
-    rw [List.length_append]
-    rw [add_assoc]
-    rw [add_assoc]
-    rw [List.length_cons]
-    rw [List.length_cons]
-  }
+  x.length +  u.length.succ.succ +  u.length.succ.succ +  z.length := by
+    repeat rw [append_assoc]
+    repeat rw [length_append]
+    repeat simp [length_append, add_assoc, length_cons]
 
 theorem square_length_ge_four {x z u: List (Fin 2)} {a b : Fin 2}:
-  (x ++ ((a :: (b :: u)) ++ (a::(b::u))) ++ z).length ≥ 4 :=
-  let n := u.length.succ.succ
-  calc
-  _ = x.length + n + n + z.length := cons_append_length
-  _ ≥ x.length + n + n            := Nat.le_add_right (List.length x + n + n) (List.length z)
-  _ = x.length + (n + n)          := add_assoc _ _ _
-  _ ≥            n + n            := Nat.le_add_left _ _
-  _ = u.length.succ.succ + u.length.succ.succ := rfl
-  _ = (u.length.succ + 1) + (u.length.succ + 1) := by repeat{rw[Nat.succ_eq_add_one]}
-  _ = (u.length + 2) + (u.length + 2) := by repeat{rw[Nat.succ_eq_add_one]}
-  _ =            2*u.length + 4   := by ring
-  _ ≥ _                           := le_add_self
+  (x ++ ((a :: (b :: u)) ++ (a::(b::u))) ++ z).length ≥ 4 := by
+  simp only [cons_append, append_assoc, length_append, length_cons, ge_iff_le]
+  linarith
+
+def ctrex := ([0,0,0]: List (Fin 2))
 
 theorem ctrex_ne {x z : List (Fin 2)} {a b : Fin 2}:
-  ctrex ≠ (x ++ ([a,b] ++ [a,b]) ++ z) :=
-  λh ↦ have : ctrex.length ≥ 4 :=
-  (calc _ = (x ++ ([a,b] ++ [a,b]) ++ z).length := by rw [h]
-  _ ≥ 4 := square_length_ge_four)
-  Nat.not_succ_le_self 3 this
+  ctrex ≠ (x ++ ([a,b] ++ [a,b]) ++ z) := fun h => by
+  have : ctrex.length ≥ 4 := h ▸ square_length_ge_four
+  simp [ctrex] at this
 
-example: generalized_almost_square_free ctrex := by {
+example: generalized_almost_square_free ctrex := by
   constructor
-  intros a b hcontra
-  rcases hcontra with ⟨hcontra_left, _⟩
-  rcases hcontra_left with ⟨_, h⟩
-  rcases h with ⟨x, hx⟩
-  rcases hx with ⟨z, hz⟩
+  intros a b hc
+  obtain ⟨x, hx⟩ := hc.1.2
+  obtain ⟨z, hz⟩ := hx
   exact ctrex_ne hz
   intros y hy
-  rcases y with yy | ⟨a, y_tl⟩
-  exfalso
-  exact hy.1 rfl
-  unfold nonnil_occurs_squared_in at hy
-  left
-  exists a
+  cases y with
+  | nil => exfalso; exact hy.1 rfl
+  | cons hd₀ tail =>
+    unfold nonnil_occurs_squared_in at hy
+    left
+    exists hd₀
+    cases tail with
+    | nil => rfl
+    | cons hd tl =>
+      exfalso
+      obtain ⟨x, hx⟩ := hy.2
+      obtain ⟨z, hz⟩ := hx
+      have : 3 ≥ 4 := (by
+      show ctrex.length ≥ 4
+      rw [hz]
+      apply square_length_ge_four)
+      simp at this
 
+example: ¬ overlapfree ctrex := by
+  unfold overlapfree
+  push_neg
+  exists nil, 0, nil, nil
 
-  rcases y_tl with _ | ⟨b , u⟩
-  rfl
-  exfalso
-  rcases hy with ⟨_, hy2⟩
-  rcases hy2 with ⟨x, hx⟩
-  rcases hx with ⟨z, hz⟩
-  have : 3 ≥ 4 := (calc
-    3 = ctrex.length := rfl
-  _ = (x ++ (a :: b :: u ++ a :: b :: u) ++ z).length := by rw [hz]
-  _ ≥ 4                                               := square_length_ge_four)
-  exact Nat.not_succ_le_self 3 this
-}
-
-example: not_overlapfree ctrex := by {
-  exists List.nil
-  exists (0:Fin 2)
-  exists List.nil
-  exists List.nil
-}
-
-example: ¬ almost_square_free ([0,1,1,0,1,1] : List (Fin 2)) := by {
+example: ¬ almost_square_free ([0,1,1,0,1,1] : List (Fin 2)) := by
   let ex := ([0,1,1] : List (Fin 2))
-  let target := ([0,1,1,0,1,1] : List (Fin 2))
-  intro hcontra
-  let h := hcontra ex
-  have h1 : nonnil_occurs_squared_in ex target := by {
+  intro hc
+  have h1 : nonnil_occurs_squared_in ex [0,1,1,0,1,1] := by
     constructor
-    intro hex
-    have h2 : 3 = 0 := congr_arg List.length hex
-    exact Nat.succ_ne_zero 2 h2
-    exists List.nil
-    exists List.nil
-  }
-  have h2 : ex ∈ ({[0], [1], [0,1]} : Set (List (Fin 2))) := h h1
-  rcases h2 with h2 | H2
-  have h3: 3 = 1 := congr_arg List.length h2
-  exact Nat.succ_ne_zero 1 (Nat.succ_injective h3)
-  rcases H2 with HH2 | GG2
-  have h3: 3 = 1 := congr_arg List.length HH2
-  exact Nat.succ_ne_zero 1 (Nat.succ_injective h3)
-  have h2': ex = ([0,1]:List (Fin 2)) := GG2
-
-  have h3: 3 = 2 := (calc
-  3 = ex.length := rfl
-  _ = ([0,1]:List (Fin 2)).length := by rw [h2']
-  _ = 2 := rfl)
-  exact Nat.succ_ne_zero 0 (Nat.succ_injective (Nat.succ_injective h3))
-}
+    · intro h
+      simp [ex] at h
+    · exists nil, nil
+  rcases hc ex h1 with h | h <;> simp [ex] at h
