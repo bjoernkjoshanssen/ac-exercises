@@ -5,7 +5,7 @@
 % If you want to split the blueprint content into several files then
 % the current file can be a simple sequence of \input. Otherwise It
 % can start with a \section or \chapter for instance.
-This Lean project contains solutions to the exercises in the book \emph{Automatic complexity: a computable measure of irregularity} published by de Gruyter.
+This Lean project contains solutions to the exercises in the book \emph{Automatic complexity: a computable measure of irregularity} published by de Gruyter, and excerpts from the book itself.
 
 \chapter*{Preface}
 
@@ -18,6 +18,21 @@ This Lean project contains solutions to the exercises in the book \emph{Automati
 	Complexity Guessing Game at \url{http://math.hawaii.edu/wordpress/bjoern/software/web/complexity-guessing-game/}
 	on November 14, 2021, I am presented with the string $x=011000111001010$ of length 15, and asked to guess its complexity,
 	from 1 to 8.
+	As we shall see in this book, in particular in \Cref{chap:FMS},
+	the best bet is to choose the largest complexity offered (8 in this case) unless you spot something very special about $x$.
+	This is correct for our $x$ and next I am asked about the length 25 word
+	\begin{equation}\label{y-word}
+		y=1011001111101111010100101
+	\end{equation}
+	and for a guess for its complexity, from 1 to 13.
+	Again I choose the maximum, but in this case, the game responds that the complexity is 12
+	and that there is a complexity \emph{deficiency} of 1.
+
+	The idea of complexity (or randomness) deficiency comes from the study of Kolmogorov complexity.
+	However, automatic complexity is a more manageable (and computable) measure of irregularity.
+	When we say ``irregularity'' here it is partly a pun:
+	automatic complexity is based on finite automata, that accept regular languages,
+	so irregularity indicates a failure of small finite automata to uniquely identify the string in a sense.
 
 	\paragraph*{Acknowledgments.}
 	I am grateful to many people.
@@ -44,5 +59,15 @@ This Lean project contains solutions to the exercises in the book \emph{Automati
 \begin{flushright}	
 	Honolulu, October 2023
 \end{flushright}
+
+
+\chapter{The incompressibility theorem}\label{chap:FMS}
+
+	Shallit and Wang showed that the automatic complexity $A(x)$ satisfies $A(x)\ge n/13$ for almost all $x\in{\{\mt{0},\mt{1}\}}^n$.
+	They also stated that Holger Petersen had informed them that the constant 13 can be reduced to 7.
+	Here we show that it can be reduced to $2+\epsilon$ for any $\epsilon>0$.
+	The result also applies to nondeterministic automatic complexity $A_N(x)$.
+	In that setting the result is tight inasmuch as $A_N(x)\le n/2+1$ for all $x$.
+
 \bibliographystyle{plain}
 \bibliography{ac-acmoi}
