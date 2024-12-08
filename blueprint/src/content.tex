@@ -34,6 +34,21 @@ This Lean project contains solutions to the exercises in the book \emph{Automati
 	automatic complexity is based on finite automata, that accept regular languages,
 	so irregularity indicates a failure of small finite automata to uniquely identify the string in a sense.
 
+	The game provides the finite automaton for $y$ from \Cref{y-word} shown in \Cref{y-automaton}.
+	\begin{figure}
+		\centering
+		\[
+			\xymatrix{
+									&								& *+[Fo]{q_{\mathrm A}}\ar[dr]_1   &			   &\\
+									& *+[Fo]{q_9}\ar[ur]_1			&				   & *+[Fo]{q_{\mathrm B}}\ar[d]_0  \\
+									& *+[Fo]{q_8}\ar[u]_1\ar[dl]_0	&				   & *+[Fo]{q_7}\ar[ll]_1			\\
+				*+[Fo]{q_3}\ar[r]_1 & *+[Fo]{q_4}\ar[rr]_0			&				   & *+[Fo]{q_5}\ar[r]_0		   & *+[Fo]{q_6}\ar[ul]_1\ar[dl]_1\\
+									& *+[Fo]{q_2}\ar[ul]_1\ar[dr]_1	&				   & *+[Fo]{q_1}\ar[ll]_0		   & \\
+									&\text{start}\ar[r]				& *+[Foo]{q_0}\ar[ur]_1
+			}
+		\]
+		\caption{An automaton provided by the \emph{Complexity Guessing Game}.}\label{y-automaton}
+	\end{figure}
 	\paragraph*{Acknowledgments.}
 	I am grateful to many people.
 	\begin{itemize}
