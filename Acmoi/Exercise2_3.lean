@@ -1,6 +1,7 @@
 -- Solution to Exercise 2.3.
 import Mathlib.Tactic.Basic
 import Mathlib.Data.Vector.Basic
+import Mathlib.Combinatorics.Digraph.Basic
 -- import Acmoi.Basic
 set_option tactic.hygienic false
 
@@ -27,6 +28,19 @@ a_nice_case_of_hyde_theorem
 
 /-- A slightly different signature from `labeled_digraph` in `Exercise2_4` -/
 structure labeled_digraph' (α:Type) (σ:Type) where (edge : σ → σ → α → Prop)
+
+/-- An edge-labeled digraph on σ consists of a digraph on σ for each label.
+`M.Lab a).Adj u v` means that in `M`, there is an adjacency from `u` to `v`
+labeled `a`. -/
+structure labeledDigraph (α:Type) (σ:Type) where
+    (Lab : α → Digraph σ)
+
+inductive walkLabeled  {α : Type} {σ : Type} (M : labeledDigraph α σ) :
+σ → σ → List α → Type 0
+| nil {u : σ} : walkLabeled M u u List.nil
+| cons {u v w: σ} {a:α} {x: List α}
+  (h : (M.Lab a).Adj u v) (p : walkLabeled M v w x) :
+                            walkLabeled M u w (a::x)
 
 -- @[derive decidable_eq]
 inductive walk_labeled  {α : Type} {σ : Type} (M : labeled_digraph' α σ) :
