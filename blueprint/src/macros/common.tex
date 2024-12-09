@@ -10,27 +10,8 @@
 % If you want for instance to number them within chapters then you can add
 % [chapter] at the end of the next line.
 \usepackage{cleveref}
-\usepackage{tikz}
-% \usepackage[all]{xy}
-\usetikzlibrary{cd, automata, bending}
-\definecolor{processblue}{cmyk}{0.96,0,0,0}
-\makeatletter
-\tikzset{
-  Loop/.style={anchor={180+#1}, out={#1-15}, in={#1+15}, loop},
-  /utils/temp/.style args={#1=#2}{Loop #1/.style={Loop={#2}}, commutative diagrams/Loop #1/.style={/tikz/Loop #1, labels={auto=false}}},
-  /utils/temp/.list={above=90, right=0, left=180, below=270, above right=45, above left=135, below left=235, below right=315},
-  initial by arrow wo text/.code={\arrow[double=none, every initial by arrow, to path={([shift=(\tikz@initial@angle:\tikz@initial@distance)]\tikztostart.\tikz@initial@angle) -- (\tikztostart)}]}}
-\makeatother
-\tikzcdset{
-  automata/.style={
-    /tikz/initial/.style={initial by arrow wo text},
-    /tikz/accepting by double/.style={double,outer sep=\pgflinewidth+.3pt},
-    cells={nodes={state, draw=processblue}},
-    labels={math mode=false, node font=\footnotesize\ttfamily},
-    arrows={thick, color=processblue, text=black, /tikz/>={Latex[angle'=25]}, ->}}}
-
-
-
+\usepackage[all]{xy}
+\usepackage{tikz-cd}
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}

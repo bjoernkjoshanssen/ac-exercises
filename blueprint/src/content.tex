@@ -37,22 +37,26 @@ This Lean project contains solutions to the exercises in the book \emph{Automati
 	The game provides the finite automaton for $y$ from \Cref{y-word} shown in \Cref{y-automaton}.
 	\begin{figure}
 		\centering
-		% \[
-		% 	\xymatrix{
-		% 							&								& *+[Fo]{q_{\mathrm A}}\ar[dr]_1   &			   &\\
-		% 							& *+[Fo]{q_9}\ar[ur]_1			&				   & *+[Fo]{q_{\mathrm B}}\ar[d]_0  \\
-		% 							& *+[Fo]{q_8}\ar[u]_1\ar[dl]_0	&				   & *+[Fo]{q_7}\ar[ll]_1			\\
-		% 		*+[Fo]{q_3}\ar[r]_1 & *+[Fo]{q_4}\ar[rr]_0			&				   & *+[Fo]{q_5}\ar[r]_0		   & *+[Fo]{q_6}\ar[ul]_1\ar[dl]_1\\
-		% 							& *+[Fo]{q_2}\ar[ul]_1\ar[dr]_1	&				   & *+[Fo]{q_1}\ar[ll]_0		   & \\
-		% 							&\text{start}\ar[r]				& *+[Foo]{q_0}\ar[ur]_1
-		% 	}
-		% \]
-\begin{tikzcd}[automata, bend angle=10, text depth=+0pt, /utils/exec=\def\c{{\normalfont, }}]
- & |[accepting, initial]| 1, 2 \ar[r,   "a"]   \ar[dr,             "b"]  &                        2    \ar[d,   "b"]   \ar[    Loop right, "a"] \\
- &                        4    \ar[u,   "a\c b"']						 & |[accepting]|          3    \ar[l,   "a"]   \ar[d,              "b"] \\
-2, 4                           \ar[uur, "a"]   \ar[dr, bend left,  "b"]  & & |[accepting]|        2, 3 \ar[ll,  "a"]   \ar[    Loop right, "b"] \\
- & |[accepting]|       1, 2, 3 \ar[ul, bend left, "a"] \ar[ur,     "b"']
+		\[
+			\xymatrix{
+									&								& *+[Fo]{q_{\mathrm A}}\ar[dr]_1   &			   &\\
+									& *+[Fo]{q_9}\ar[ur]_1			&				   & *+[Fo]{q_{\mathrm B}}\ar[d]_0  \\
+									& *+[Fo]{q_8}\ar[u]_1\ar[dl]_0	&				   & *+[Fo]{q_7}\ar[ll]_1			\\
+				*+[Fo]{q_3}\ar[r]_1 & *+[Fo]{q_4}\ar[rr]_0			&				   & *+[Fo]{q_5}\ar[r]_0		   & *+[Fo]{q_6}\ar[ul]_1\ar[dl]_1\\
+									& *+[Fo]{q_2}\ar[ul]_1\ar[dr]_1	&				   & *+[Fo]{q_1}\ar[ll]_0		   & \\
+									&\text{start}\ar[r]				& *+[Foo]{q_0}\ar[ur]_1
+			}
+\]
+\[
+\begin{tikzcd}
+    & & q_{\mathrm{A}} \arrow[dr, "1"] & & \\
+    & q_9 \arrow[ur, "1"] & & q_{\mathrm{B}} \arrow[d, "0"] \\
+    & q_8 \arrow[u, "1"] \arrow[dl, "0"] & & q_7 \arrow[ll, "1"] \\
+    q_3 \arrow[r, "1"] & q_4 \arrow[rr, "0"] & & q_5 \arrow[r, "0"] & q_6 \arrow[ul, "1"] \arrow[dl, "1"] \\
+    & q_2 \arrow[ul, "1"] \arrow[dr, "1"] & & q_1 \arrow[ll, "0"] & \\
+    & \text{start} \arrow[r] & q_0 \arrow[ur, "1"]
 \end{tikzcd}
+		\]
 		\caption{An automaton provided by the \emph{Complexity Guessing Game}.}\label{y-automaton}
 	\end{figure}
 	\paragraph*{Acknowledgments.}
