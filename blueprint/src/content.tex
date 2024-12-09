@@ -47,16 +47,20 @@ This Lean project contains solutions to the exercises in the book \emph{Automati
 									&\text{start}\ar[r]				& *+[Foo]{q_0}\ar[ur]_1
 			}
 \]
-\[
-\begin{tikzcd}
-    & & q_{\mathrm{A}} \arrow[dr, "1"] & & \\
-    & q_9 \arrow[ur, "1"] & & q_{\mathrm{B}} \arrow[d, "0"] \\
-    & q_8 \arrow[u, "1"] \arrow[dl, "0"] & & q_7 \arrow[ll, "1"] \\
-    q_3 \arrow[r, "1"] & q_4 \arrow[rr, "0"] & & q_5 \arrow[r, "0"] & q_6 \arrow[ul, "1"] \arrow[dl, "1"] \\
-    & q_2 \arrow[ul, "1"] \arrow[dr, "1"] & & q_1 \arrow[ll, "0"] & \\
-    & \text{start} \arrow[r] & q_0 \arrow[ur, "1"]
-\end{tikzcd}
-		\]
+\begin{document}
+\begin{tikzpicture}
+  \draw(0,0)--(6,6);
+\end{tikzpicture}
+% \[
+% \begin{tikzcd}
+%     & & q_{\mathrm{A}} \arrow[dr, "1"] & & \\
+%     & q_9 \arrow[ur, "1"] & & q_{\mathrm{B}} \arrow[d, "0"] \\
+%     & q_8 \arrow[u, "1"] \arrow[dl, "0"] & & q_7 \arrow[ll, "1"] \\
+%     q_3 \arrow[r, "1"] & q_4 \arrow[rr, "0"] & & q_5 \arrow[r, "0"] & q_6 \arrow[ul, "1"] \arrow[dl, "1"] \\
+%     & q_2 \arrow[ul, "1"] \arrow[dr, "1"] & & q_1 \arrow[ll, "0"] & \\
+%     & \text{start} \arrow[r] & q_0 \arrow[ur, "1"]
+% \end{tikzcd}
+% 		\]
 		\caption{An automaton provided by the \emph{Complexity Guessing Game}.}\label{y-automaton}
 	\end{figure}
 	\paragraph*{Acknowledgments.}
