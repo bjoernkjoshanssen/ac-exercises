@@ -183,6 +183,25 @@ The Kolmogorov complexity of a finite word $w$ is, roughly speaking,
 		t\concat \eps		   &=& t,\\
 		t\concat (s \dolon a)   &=& (t\concat s) \dolon a.
 	\end{eqnarray*}
+	\begin{definition}\label{df:length}
+		The \emph{length} of a word $s\in\Sigma^*$ is defined by induction:
+		\begin{eqnarray*}
+			\abs{\eps}		   &=& 0\\
+			\abs{s \dolon a}	 &=& \abs{s} + 1.
+		\end{eqnarray*}
+	\end{definition}
+	If $A\subseteq B$ and $f\subseteq B\times C$ then $f\restrict A = \{(x,y)\in f\st x\in A\}$ is the restriction of $f$ to $A$.
+
+	The word $\sigma$ is also denoted $\langle \sigma(0),\sigma(1),\dots,\sigma(\abs{\sigma}-1)\rangle$.
+	By convention, instead of $\langle \mt 0, \mt 1, \mt 0\rangle$ we write simply $\mt 0\mt 1\mt 0$.
+	\begin{example}
+		We have
+		\begin{eqnarray*}
+			\langle \mt 0\rangle \concat \langle \mt 1, \mt 0\rangle &=& \langle \mt 0, \mt 1, \mt 0\rangle\\
+																	 &=& \mt 0 \lolon \la 1, 0\ra\\
+																	 &=& \la 0,1\ra \dolon \la 0\ra.\\
+		\end{eqnarray*}
+	\end{example}
 
 \chapter{Nondeterminism and overlap-free words}\label{chap:EJC}
 
