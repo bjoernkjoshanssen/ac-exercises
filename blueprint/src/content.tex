@@ -34,34 +34,57 @@ This Lean project contains solutions to the exercises in the book \emph{Automati
 	automatic complexity is based on finite automata, that accept regular languages,
 	so irregularity indicates a failure of small finite automata to uniquely identify the string in a sense.
 
-	The game provides the finite automaton for $y$ from \Cref{y-word} shown in \Cref{y-automaton}.
-	\begin{figure}
-		\centering
-		\[
-			\xymatrix{
-									&								& *+[Fo]{q_{\mathrm A}}\ar[dr]_1   &			   &\\
-									& *+[Fo]{q_9}\ar[ur]_1			&				   & *+[Fo]{q_{\mathrm B}}\ar[d]_0  \\
-									& *+[Fo]{q_8}\ar[u]_1\ar[dl]_0	&				   & *+[Fo]{q_7}\ar[ll]_1			\\
-				*+[Fo]{q_3}\ar[r]_1 & *+[Fo]{q_4}\ar[rr]_0			&				   & *+[Fo]{q_5}\ar[r]_0		   & *+[Fo]{q_6}\ar[ul]_1\ar[dl]_1\\
-									& *+[Fo]{q_2}\ar[ul]_1\ar[dr]_1	&				   & *+[Fo]{q_1}\ar[ll]_0		   & \\
-									&\text{start}\ar[r]				& *+[Foo]{q_0}\ar[ur]_1
-			}
-\]
-\begin{tikzpicture}
-  \draw(0,0)--(6,6);
-\end{tikzpicture}
-% \[
-% \begin{tikzcd}
-%     & & q_{\mathrm{A}} \arrow[dr, "1"] & & \\
-%     & q_9 \arrow[ur, "1"] & & q_{\mathrm{B}} \arrow[d, "0"] \\
-%     & q_8 \arrow[u, "1"] \arrow[dl, "0"] & & q_7 \arrow[ll, "1"] \\
-%     q_3 \arrow[r, "1"] & q_4 \arrow[rr, "0"] & & q_5 \arrow[r, "0"] & q_6 \arrow[ul, "1"] \arrow[dl, "1"] \\
-%     & q_2 \arrow[ul, "1"] \arrow[dr, "1"] & & q_1 \arrow[ll, "0"] & \\
-%     & \text{start} \arrow[r] & q_0 \arrow[ur, "1"]
-% \end{tikzcd}
-% 		\]
-		\caption{An automaton provided by the \emph{Complexity Guessing Game}.}\label{y-automaton}
-	\end{figure}
+% 	The game provides the finite automaton for $y$ from \Cref{y-word} shown in \Cref{y-automaton}.
+% 	\begin{figure}
+% 		\centering
+% 		\[
+% 			\xymatrix{
+% 									&								& *+[Fo]{q_{\mathrm A}}\ar[dr]_1   &			   &\\
+% 									& *+[Fo]{q_9}\ar[ur]_1			&				   & *+[Fo]{q_{\mathrm B}}\ar[d]_0  \\
+% 									& *+[Fo]{q_8}\ar[u]_1\ar[dl]_0	&				   & *+[Fo]{q_7}\ar[ll]_1			\\
+% 				*+[Fo]{q_3}\ar[r]_1 & *+[Fo]{q_4}\ar[rr]_0			&				   & *+[Fo]{q_5}\ar[r]_0		   & *+[Fo]{q_6}\ar[ul]_1\ar[dl]_1\\
+% 									& *+[Fo]{q_2}\ar[ul]_1\ar[dr]_1	&				   & *+[Fo]{q_1}\ar[ll]_0		   & \\
+% 									&\text{start}\ar[r]				& *+[Foo]{q_0}\ar[ur]_1
+% 			}
+% \]
+% \begin{tikzpicture}
+%   \draw(0,0)--(6,6);
+% \end{tikzpicture}
+% % \[
+% % \begin{tikzcd}
+% %     & & q_{\mathrm{A}} \arrow[dr, "1"] & & \\
+% %     & q_9 \arrow[ur, "1"] & & q_{\mathrm{B}} \arrow[d, "0"] \\
+% %     & q_8 \arrow[u, "1"] \arrow[dl, "0"] & & q_7 \arrow[ll, "1"] \\
+% %     q_3 \arrow[r, "1"] & q_4 \arrow[rr, "0"] & & q_5 \arrow[r, "0"] & q_6 \arrow[ul, "1"] \arrow[dl, "1"] \\
+% %     & q_2 \arrow[ul, "1"] \arrow[dr, "1"] & & q_1 \arrow[ll, "0"] & \\
+% %     & \text{start} \arrow[r] & q_0 \arrow[ur, "1"]
+% % \end{tikzcd}
+% % 		\]
+% 		\caption{An automaton provided by the \emph{Complexity Guessing Game}.}\label{y-automaton}
+% 	\end{figure}
+
+	This research area was started by Jeff Shallit and Ming-Wei Wang in 2001~\cite{MR1897300}.
+	I independently made the same definition in 2009 while teaching the class Math 301 (Discrete Mathematics) at
+	University of Hawai\textquoteleft i. Subsequently, I have written several papers which are treated in this book.
+	Moreover, Jordon and Moser wrote a paper on the topic in 2021~\cite{DBLP:conf/fsttcs/JordonM21}. It is my hope that this book will stimulate further work in this area.
+
+	As a research tool, and incidentally as a method of cheating at the \emph{Complexity Guessing Game},
+	I have created a web service to find the complexity of a given word, and an illustration of an automaton used in the associated proof~\cite{lookup}.
+
+	The Complexity Option Game~\cite{COG} is a variation on the same idea, inviting the player implement an exercise policy for a complexity-based financial option.
+	These games include graphical displays of millions of the relevant automata.
+
+	\paragraph*{How to use this book.}
+	\Cref{chap:2001}, \Cref{chap:EJC}, \Cref{chap:digraph}, and \Cref{chap:determine} answer the question ``What''
+	by introducing the basics of state-counting and edge-counting automatic complexity.
+	\Cref{chap:FMS} answers the question ``How'' (do we work with automatic complexity), answering a question of Shallit and Wang by estimating the complexity of random words.
+	\Cref{chap:metrics} and \Cref{chap:depth} are an attempt to answer the question ``Why''.
+	Conditional automatic complexity gives a perspective on the length-conditional aspect of automatic complexity, and
+	automatic complexity turns out to give an answer to the question, what does logical depth look like in practice.
+	
+	Each chapter contains exercises, most of which come with solutions in the proof assistant Lean. Open research problems also appear in dedicated sections.
+
+
 	\paragraph*{Acknowledgments.}
 	I am grateful to many people.
 	\begin{itemize}
@@ -89,6 +112,96 @@ This Lean project contains solutions to the exercises in the book \emph{Automati
 \end{flushright}
 
 
+\chapter{First steps in automatic complexity}\label{chap:2001}
+
+The Kolmogorov complexity of a finite word $w$ is, roughly speaking,
+	the length of the shortest description $w^*$ of $w$ in a fixed formal language.
+	The description $w^*$ can be thought of as an optimally compressed version of $w$.
+	Motivated by the non-computability of Kolmogorov complexity,
+	Shallit and Wang~\cite{MR1897300} studied a deterministic finite automaton analogue.
+	%A more recent approach is due to Calude, Salomaa, and Roblot~\cite{Calude}.
+
+	Their notion of automatic complexity is an automata-based and length-conditional analogue of
+	Sipser's distinguishing complexity $CD$ (\cite{Sipser:1983:CTA:800061.808762}, \cite[Definition 7.1.4]{MR1438307}).
+	This was pointed out by Mia Minnes in a review in the \emph{Bulletin of Symbolic Logic} from 2012.
+	Another precursor is the length-conditional Kolmogorov complexity \cite[Definition 2.2.2]{MR1438307}.
+	
+	The automatic complexity of Shallit and Wang is the minimal number of states of an automaton accepting only a given word among its equal-length peers.
+	Finding such an automaton is analogous to the protein folding problem where one looks for a minimum-energy configuration.
+	The protein folding problem may be NP-complete~\cite{CGPPY:98}, depending on how one formalizes it as a mathematical problem.
+	For automatic complexity, the computational complexity is not known, but a certain generalization to equivalence relations gives an NP-complete decision problem~\cite{MR3712310}.
+
+	In this chapter we start to develop the properties of automatic complexity.
+\section{Words}
+
+	The set of all natural numbers is $\N=\{0,1,2,\dots\}$.
+	Following the von Neumann convention, each natural number $n\in\N$ is considered to be the set of its predecessors:
+	\[
+		0=\emptyset,\quad 1=\{0\}, \text{ and in general}\quad n=\{0,1,\dots,n-1\}.
+	\]
+
+
+	The power set $\mathcal P(X)$ of a set $X$ is the set of all the subsets of $X$:
+	\[
+		\mathcal P(X) = \{A \st A \subseteq X\}.
+	\]
+	If $\Sigma$ is an \emph{alphabet}\index{alphabet} (a set), a \emph{word}\index{word} (sometimes called \emph{string}\index{string}) is a sequence of elements of $\Sigma$.
+
+	For computer implementations it is often convenient to use an alphabet that is an interval $[0,b)$ in $\N$.
+	When we want to emphasize that 0, 1, etc.~are playing the role of symbols rather than numbers, we often typeset them as $\mt{0}, \mt{1}$, etc., respectively.
+
+	We denote concatenation of words by $x\concat y$\index{concatenation} or by juxtaposition $xy$.
+	In the word $w=xyz$, $y$ is called a \emph{subword}\index{subword} or \emph{factor}\index{factor} of $w$. Infinite words are denoted in boldface.
+	For example, there is a unique infinite word $\mathbf{w}$ such that $\mathbf w = 0 \mathbf w$, and we write $\mathbf w = 0^{\infty}$.
+
+	Let $\preceq$ denote the prefix relation, so that $a\preceq b$ iff $a$ is a prefix of $b$,
+	iff there is a word $c$ such that $b=ac$.\index{prefix}
+
+
+	The concatenation of a word $x$ and a symbol $a$ is written $x\dolon a$ if $a$ is appended on the right, and
+	$a\lolon x$ if $a$ is appended on the left. It may seem most natural to define $\Sigma^*$ by induction
+	using $x\dolon a$, at least for speakers of languages where one reads from left to right.
+	The Lean proof assistant~\cite{conf/cade/MouraKADR15} (version 3)\index{Lean} uses $a \lolon x$.
+	That approach fits well with co-induction, if infinite words are ordered in order type $\N$~\cite{MR3705668}.
+
+	For $n\in\N$, $\Sigma^n$ is the set of words of length $n$ over $\Sigma$.
+	We may view $\sigma\in\Sigma^n$ is a function with domain $n$ and range $\Sigma$.
+
+	We view functions $f\fr A\to B$ as subsets of the cartesian product $A\times B$,
+	\[
+		f=\{(x,y)\st y=f(x)\}.
+	\]
+	The set $\Sigma^n$ is both the set of functions from $n$ to $\Sigma$ and
+	the cartesian product $(\Sigma^{n-1})\times\Sigma$ if $n>0$.
+	The empty word is denoted $\eps$\index{empty word} and the first symbol in a word $x$ is denoted $x(0)$.
+
+	We can define $\Sigma^*=\bigcup_{n\in\N}\Sigma^n$.
+	More properly, the set $\Sigma^*$ is defined recursively by the rule that $\eps\in\Sigma^*$, and whenever $s\in\Sigma^*$ and $a\in\Sigma$, then
+	$s\dolon a\in \Sigma^*$.
+	We define \emph{concatenation} by structural induction\index{structural induction}: for $s,t\in\Sigma^*$,
+	\begin{eqnarray*}
+		t\concat \eps		   &=& t,\\
+		t\concat (s \dolon a)   &=& (t\concat s) \dolon a.
+	\end{eqnarray*}
+
+\chapter{Nondeterminism and overlap-free words}\label{chap:EJC}
+
+	
+	In this chapter we develop some properties of nondeterministic automatic complexity.
+	As a corollary we get a strengthening of a result of Shallit and Wang~\cite{MR1897300}
+	on the complexity of the infinite Thue--Morse word $\mathbf t$.
+	Moreover, viewed through an NFA lens we can, in a sense, characterize the complexity of $\mathbf t$ exactly.
+	A main technical idea is to extend the following result, which says that not only do squares, cubes and higher powers of a word have low complexity,
+	but a word completely free of such powers must conversely have high complexity.
+
+\chapter{Edge complexity and digraphs}\label{chap:digraph}
+
+	\section{Edge-counting automatic complexity}
+
+\chapter{The many variants}\label{chap:determine}
+
+\section{Master diagram}
+
 \chapter{The incompressibility theorem}\label{chap:FMS}
 
 	Shallit and Wang showed that the automatic complexity $A(x)$ satisfies $A(x)\ge n/13$ for almost all $x\in{\{\mt{0},\mt{1}\}}^n$.
@@ -96,6 +209,43 @@ This Lean project contains solutions to the exercises in the book \emph{Automati
 	Here we show that it can be reduced to $2+\epsilon$ for any $\epsilon>0$.
 	The result also applies to nondeterministic automatic complexity $A_N(x)$.
 	In that setting the result is tight inasmuch as $A_N(x)\le n/2+1$ for all $x$.
+
+\chapter{Conditional automatic complexity}\label{chap:metrics}
+
+	In this chapter we show that metrics analogous to the Jaccard distance and the Normalized Information Distance can be defined based on conditional nondeterministic automatic complexity $A_N$.
+	Our work continues the path of Shannon (1950) on entropy metrics and G\'acs (1974) on symmetry of information among others.
+
+	Shallit and Wang (2001) defined the automatic complexity of a word $w$ as, somewhat roughly speaking, the minimum number of states of a finite automaton that accepts $w$ and no other word of length $\abs{w}$.
+	This definition may sound a bit artificial, as it is not clear the length of $w$ is involved in defining the complexity of $w$.
+	In this chapter we shall see how \emph{conditional} automatic complexity neatly resolves this issue.
+
+
+\section{Basics}
+
+\chapter{Logical depth and automatic complexity}\label{chap:depth}
+
+\section{Introduction}
+
+	Logical depth was defined by Chaitin in 1977 \cite{5390997} and further studied by Bennett in 1986. It is essentially the time it takes to verify a witness of Kolmogorov complexity.
+	We demonstrate that for automatic complexity, logical depth arises as the difficulty of determining the unique solvability of certain knapsack problems.
+
+	A word is deep not so much if it has no simple description but rather if its simplest description is hard to understand and verify. For example, the task of finding the factorization
+	\[
+	2001 = 3 \times 23 \times 29
+	\]
+	is laborious to find, but relatively simple to verify. In that sense, it is not deep.
+	In this chapter we uncover a quite concrete instance of this idea of logical depth. To do so we replace Turing machines by finite automata.
+	In the case of infinite sequences, finite-state depth has been studied by Jordon and Moser \cite{MR4074827}, but we focus on the concrete world of finite words.
+
+	We replace Kolmogorov complexity with \emph{automatic complexity}.
+	The automatic complexity $A(w)$ of a word $w$ was studied by Shallit and Wang (2001) \cite{MR1897300}.
+	It is the minimum number of states of a DFA with certain properties and can be defined in a couple of in-equivalent variants.
+	
+
+	Now, an NFA with a minimum number of edges accepting the word $w$ and no other word of the same length must of course contain a walk on which
+	$w$ is accepted that \emph{visits every edge} of $M$.	
+	It is thus natural to require $w$ to be the only word of length $\abs{w}$ accepted by $M$ on an edge-covering walk,
+	thus obtaining the edge-covering complexity $E_{Nc}(w)$.
 
 \bibliographystyle{plain}
 \bibliography{ac-acmoi}
