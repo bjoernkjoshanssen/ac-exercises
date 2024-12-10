@@ -202,6 +202,177 @@ The Kolmogorov complexity of a finite word $w$ is, roughly speaking,
 																	 &=& \la 0,1\ra \dolon \la 0\ra.\\
 		\end{eqnarray*}
 	\end{example}
+	\subsection{Occurrences and powers}
+
+		In this subsection we state some results from the subject ``combinatorics on words'' that will be used frequently.
+
+
+		The statement $\mathrm{occurs}(x,k,y)$ that $x$ occurs in position $k$ within $y$ may be defined by induction on $n$:
+		\begin{eqnarray*}
+			\mathrm{occurs}(x,0,y)  &\iff& \exists z,\, x \concat z =y,\\
+			\mathrm{occurs}(x,n+1,y)&\iff& \exists a\in\Sigma,\, \mathrm{occurs}(a\lolon x,n,y).
+		\end{eqnarray*}
+		\begin{example}\label{janani-suggest}
+			We have $\mathrm{occurs}(\mathrm{na}, 2, \mathrm{banana})$ and $\mathrm{occurs}(\mathrm{na},4,\mathrm{banana})$.
+		\end{example}
+
+		The number of occurrences can be defined, without defining a notion of ``occurrence'', as the cardinality of
+		$\{k\in\N: \mathrm{occurs}(x,k,y)\}$.
+		To define disjoint occurrences, so we should have a notion of ``occurrence''.
+		\begin{definition}\label{df:disjoint-occurrence}
+			Two occurrences of words $a$ (starting at position $i$) and $b$ (starting at position $j$) in a word $x$ are \emph{disjoint} if
+			$x=uavbw$ where $u,v,w$ are words and $\abs{u}=i$, $\abs{uav}=j$.
+		\end{definition}
+		Type-theoretically~\cite{MR935892} we may say that an occurrence of $x$ in $y$ is a pair $(k,h)$
+		where $h$ is a proof that $\mathrm{occurs}(x,k,y)$. Of course, we could also say that the occurrence is simply the number $k$,
+		or even the triple $(x,k,y)$ but in that case the object does not have its defining property within it, so to speak:
+		the number $k$, and the triple $(x,k,y)$, exist even when $x$ does not occur at position $k$ in $y$.
+
+		To naturally speak of disjoint occurrences we make \Cref{df:occ}. Note that we primarily use zero-based words\index{zero-based words}
+		in this book, i.e.,
+		other things being equal we prefer to call the first letter of a word $x_0$, rather than $x_1$.
+		\begin{definition}\label{df:occ}\label{word-as-permutation}
+			A word $x=x_0\dots x_{n-1}$, or an infinite word $x=x_0x_1\dots$, with each $x_i\in\Sigma$, is viewed as a function $f_x:n\to\Sigma$ with $f_x(i)=x_i$.
+			An \emph{occurrence}\index{occurrence} of $y=y_0\dots y_{m-1}$ in $x$ is a function
+			$f_x\restrict [a,a+m-1]$ such that $f_x(a+i)=y_i$ for each $0\le i< m$.
+
+			For $a,b\in\N$, let $[a,b]=\{x\in\N\st a\le x\le b\}$.
+			Two occurrences $f_x\restrict [a,b]$, $f_x\restrict [c,d]$ are \emph{disjoint}\index{occurrence, disjoint} if $[a,b]\cap [c,d]=\emptyset$.
+
+
+			If moreover $[a,b+1]\cap [c,d]=\emptyset$ then
+			the occurrences are
+			\emph{strongly disjoint}\index{disjoint, strongly}.
+
+			A subword that occurs at least twice in a word $w$ is a \emph{repeated} subword of $w$.\index{repeated subword}
+			Let $k\in\N$, $k\ge 1$.
+			A word $x=x_0\dots x_{n-1}$, $x_i\in\Sigma$, is \emph{$k$-rainbow}\index{rainbow word}\index{2-rainbow} if it has no repeated subword of length $k$:
+			there are no $0\le i<j<n-k$ with $x\restrict [i,i+k-1]=x\restrict [j,j+k-1]$.
+			A 1-rainbow word is also known simply as \emph{rainbow}.
+		\end{definition}
+		In particular, the empty word $\eps$ occurs everywhere in every word.
+		However, each word has exactly one occurrence of $\eps$, since all empty functions are
+		considered to be equal (in set theory, at any rate).
+
+		Having properly defined ``occurrence'' in \Cref{df:occ}, we can state and prove the trivial \Cref{lem:num-occ}.
+		\begin{lemma}\label{lem:num-occ}
+		Suppose $n,t$ are positive integers with $t\le n+1$.
+		A word of length $n$ has $n+1-t$ occurrences of subwords of length $t$.
+		\end{lemma}
+		\begin{proof}
+			Let $x$ be a word of length $n$.
+			The occurrences of subwords of length $t$ are
+			\[
+				f_x\restrict [0,t-1],
+				f_x\restrict [1,t],
+				\dots,
+				f_x\restrict [n-t,n-t+(t-1)].\qedhere
+			\]
+		\end{proof}
+		\begin{theorem}\label{sep18-2022}
+			Let $k,t\in\N$ with $k\ge 1$.
+			In an alphabet of cardinality $k$, a $t$-rainbow word has length at most $k^t+t-1$.
+		\end{theorem}
+		\begin{proof}
+			There are $k^t$ words of length $t$.
+			Thus, by \Cref{lem:num-occ}, for a $t$-rainbow word of length $n$ we have $n+1-t \le k^t$.
+		\end{proof}
+		\Cref{sep18-2022} has a converse,
+		\Cref{feb6-2023}. To prove it we shall require the notion of a de Bruijn word.
+		\begin{definition}
+			\index{de Bruijn word}\label{df:de-bruijn}
+			A \emph{de Bruijn word of order $n$} over an alphabet $\Sigma$ is a sequence $y$
+			such that every $x\in\Sigma^n$ occurs exactly once as a cyclic substring of $y$.
+		\end{definition}
+		\begin{theorem}\label{feb6-2023}
+			Let $k,t\in\N$ with $k\ge 1$.
+			In an alphabet of cardinality $k$, there exists a $t$-rainbow word of length $k^t+t-1$.
+		\end{theorem}
+		\begin{proof}
+			Case $t=0$: indeed, the empty word is a 0-rainbow word of length 0.
+			Case $t=1$:	A 1-rainbow word of length $k$ exists, namely any permutation of the symbols in $\Sigma$ (\Cref{word-as-permutation}).
+		For $t>1$, let $x$ be a \emph{de Bruijn} word $B(k,t)$ of length $k^t$ and let $w= x^2\restrict (k^t+t-1)$.
+		\end{proof}
+		\begin{definition}\label{df:power}\label{df:IEEEref}
+			Let $\alpha$ be a word of length $n$, and let $\alpha_i$ be the $i^{\text{th}}$ letter of $\alpha$ for $1\le i\le n$.
+			We define the $u^{\text{th}}$ power\index{power} of $\alpha$ for certain values of
+			$u\in\mathbb Q_{\ge 0}$ (the set of nonnegative rational numbers) as follows.
+			For $u\in\N$:
+			\begin{eqnarray*}
+				\alpha^0 &=& \eps,\\
+				\alpha^{n+1} &=& \alpha^n \concat \alpha.
+			\end{eqnarray*}
+			\begin{itemize}
+			\item If $u=v+k/n$ where $0<k<n$, and $k$ is an integer,
+				then $\alpha^u$ denotes $\alpha^v \alpha_1\dots\alpha_k$ and is called a $u$-power.
+			\end{itemize}
+			The word $w$ is $u$-power-free if no nonempty $v$-power, $v\ge u$,
+			occurs (\Cref{df:occ}) in $w$.
+			In particular, 2-power-free is called \emph{square-free}\index{square-free}
+			and 3-power-free is called \emph{cube-free}\index{cube-free}.
+			Let $\mathbf{w}$ be an infinite word over the alphabet $\Sigma$, and let $x$ be a finite word over $\Sigma$.
+			Let $u>0$ be a rational number.
+			The word $x$ is said to occur in $\mathbf{w}$ with exponent $u$ if
+			$x^{u}$ occurs in $\mathbf{w}$ (\Cref{df:occ}).
+		\end{definition}
+		The reader may note that the definition of $u$-power-free is perhaps not obvious.
+		For example, the word $aba$ is not $1.49$-power-free: while it contains no $1.49$-power,
+		it contains a $1.5$-power.
+		This way of defining things enables \Cref{thm:crit-exp} and goes back at least to Krieger~\cite[page 71]{MR2316392}.
+
+		\begin{definition}\label{critExp}
+			The \emph{critical exponent} $\mathrm{ce}(w)$ of an infinite word $\mathbf{w}$ is defined by
+			\[
+				\mathrm{ce}(w) = \sup \{\alpha\in\mathbb Q \st \mathbf{w} \text{ contains some $\alpha$-power}\}.
+			\]
+		\end{definition}
+		\begin{theorem}[{Krieger~\cite{MR2316392}}]\label{thm:crit-exp}
+			The critical exponent of $\mathbf w$ is equal to
+			\[
+				\inf \{\alpha\in\mathbb Q \st \mathbf{w} \text{ is  $\alpha$-power-free}\}.
+			\]
+		\end{theorem}
+		\begin{proof}
+			Let
+			\begin{eqnarray*}
+				S&=&\{\alpha\in\mathbb Q \st \mathbf{w} \text{ is  $\alpha$-power-free}\},\\
+				T&=&\{\alpha\in\mathbb Q \st \mathbf{w} \text{ contains some $\alpha$-power}\}.
+			\end{eqnarray*}
+			Paying careful attention to \Cref{df:power},
+			the word $\mathbf w$ is $\alpha$-power-free iff
+			for all $\beta\ge\alpha$, $\mathbf w$ contains no $\beta$-power.
+			Therefore, $S$ is upward closed.
+			On the other hand, $T$ is an upward dense subset of the complement of $S$.
+			Therefore, $\mathrm{ce}(w)=\sup T=\inf S$.
+		\end{proof}
+
+		As an example of \Cref{df:IEEEref}, we have $\mt{0110}^{3/2}=\mt{011001}$.
+		Note that the expected Power Rule for Exponents\index{power rule for exponents} fails for word exponentiation.
+		In general, $(x^a)^b\ne x^{ab}$, for instance
+		\[
+			(01)^3=010101\ne 010010= ((01)^{3/2})^2.
+		\]
+
+		Fix an alphabet $\Sigma$, and let $\Sigma^+$ denote the set of nonempty words over $\Sigma$.
+
+		\begin{lemma}[{Lyndon and Sch\"utzenberger~\cite{MR0162838}; see~\cite[Theorem 2.3.2]{Shallit:2008:SCF:1434864}}]\label{shallit232}\label{thm:lyndon}
+			Let $c,d,e\in\Sigma^+$.
+			The equation $cd=de$ holds iff there exist a nonempty word $u$,
+			a word $v$, and a natural number $p$ such that
+			$c=uv$,
+			$d=(uv)^p u$, and
+			$e=vu$.
+		\end{lemma}
+
+		\begin{theorem}[{Lyndon and Sch\"utzenberger~\cite{MR0162838}; see\cite[Theorem 2.3.3]{Shallit:2008:SCF:1434864}}]\label{thm:shallit233}\label{lyndon:schuetzenberger}
+			Let $x,y\in\Sigma^+$. Then the following four conditions are equivalent:
+			\begin{enumerate}
+				\item\label{t:1} $xy=yx$.
+				\item\label{t:2} There exists $z\in\Sigma$ and integers $k,l>0$ such that $x=z^k$ and $y=z^l$.
+				\item\label{t:3} There exist integers $i,j>0$ such that $x^i=y^j$.
+			\end{enumerate}
+		\end{theorem}
+
 
 \chapter{Nondeterminism and overlap-free words}\label{chap:EJC}
 
