@@ -2,6 +2,7 @@ import Mathlib.NumberTheory.Padics.PadicNumbers
 import Mathlib.Algebra.Order.Floor
 import Mathlib.Data.Nat.Log
 import Mathlib.InformationTheory.Hamming
+import Mathlib.Data.Finset.Basic
 
 set_option tactic.hygienic false
 
@@ -12,6 +13,264 @@ set_option tactic.hygienic false
     (Bonus material for ac-exercises)
 
 -/
+section Basics
+variable {V : Type*} [DecidableEq V] [Fintype V]
+
+/-- To make this computable, restrict A ⊆ ⋃ 𝓕 -/
+def shatters_card (𝓕 : Finset (Finset V)) (d : ℕ) : Prop :=
+    ∃ A, A.card = d ∧ ∀ B ⊆ A, ∃ C ∈ 𝓕, A ∩ C = B
+
+instance (A B C : Finset V) : Decidable (A ∩ C = B) := decEq (A ∩ C) B
+
+instance (𝓕 𝓖 : Finset (Finset V)) : Decidable (𝓕 = 𝓖) := decEq 𝓕 𝓖
+
+instance (A B : Finset V) (𝓕 : Finset (Finset V)) : Decidable (∃ C ∈ 𝓕, A ∩ C = B) := by
+  exact Multiset.decidableExistsMultiset
+
+instance (A : Finset V) (𝓕 : Finset (Finset V)) : Decidable (∀ B ⊆ A, ∃ C ∈ 𝓕, A ∩ C = B) := by
+  exact Fintype.decidableForallFintype
+
+instance (A : Finset V) (𝓕 : Finset (Finset V)) (d : ℕ) : Decidable (A.card = d ∧ ∀ B ⊆ A, ∃ C ∈ 𝓕, A ∩ C = B) := by
+  exact instDecidableAnd
+
+instance (𝓕 : Finset (Finset V)) (d : ℕ) : Decidable (shatters_card 𝓕 d) := by
+  unfold shatters_card
+  exact Fintype.decidableExistsFintype
+end Basics
+
+theorem empty_does_not_shatter {V : Type*} [DecidableEq V] [Fintype V] : ¬ shatters_card (∅ : Finset (Finset V)) 0 :=
+  fun ⟨s,hs⟩ => by
+    simp at hs
+    obtain ⟨_, _⟩ := hs.2 ∅ (Finset.empty_subset s)
+
+theorem nonempty_shatters {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset (Finset V)) {A : Finset V} (hA : A ∈ 𝓕) :
+    shatters_card 𝓕 0 := by
+  use ∅
+  simp
+  intro B hB
+  constructor
+  use A
+  symm
+  exact Finset.subset_empty.mp hB
+
+open Finset
+theorem filter_condition
+  (𝓕 : Finset (Finset V))
+  (condition : Finset (Finset V) → ℕ → Prop)
+  [DecidablePred <|condition 𝓕]
+  (h₀ : 0 < 𝓕.card) (h₁ : condition 𝓕 0) :
+  0 ∈ (filter (fun (k : ℕ) => condition 𝓕 k) (range 𝓕.card)) := by
+  simp
+  constructor
+  exact card_pos.mp h₀
+  exact h₁
+
+
+theorem equivVC {V : Type*} [DecidableEq V] [Fintype V] (F: Finset (Finset V)) :
+    0 < F.card ↔ shatters_card F 0 := by
+  constructor
+  · intro h
+    have h₀ : F.card ≠ 0 := Nat.not_eq_zero_of_lt h
+    have : F ≠ ∅ := Ne.symm (ne_of_apply_ne card fun a ↦ h₀ (a.symm))
+    exact nonempty_shatters F (nonempty_iff_ne_empty.mpr this).exists_mem.choose_spec
+  · intro h
+    suffices F ≠ ∅ by
+      have : F.card ≠ 0 := by
+        apply card_ne_zero.mpr
+        exact nonempty_iff_ne_empty.mpr this
+      exact Nat.zero_lt_of_ne_zero this
+    intro hc
+    exact empty_does_not_shatter (V := V) <| hc ▸ h
+
+/-- TODO: Simplify since the two assumptions are equivalent. -/
+theorem VC_filter {V : Type*} [DecidableEq V] [Fintype V] (F: Finset (Finset V))
+  (h₀ : 0 < F.card) :
+  0 ∈ (filter (fun (k : ℕ) => shatters_card F k) (range F.card)) :=
+  filter_condition F shatters_card h₀ (by rw [equivVC] at h₀;tauto)
+
+
+
+/-- The VC dimension of a finite set family. -/
+def dimVC {V : Type*} [DecidableEq V] [Fintype V]
+    (𝓕 : {𝓕 : Finset (Finset V) // ∃ f, f ∈ 𝓕 }) : ℕ :=
+  Finset.max'
+  (filter (shatters_card 𝓕.val) (range (𝓕.val.card))) (by
+    use 0
+    have h₀:= Exists.elim 𝓕.2 fun _ => card_ne_zero_of_mem
+    apply VC_filter
+    exact Nat.zero_lt_of_ne_zero h₀)
+
+open Finset
+
+/-- Obtain a smaller subset of a given set. -/
+theorem subset_of_size {α : Type*} {s : Finset α} (a b : ℕ)
+    (h_card : s.card = b) (h_le : a ≤ b) :
+    ∃ t : Finset α, t ⊆ s ∧ t.card = a := by
+  classical
+  -- Extract the list representation of `s`
+  let l := s.toList
+  have h_length : l.length = b := by
+    have := @List.toFinset_card_of_nodup α _ l (nodup_toList s)
+    aesop
+  -- Take the first `a` elements of the list
+  let l' := l.take a
+
+  -- Convert the list back into a finset
+  let t := l'.toFinset
+
+  -- Prove that `t` is a subset of `s`
+  have h_subset : t ⊆ s := by
+    intro x hx
+
+    rw [List.mem_toFinset] at hx
+    have : x ∈ List.take a s.toList := hx
+    simp at this
+    refine mem_toList.mp ?_
+    exact List.mem_of_mem_take hx
+
+  -- Prove that the cardinality of `t` is `a`
+  have h_card_t : t.card = a := by
+    rw [Finset.card_def]
+
+    show (List.take a s.toList).toFinset.val.card = a
+    have : a ≤ s.card := by aesop
+    simp
+    have :  #s.toList.toFinset = l.length := @List.toFinset_card_of_nodup α _ l (nodup_toList s)
+    have := @List.length_take α a s.toList
+    have : (List.take a s.toList).dedup = (List.take a s.toList) := by
+      refine List.Nodup.dedup ?_;apply List.Sublist.nodup
+      show (List.take a s.toList).Sublist s.toList
+      exact List.take_sublist a s.toList
+      exact nodup_toList s
+
+    rw [this]
+    simp
+    tauto
+
+  -- Combine the results
+  exact ⟨t, h_subset, h_card_t⟩
+
+lemma of_size_subset (V : Type*) [Fintype V] (S : Finset V) (k l : ℕ) (h₀ : k ≤ l)
+    (h : Finset.card S = l) : ∃ T, Finset.card T = k ∧ T ⊆ S := by
+  have := @subset_of_size V S k l h h₀
+  aesop
+
+
+lemma shatters_monotone {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : {𝓕 : Finset (Finset V) // ∃ f, f ∈ 𝓕 })
+    (k l : ℕ) (h : k ≤ l) (h₀ : shatters_card 𝓕.val l) :
+    shatters_card 𝓕.val k := by
+  unfold shatters_card at *
+  obtain ⟨A₀,hA₀⟩ := h₀
+  obtain ⟨A,hA⟩ := of_size_subset V  A₀ k l h hA₀.1
+  use A
+  simp_all
+  intro B hB
+  have := hA₀.2 (B) (by tauto)
+  obtain ⟨C₀,hC₀⟩ := this
+  use C₀
+  simp_all
+  ext x
+  constructor
+  · intro H;simp at H;have := hC₀.2;rw [← this];simp;tauto
+  · intro H;simp_all;constructor;tauto
+    have := hC₀.2;
+    rw [← this] at H
+    simp at H
+    tauto
+
+lemma le_max'_iff (S : Finset ℕ) (h : S.Nonempty) (k : ℕ) :
+  k ≤ S.max' h ↔ ∃ y ∈ S, k ≤ y := le_sup'_iff _
+
+-- #eval @dimVC (Fin 2) _ _ ⟨{{0}},by simp⟩
+-- #eval @dimVC (Fin 2) _ _ ⟨{{0,1}},by simp⟩
+-- #eval @dimVC (Fin 2) _ _ ⟨{{1}},by simp⟩
+-- #eval @dimVC (Fin 2) _ _ ⟨{∅},by simp⟩
+
+theorem VC_as_a_function {V : Type*} [DecidableEq V] [Fintype V] (F : Finset (Finset V)) (k : ℕ)
+    (h : shatters_card F k) :
+    ∃ A : Finset V, A.card = k ∧ ∃ φ : {B // B ⊆ A} → {C // C ∈ F},
+        ∀ B : {B // B ⊆ A}, A ∩ (φ B) = B :=
+    Exists.elim h (fun A h₀ => ⟨A, h₀.1, Exists.intro
+        (fun B => ⟨(h₀.2 B.1 B.2).choose, (h₀.2 B.1 B.2).choose_spec.1⟩)
+         fun B =>  (h₀.2 B.1 B.2).choose_spec.2⟩)
+
+theorem VC_injective_function {V : Type*} [DecidableEq V] [Fintype V] (F : Finset (Finset V)) (A : Finset V)
+    (φ : {B // B ⊆ A} → {C : Finset V // C ∈ F})
+    (h : ∀ B : {B // B ⊆ A}, A ∩ (φ B) = B) :
+    Function.Injective φ :=
+  fun B₁ B₂ h0 => by
+  have h3: A ∩ (φ B₁) = A ∩ (φ B₂) := by rw [h0]
+  have : B₁.val = B₂.val := Eq.trans (Eq.trans (h B₁).symm h3) (h B₂)
+  cases B₂
+  cases B₁
+  dsimp at *
+  induction this
+  rfl
+
+/-- Lean 3 version thanks to Adam Topaz. -/
+theorem card_of_injective {V : Type*} [DecidableEq V] [Fintype V] (F : Finset (Finset V)) (A : Finset V)
+    (φ : {B // B ⊆ A} → {C : Finset V // C ∈ F})
+    (h : Function.Injective φ) : A.powerset.card ≤ F.card := by
+
+  have h₀: Fintype.card { B // B ⊆ A } ≤ Fintype.card { C // C ∈ F } := by
+    exact Fintype.card_le_of_injective φ h
+  have h₁: #A.powerset = Fintype.card { B // B ⊆ A } := by
+    refine Eq.symm (Fintype.card_of_subtype A.powerset ?H)
+    simp
+  have h₂: #F = Fintype.card { C // C ∈ F } := by simp
+  rw [h₁,h₂]
+  tauto
+
+theorem pow_le_of_shatters {V : Type*} [DecidableEq V] [Fintype V] (F : Finset (Finset V)) (k : ℕ)
+  (h : shatters_card F k) : 2^k ≤ F.card :=
+  Exists.elim (VC_as_a_function F k h) (fun A g => Exists.elim g.2 (fun φ hphi =>
+      calc
+           _ = 2^A.card := by rw [← g.left]
+           _ = A.powerset.card := (card_powerset A).symm
+           _ ≤ F.card := card_of_injective F A φ <|VC_injective_function F A φ hphi
+    )
+  )
+
+lemma pow_le (m : ℕ) : m < 2 ^ m := by
+  induction m with
+        | zero => simp
+        | succ n ih =>
+          calc
+          n + 1 < 2^n + 1 := by linarith
+          _ ≤ _ := by ring_nf;linarith
+/-- Dec 21 2024 with just a little ChatGPT help. -/
+theorem VC_works {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : {𝓕 : Finset (Finset V) // ∃ f, f ∈ 𝓕 }) (k : ℕ) :
+  k ≤ dimVC 𝓕 ↔ shatters_card 𝓕.val k := by
+  constructor
+  · intro h
+    apply shatters_monotone 𝓕 k _ h
+    have := @Finset.max'_mem ℕ _ (filter (shatters_card 𝓕.1) (range #𝓕.1))
+      (by
+        apply filter_nonempty_iff.mpr
+        use 0
+        simp_all
+        constructor
+        · exact 𝓕.2
+        · obtain ⟨f,hf⟩ := 𝓕.2
+          exact @nonempty_shatters V _ _ 𝓕 f hf
+      )
+    simp at this
+    exact this.2
+  intro h
+  have := @le_max' ℕ _ (filter (shatters_card 𝓕.1) (range #𝓕.1)) k
+  apply this
+  simp
+  constructor
+  · linarith[@pow_le_of_shatters V _ _ 𝓕 k h, pow_le k]
+  · tauto
+
+lemma dimVC_eq  {V : Type*} [DecidableEq V] [Fintype V]
+    (𝓕 : {𝓕 : Finset (Finset V) // ∃ f, f ∈ 𝓕 }) (k : ℕ) :
+    @shatters_card V _ 𝓕 k ∧ ¬ @shatters_card V _  𝓕 (k + 1) → dimVC 𝓕 = k := by
+  intro ⟨h₀,h₁⟩
+  rw [← VC_works] at h₀ h₁
+  linarith
+
 
 open Nat
 
