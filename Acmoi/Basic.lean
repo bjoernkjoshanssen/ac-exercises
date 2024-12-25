@@ -38,12 +38,12 @@ instance (𝓕 : Finset (Finset V)) (d : ℕ) : Decidable (shatters_card 𝓕 d)
   exact Fintype.decidableExistsFintype
 end Basics
 
-theorem empty_does_not_shatter {V : Type*} [DecidableEq V] [Fintype V] : ¬ shatters_card (∅ : Finset (Finset V)) 0 :=
+theorem empty_does_not_shatter {V : Type*} [DecidableEq V] (k : ℕ) : ¬ shatters_card (∅ : Finset (Finset V)) k :=
   fun ⟨s,hs⟩ => by
     simp at hs
     obtain ⟨_, _⟩ := hs.2 ∅ (Finset.empty_subset s)
 
-theorem nonempty_shatters {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset (Finset V)) {A : Finset V} (hA : A ∈ 𝓕) :
+theorem nonempty_shatters {V : Type*} [DecidableEq V]  (𝓕 : Finset (Finset V)) {A : Finset V} (hA : A ∈ 𝓕) :
     shatters_card 𝓕 0 := by
   use ∅
   simp
@@ -54,16 +54,6 @@ theorem nonempty_shatters {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset
   exact Finset.subset_empty.mp hB
 
 open Finset
-theorem filter_condition
-  (𝓕 : Finset (Finset V))
-  (condition : Finset (Finset V) → ℕ → Prop)
-  [DecidablePred <|condition 𝓕]
-  (h₀ : 0 < 𝓕.card) (h₁ : condition 𝓕 0) :
-  0 ∈ (filter (fun (k : ℕ) => condition 𝓕 k) (range 𝓕.card)) := by
-  simp
-  constructor
-  exact card_pos.mp h₀
-  exact h₁
 
 
 theorem equivVC {V : Type*} [DecidableEq V] [Fintype V] (F: Finset (Finset V)) :
@@ -80,15 +70,7 @@ theorem equivVC {V : Type*} [DecidableEq V] [Fintype V] (F: Finset (Finset V)) :
         exact nonempty_iff_ne_empty.mpr this
       exact Nat.zero_lt_of_ne_zero this
     intro hc
-    exact empty_does_not_shatter (V := V) <| hc ▸ h
-
-/-- TODO: Simplify since the two assumptions are equivalent. -/
-theorem VC_filter {V : Type*} [DecidableEq V] [Fintype V] (F: Finset (Finset V))
-  (h₀ : 0 < F.card) :
-  0 ∈ (filter (fun (k : ℕ) => shatters_card F k) (range F.card)) :=
-  filter_condition F shatters_card h₀ (by rw [equivVC] at h₀;tauto)
-
-
+    exact empty_does_not_shatter (V := V) (k := 0) <| hc ▸ h
 
 /-- The VC dimension of a finite set family. -/
 def dimVC {V : Type*} [DecidableEq V] [Fintype V]
@@ -96,9 +78,26 @@ def dimVC {V : Type*} [DecidableEq V] [Fintype V]
   Finset.max'
   (filter (shatters_card 𝓕.val) (range (𝓕.val.card))) (by
     use 0
-    have h₀:= Exists.elim 𝓕.2 fun _ => card_ne_zero_of_mem
-    apply VC_filter
-    exact Nat.zero_lt_of_ne_zero h₀)
+    simp
+    constructor
+    exact 𝓕.2
+    exact (@equivVC V _ _ 𝓕).mp <| card_pos.mpr 𝓕.2)
+
+
+/-- With this definition we can prove dimVC! 𝓕 = indexVC 𝓕 - 1. -/
+def dimVC! {V : Type*} [DecidableEq V] [Fintype V]
+    (𝓕 : Finset (Finset V)) : ℕ := by
+  by_cases H : 𝓕 = ∅
+  exact 0 -- dummy value, should really be -1 but that is inconvenient in Lean
+  exact Finset.max'
+    (filter (shatters_card 𝓕) (range (𝓕.val.card + 1))) (by
+      use 0
+      simp
+      refine (equivVC 𝓕).mp ?h.a
+      refine card_pos.mpr ?h.a.a
+      exact nonempty_iff_ne_empty.mpr H
+      )
+
 
 open Finset
 
@@ -231,6 +230,16 @@ theorem pow_le_of_shatters {V : Type*} [DecidableEq V] [Fintype V] (F : Finset (
     )
   )
 
+theorem pow_le_of_shatters₂ {V : Type*} [DecidableEq V] [Fintype V] (F : Finset (Finset V)) (k : ℕ)
+    (h : shatters_card F k) : k ≤ Nat.log 2 F.card := by
+  have := pow_le_of_shatters F k h
+  refine (Nat.pow_le_iff_le_log ?hb ?hy).mp this
+  simp
+  intro hc
+  rw [hc] at this
+  simp at this
+
+
 lemma pow_le (m : ℕ) : m < 2 ^ m := by
   induction m with
         | zero => simp
@@ -252,7 +261,7 @@ theorem VC_works {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : {𝓕 : Finset 
         constructor
         · exact 𝓕.2
         · obtain ⟨f,hf⟩ := 𝓕.2
-          exact @nonempty_shatters V _ _ 𝓕 f hf
+          exact @nonempty_shatters V _ 𝓕 f hf
       )
     simp at this
     exact this.2
@@ -263,6 +272,212 @@ theorem VC_works {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : {𝓕 : Finset 
   constructor
   · linarith[@pow_le_of_shatters V _ _ 𝓕 k h, pow_le k]
   · tauto
+
+/-- The VC dimension is bounded by the logarithm of the cardinality.
+ This is one of the bounds listed in Wikipedia. -/
+theorem pow_le_of_shatters₃ {V : Type*} [DecidableEq V] [Fintype V]
+    (F : { 𝓕 : Finset (Finset V) // ∃ f, f ∈ 𝓕}) :
+    dimVC F ≤ Nat.log 2 F.1.card := by
+  suffices ∀ k, k ≤ dimVC F → k ≤ Nat.log 2 F.1.card by
+    apply this <| dimVC F
+    simp
+  intro k hk
+  rw [VC_works] at hk
+  exact @pow_le_of_shatters₂ V _ _ F k hk
+
+/-- The VC index is the VC dimension +1 for nonempty finite families, but can be defined for
+families of all cardinalities. -/
+def indexVC {V : Type*} [DecidableEq V] [Fintype V]
+    (𝓕 : Finset (Finset V)) : ℕ := by
+  exact Finset.min' (filter (fun k => ¬ shatters_card 𝓕 k) (range (𝓕.card + 1))) (by
+    by_cases H : 𝓕 = ∅
+    · subst H
+      simp -- should not use range (𝓕.card) here
+      use 0
+      simp
+      exact empty_does_not_shatter 0
+    by_cases H : 𝓕.card = 1
+    · use 1
+      simp
+      constructor
+      · apply nonempty_iff_ne_empty.mpr
+        simp_all
+      · intro hc
+        have := @pow_le_of_shatters₂ V _ _ 𝓕 1 hc
+        rw [H] at this
+        simp at this
+    use Nat.log 2 𝓕.card + 1
+    simp
+    constructor
+    · by_contra h
+      simp at h
+      have : 2^#𝓕 ≤ 2^Nat.log 2 #𝓕 := Nat.pow_le_pow_of_le_right (by simp) h
+      have : 2^Nat.log 2 #𝓕 ≤ #𝓕 := by
+        apply (Nat.le_log2 _).mp
+        · have : (#𝓕).log2 = Nat.log 2 #𝓕 := Nat.log2_eq_log_two
+          linarith
+        · aesop
+      have : 2^#𝓕 ≤ #𝓕 := by linarith
+      have := @pow_le #𝓕
+      linarith
+    · by_cases H : 𝓕 = ∅
+      · simp_all [empty_does_not_shatter 1]
+      · have := @pow_le_of_shatters₃ V _ _ ⟨𝓕, Nonempty.exists_mem <| nonempty_iff_ne_empty.mpr H⟩
+        intro hc
+        have : Nat.log 2 #𝓕 + 1 ≤ dimVC ⟨𝓕, Nonempty.exists_mem (nonempty_iff_ne_empty.mpr H)⟩ :=
+          (VC_works ⟨𝓕, Nonempty.exists_mem (nonempty_iff_ne_empty.mpr H)⟩ (Nat.log 2 #𝓕 + 1)).mpr hc
+        linarith)
+
+lemma not_shatter {V : Type*} [DecidableEq V] [Fintype V] {𝓕 : Finset (Finset V)} :
+    (filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))).Nonempty := by
+  use #𝓕
+  simp
+  intro h
+  have := @pow_le_of_shatters V _ _ 𝓕 #𝓕 h
+  have := pow_le #𝓕
+  linarith
+
+lemma indexVC_emp {V : Type*} [DecidableEq V] [Fintype V] :
+    indexVC (∅ : Finset (Finset V)) = 0 := by
+      unfold indexVC
+      simp
+      apply le_antisymm
+      · have := @min'_le ℕ _ (filter (fun k ↦ ¬shatters_card (∅ : Finset (Finset V)) k) {0})
+          0 (by simp;exact empty_does_not_shatter 0)
+        aesop
+      have := @le_min' ℕ _ (filter (fun k ↦ ¬shatters_card (∅ : Finset (Finset V)) k) {0}) (by
+        apply filter_nonempty_iff.mpr
+        simp
+        exact empty_does_not_shatter 0
+      ) 0 (by intro y hy; simp at hy; aesop)
+      simp_all
+
+lemma dimVC!_emp {V : Type*} [DecidableEq V] [Fintype V] :
+    dimVC! (∅ : Finset (Finset V)) = 0 := by simp [dimVC!]
+
+
+lemma dimVC!_dimVC  {V : Type*} [DecidableEq V] [Fintype V]
+    (𝓕 : Finset (Finset V)) (h : ∃ f, f ∈ 𝓕) :
+    dimVC! 𝓕 = dimVC ⟨𝓕, h⟩ := by
+  unfold dimVC dimVC!
+  simp
+  by_cases H : 𝓕 = ∅
+  · subst H;simp at h
+  · simp_all
+    -- maybe better to just get rid of `dimVC`.
+    sorry
+
+/-- Obtain dimVC! from indexVC.
+ Since dimVC! ∅ = 0 and indexVC ∅ x= 0, this relies on 0 - 1 = 0.
+-/
+theorem dim_index  {V : Type*} [DecidableEq V] [Fintype V]
+    (𝓕 : Finset (Finset V)) : dimVC! 𝓕 = indexVC 𝓕 - 1 := by
+  by_cases H : 𝓕 = ∅
+  · subst H
+    rw [dimVC!_emp,indexVC_emp]
+  · unfold dimVC! indexVC
+    simp_all
+    apply le_antisymm
+    · apply Nat.le_sub_one_of_lt
+      by_contra hc
+      simp at hc
+      obtain ⟨x,hx⟩ := hc
+      obtain ⟨y,hy⟩ := hx.2.2
+      apply hx.2.1
+      have g₀ := hy.2.2
+      have g₁ := hy.2.1
+      exact shatters_monotone ⟨𝓕, Nonempty.exists_mem <| nonempty_iff_ne_empty.mpr H⟩ x y g₀ g₁
+    · apply le_max'
+      simp
+      constructor
+      · suffices (filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))).min' not_shatter < #𝓕 + 1 by
+          calc
+          _ ≤ (filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))).min' not_shatter := by omega
+          _ < _ := this
+        suffices (filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))).min' not_shatter ≤ #𝓕 by linarith
+        apply @min'_le ℕ _
+        simp
+        intro h
+        linarith [pow_le_of_shatters 𝓕 #𝓕 h, pow_le #𝓕]
+      · by_contra H₀
+        simp at H₀
+        have h₀ : (filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))).min' not_shatter - 1
+          < (filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))).min' not_shatter := by
+          apply Nat.sub_one_lt
+          intro hc
+          have : ¬shatters_card 𝓕 0 := by
+            have := min'_mem (filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))) not_shatter
+            simp at this
+            rw [hc] at this
+            exact this.2
+          exact this <| (equivVC 𝓕).mp <| Nat.zero_lt_of_ne_zero <| card_ne_zero.mpr <| nonempty_iff_ne_empty.mpr H
+        have := (@lt_min'_iff ℕ _ (filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))) not_shatter
+          ((filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))).min' not_shatter - 1)).mp h₀
+          ((filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))).min' not_shatter - 1)
+          (by
+            simp
+            constructor
+            · suffices (filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))).min' not_shatter < #𝓕 + 1 by
+                linarith
+              have := min'_mem (filter (fun k ↦ ¬shatters_card 𝓕 k) (range (#𝓕 + 1))) not_shatter
+              simp at this
+              exact this.1
+            exact H₀
+          )
+        simp at this
+
+
+lemma VC_mono {V : Type*} [DecidableEq V] [Fintype V] (𝓕 𝓖 : {𝓕 : Finset (Finset V) // ∃ f, f ∈ 𝓕 })
+  (h : 𝓕.1 ⊆ 𝓖.1) : dimVC 𝓕 ≤ dimVC 𝓖 := by
+    suffices ∀ k, k ≤ dimVC 𝓕 → k ≤ dimVC 𝓖 by
+      exact this (dimVC 𝓕) (le_refl _)
+    intro k hf
+    rw [VC_works] at hf ⊢
+    obtain ⟨A,hA⟩ := hf
+    use A
+    simp_all
+    intro B hB
+    obtain ⟨C,hC⟩ := hA.2 B hB
+    use C
+    tauto
+
+lemma VC_trivBound  {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : {𝓕 : Finset (Finset V) // ∃ f, f ∈ 𝓕 }) :
+    dimVC 𝓕 ≤ (univ : Finset V).card := by
+  suffices ∀ k, k ≤ dimVC 𝓕 → k ≤ (univ : Finset V).card by
+    exact this (dimVC 𝓕) (le_refl _)
+  intro k hk
+  rw [VC_works] at hk
+  obtain ⟨A,hA⟩ := hk
+  rw [← hA.1]
+  exact card_le_univ A
+
+/-- The VC dimension of the powerset is the cardinality of the underlying set.
+ Note that this does not require [Nonempty V]. -/
+lemma dimVC_powerset  {V : Type*} [DecidableEq V] [Fintype V] :
+    dimVC ⟨(univ : Finset (Finset V)),
+           ⟨univ, mem_univ univ⟩⟩ =
+           (univ : Finset V).card := by
+  suffices ∀ k, k ≤ dimVC ⟨(univ : Finset (Finset V)), ⟨univ, mem_univ univ⟩⟩ ↔ k ≤ (univ : Finset V).card by
+    apply le_antisymm
+    apply (this (dimVC ⟨(univ : Finset (Finset V)), ⟨univ, mem_univ univ⟩⟩)).mp
+    simp
+    rw [VC_works]
+    use Finset.univ
+    simp
+  intro k
+  constructor
+  · intro h
+    calc
+    _ ≤ _ := h
+    _ ≤ _ := VC_trivBound ⟨(univ : Finset (Finset V)), ⟨univ, mem_univ univ⟩⟩
+  · intro h
+    rw [VC_works]
+    apply shatters_monotone
+    exact h
+    use Finset.univ
+    simp
+
+
 
 lemma dimVC_eq  {V : Type*} [DecidableEq V] [Fintype V]
     (𝓕 : {𝓕 : Finset (Finset V) // ∃ f, f ∈ 𝓕 }) (k : ℕ) :
