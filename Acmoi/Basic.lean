@@ -621,8 +621,6 @@ lemma VC!_trivBound  {V : Type*} [DecidableEq V] [Fintype V]
 def indexTest {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset (Finset V))
   (hf : ∃ B, B ∉ 𝓕) : ℕ :=
     Finset.min' (filter (fun k => ¬ shatters_all 𝓕 k) (range ((univ:Finset V).card + 1))) (by
-  have := @pow_le_of_shatters V _ _ 𝓕
-
   unfold shatters_all
   push_neg
   simp
@@ -632,6 +630,30 @@ def indexTest {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset (Finset V))
   simp
   tauto
 )
+
+/-- Kathleen Romanik's testing dimension. -/
+def dimTest {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset (Finset V)) : ℕ := by
+  by_cases H : 𝓕 = ∅
+  · exact 0
+  ·
+    have : ∃ f, f ∈ 𝓕 := by
+      refine Nonempty.exists_mem ?h
+      exact nonempty_iff_ne_empty.mpr H
+    exact Finset.max' (filter (fun k => shatters_all 𝓕 k) (range ((univ:Finset V).card + 1))) (by
+    use 0
+    simp
+    intro A hA B hB
+    obtain ⟨t,ht⟩ := this
+    use t
+    constructor
+    tauto
+    have : A = ∅ := by aesop
+    have : B = ∅ := by
+      apply subset_empty.mp
+      simp_all
+    aesop
+  )
+
 
 /-- The VC dimension of the powerset is the cardinality of the underlying set.
  Note that this does not require [Nonempty V]. -/
