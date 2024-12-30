@@ -1,6 +1,9 @@
 -- This module serves as the root of the `Acmoi` library.
 -- Import modules here that should be built as part of the library.
 import Acmoi.Basic
+import Acmoi.TestingDimensionBound
+import Acmoi.dimVC
+import Acmoi.QuasTheorem
 import Acmoi.Exercise1_3
 import Acmoi.Exercise1_4
 import Acmoi.Exercise1_5
