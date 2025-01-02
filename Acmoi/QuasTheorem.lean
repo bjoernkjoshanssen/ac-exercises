@@ -6,7 +6,7 @@ import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Fin.Tuple.Take
 
 set_option tactic.hygienic false
-
+set_option maxHeartbeats 2000000
 /-!
 
   # Quas' Theorem
@@ -24,6 +24,196 @@ def ast {Q A : Type*} [Fintype A] {n : ℕ}
     (δ : A → Q → Q) (w : Fin n → A) (init : Q) : Q := match n with
 | 0 => init
 | Nat.succ k => δ (w (Fin.last k)) (ast δ (Fin.init w) init)
+
+def astN {Q A : Type*} [Fintype A] {n : ℕ}
+    (δ : A → Q → Set Q) (w : Fin n → A) (init : Q) : Set Q := match n with
+| 0 => {init}
+| Nat.succ k => ⋃ q ∈ (astN δ (Fin.init w) init), δ (w (Fin.last k)) q
+
+/-- This is an incorrect definition of accepting path. -/
+def accepts {Q A : Type*} [Fintype A] {n : ℕ}
+    (δ : A → Q → Set Q) (w : Fin n → A) (init : Q) (final : Q) (path : Fin (n+1) → Q) : Prop := by
+  exact path 0 = init ∧ path (Fin.last n) = final
+   ∧ ∀ i : Fin (n+1), path i ∈ astN δ (Fin.take i (by omega) w) init
+
+def accepts' {Q A : Type*} [Fintype A] {n : ℕ}
+    (δ : A → Q → Set Q) (w : Fin n → A) (init : Q) (final : Q) (path : Fin (n+1) → Q) : Prop := by
+  exact path 0 = init ∧ path (Fin.last n) = final
+   ∧ ∀ i : Fin (n), path (⟨i.1+1,by omega⟩) ∈ δ (w i) (path ⟨i.1,by omega⟩)
+
+
+-- Let us try it with the 2-state Kayleigh graph for 011:
+def myδ : Fin 2 → Fin 2 → Set (Fin 2) := (
+  ![  -- state 0          state 1
+    ![({1} : Set (Fin 2)), ∅    ], -- δ₀
+    ![∅,                  {0,1} ] -- δ₁
+  ]
+)
+
+example : accepts myδ ![0,1,1] 0 0 ![0,1,1,0] := by
+  simp [accepts, myδ]
+  constructor
+  rfl
+  intro i
+  fin_cases i
+  unfold astN
+  simp
+  unfold astN
+  simp
+  unfold astN
+  simp
+  unfold astN
+  simp
+  unfold astN
+  simp
+  unfold astN
+  simp
+  have : Fin.init ![(0 : Fin 2), 1, 1] = ![0, 1] := by
+    ext x
+    fin_cases x <;> rfl
+  rw [this]
+  simp
+  have : Fin.init ![(0 : Fin 2), 1] = ![(0 : Fin 2)] := by
+    ext x
+    fin_cases x ; rfl
+  rw [this]
+  simp
+  right
+  simp
+  unfold astN
+  simp
+  unfold astN
+  simp
+  unfold astN
+  simp
+  unfold astN
+  simp
+  use 1 -- just guessing!
+  constructor
+  · use 1
+    constructor
+    · have : Fin.take (3 : Fin 4) (by omega) ![(0 : Fin 2), 1, 1] = ![0,1,1] := rfl
+      rw [this]
+      simp
+      have : Fin.init ![(0 : Fin 2), 1, 1] = ![(0 : Fin 2),1] := by
+        ext x; fin_cases x <;> rfl
+      rw [this]
+      simp
+      have : Fin.init ![(0 : Fin 2), 1] = ![(0 : Fin 2)] := by
+        ext x; fin_cases x ; rfl
+      rw [this]
+      simp
+    · have : Fin.take (3 : Fin 4) (by omega) ![(0 : Fin 2), 1, 1] = ![0,1,1] := rfl
+      rw [this]
+      simp
+      have : Fin.init ![(0 : Fin 2), 1, 1] (Fin.last 1) = 1 := rfl
+      rw [this]
+      simp
+  · have : ![(0 : Fin 2), 1, 1] (Fin.last 2) = 1 := rfl
+    rw [this]
+    simp
+
+
+-- Now we can define general Kayleigh graph for odd-length words.
+def kayleighδ {A : Type} {k : ℕ} (hk : k ≥ 1)
+  {w : Fin (2*k+1) → A} : A → Fin (k+1) → Set (Fin (k+1)) := by
+  let n := 2*k + 1
+  intro b q r -- is r reachable in one step from q reading b?
+  -- n = 3, n/2 = 1
+  let b₀ := w ⟨q, by omega⟩
+  let b₁ := w ⟨k + 1 - q, by omega⟩
+  by_cases H : q = k -- q = 1
+  · -- last state
+    let P₀ : Prop := (b = b₀ ∧ q.1 = r.1) ∨ (b = w ⟨q+1,by omega⟩ ∧ r.1 + 1 = q.1)
+    exact P₀
+  · -- last q = 0
+    let P : Prop := (b = b₀ ∧ r.1 = q.1 + 1) ∨ (b = b₁ ∧ q.1 = r.1 + 1)
+    exact P
+
+
+example : @kayleighδ (Fin 2) 1 (by omega) ![0,1,1] 0 = myδ 0 := by
+  ext q
+  simp [kayleighδ, myδ]
+  fin_cases q
+  fin_cases x
+  simp
+
+  intro hc
+  change (⟨0,by omega⟩ : Fin 2).1 = 1 at hc
+  simp at hc
+  simp
+  rfl
+  simp
+  intro hc
+  change False at hc
+  tauto
+
+example : @kayleighδ (Fin 2) 1 (by omega) ![0,1,1] 1 = myδ 1 := by
+  ext q
+  simp [kayleighδ, myδ]
+  fin_cases q
+  fin_cases x
+  simp
+
+  intro hc
+  change False at hc
+  tauto
+  simp
+  intro hc
+  tauto
+  simp
+  constructor
+  intro h
+  simp at h
+  change 1 = x.1 ∨ x.1 = 0 at h
+  cases h
+  simp_all
+  right
+  symm
+  exact Fin.eq_of_val_eq h_1
+  left
+  exact Eq.symm (Fin.eq_of_val_eq (id (Eq.symm h_1)))
+  intro h
+  cases h
+  change 1 = x.1 ∨ x.1 = 0
+  right
+  exact (@Fin.mk.inj_iff 2 x.1 0 x.2 (by omega)).mp h_1
+  change 1 = x.1 ∨ x.1 = 0
+  left
+  symm
+  exact (@Fin.mk.inj_iff 2 x.1 1 x.2 (by omega)).mp h_1
+
+example : 0 ∈ astN myδ ![0,1,1] 0 := by
+  unfold myδ astN
+  unfold astN
+  unfold astN
+  unfold astN
+  simp
+  use 1 -- the penultimate state
+  constructor
+  · have : Fin.init ![(0 : Fin 2),1,1] = ![0,1] := by
+      ext i; fin_cases i <;> rfl
+    rw [this]
+    simp
+    have : Fin.init ![(0 : Fin 2), 1] = ![0] := by
+      ext i; fin_cases i; rfl
+    rw [this]
+    simp
+  · use 1 -- the state before that
+    constructor
+    · have : Fin.init ![(0 : Fin 2), 1, 1] = ![0,1] := by
+        ext i; fin_cases i <;> rfl
+      rw [this]
+      simp
+      have : ![(0 : Fin 2), 1] (Fin.last 1) = 1 := by
+        simp [Fin.last]
+      rw [this]
+      simp
+    · have : ![(0 : Fin 2), 1, 1] (Fin.last 2) = 1 := by
+        simp [Fin.last]
+      rw [this]
+      simp
+    -- the state before that again would have to be 0.
 
 open Classical
 noncomputable def 𝓡 {Q A : Type*} [Fintype A] [Fintype Q]
