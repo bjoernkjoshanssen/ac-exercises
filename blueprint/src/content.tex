@@ -384,6 +384,29 @@ The Kolmogorov complexity of a finite word $w$ is, roughly speaking,
 	A main technical idea is to extend the following result, which says that not only do squares, cubes and higher powers of a word have low complexity,
 	but a word completely free of such powers must conversely have high complexity.
 
+	\begin{theorem}[{Shallit and Wang~\cite[Theorem 9]{MR1897300}}]\label{thm:sw9}
+		Suppose $w\in\Sigma^*$ is $k$th-power-free for some integer $k\ge 2$, i.e., $w$ contains no subword of the form $x^k$ with $x\ne\eps$.
+		Then $A(w)\ge\frac{\abs{w}+1}k$.
+	\end{theorem}
+	The way we strengthen their results is by considering a variation
+	on squarefreeness and cube-freeness, \emph{overlap-freeness}.
+	This notion also goes by the names of \emph{irreducibility} and \emph{strong cube-freeness} in the combinatorial literature.
+	We also take up an idea from~\cite[Theorem 8]{MR1897300} and use it to show that
+	the natural decision problem associated with nondeterministic automatic complexity is in the complexity class E = DTIME($2^{O(n)}$).
+	This result is a theoretical complement to the practical fact that
+	the nondeterministic automatic complexity can be computed reasonably quickly, a fact that enabled the creation of the lookup service at~\cite{lookup}.
+
+	\section{Introduction}
+		\begin{theorem}[Hyde~\cite{Hyde}]\label{Hyde}\label{hydebound}
+			\lean{A_N_bound}
+			\leanok
+			The nondeterministic automatic complexity $A_N(x)$ of a string $x$ of length $n$ satisfies
+			\[
+				A_N(x) \le b(n):={\lfloor} n/2 {\rfloor} + 1\text{.}
+			\]
+		\end{theorem}
+
+
 \chapter{Edge complexity and digraphs}\label{chap:digraph}
 
 	\section{Edge-counting automatic complexity}
