@@ -406,6 +406,30 @@ The Kolmogorov complexity of a finite word $w$ is, roughly speaking,
 			\]
 		\end{theorem}
 
+			\begin{tikzpicture}[shorten >=1pt,node distance=1.5cm,on grid,auto]
+				\tikzstyle{every state}=[fill={rgb:black,1;white,10}]
+				\node[state,initial, accepting] (q_0)   {$q_m$}; 
+				\node[state] (q_1)	 [right=of q_0   ] {$q_{m-1}$}; 
+				\node[state] (q_2)	 [right=of q_1   ] {$q_{m-2}$}; 
+				\node[state] (q_3)	 [right=of q_2   ] {$q_{m-3}$};
+				\node		(q_dots)  [right=of q_3   ] {$\dots$};
+				\node[state] (q_{m-1})	 [right=of q_dots] {$q_{1}$};
+				\node[state] (q_m) [right=of q_{m-1}   ] {$q_0$}; 
+				\path[->] 
+					(q_0)	 edge [bend left]  node		   {$x_1$}	 (q_1)
+					(q_1)	 edge [bend left]  node		   {$x_2$}	 (q_2)
+					(q_2)	 edge [bend left]  node		   {$x_3$}	 (q_3)
+					(q_3)	 edge [bend left]  node [pos=.45] {$x_4$}	 (q_dots)
+					(q_dots)  edge [bend left]  node [pos=.6]  {$x_{m-1}$} (q_{m-1})
+					(q_{m-1})	 edge [bend left]  node [pos=.56] {$x_m$}	 (q_m)
+					(q_m) edge [loop above] node		   {$x_{m+1}$} ()
+					(q_m) edge [bend left]  node [pos=.45] {$x_{m+2}$} (q_{m-1})
+					(q_{m-1})	 edge [bend left]  node [pos=.4]  {$x_{m+3}$} (q_dots)
+					(q_dots)  edge [bend left]  node [pos=.6]  {$x_{n-3}$} (q_3)
+					(q_3)	 edge [bend left]  node		   {$x_{n-2}$} (q_2)
+					(q_2)	 edge [bend left]  node		   {$x_{n-1}$} (q_1)
+					(q_1)	 edge [bend left]  node		   {$x_n$}	 (q_0);
+			\end{tikzpicture}
 
 \chapter{Edge complexity and digraphs}\label{chap:digraph}
 

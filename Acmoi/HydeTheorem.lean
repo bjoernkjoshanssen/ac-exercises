@@ -104,6 +104,7 @@ def khδ {A : Type} {k : ℕ} --(hk : k ≥ 1)
     · exact (b = b₀ ∧ q.1 = r.1)     ∨ (b = b₁ ∧ r.1 + 1 = q.1)--q = k ≠ 0
     · exact (b = b₀ ∧ r.1 = q.1 + 1) ∨ (b = b₁ ∧ q.1 = r.1 + 1) -- generic case
 
+/-- A Kayleigh graph path does not advance too fast. -/
 theorem move_slowly {A : Type} {k : ℕ} {w : Fin (2 * k + 1) → A}
     {p : Fin (2 * (k + 1)) → Fin (k + 1)}
     (h : accepts_path (@khδ A k w) 0 0 p)
@@ -127,35 +128,6 @@ theorem move_slowly {A : Type} {k : ℕ} {w : Fin (2 * k + 1) → A}
       simp_all
       omega
 
-theorem move_slowly_reverse {A : Type} {k : ℕ} {w : Fin (2 * k + 1) → A}
-    {p : Fin (2 * (k + 1)) → Fin (k + 1)}
-    (h : accepts_path (@khδ A k w) 0 0 p)
-    {s : ℕ} (hs : s < 2 * k + 1) :
-    (p ⟨s, by omega⟩).1 ≤ (p ⟨s + 1, by omega⟩).1 + 1 := by
-  unfold khδ accepts_path at h
-  simp at h
-  have := h.2.2 ⟨s,hs⟩
-  split_ifs at this with g₀
-  · simp at this
-    obtain ⟨a,ha⟩ := this
-    cases ha ; omega
-  · cases this with
-    | intro a h =>
-      simp at h
-      cases h ; omega
-  · cases this with
-  | intro a h =>
-    cases h
-    have := h_1.2
-    simp_all
-    simp_all
-  · cases this with
-  | intro a h =>
-    cases h
-    have := h_1.2
-    simp_all
-    omega
-    simp_all
 
 theorem kayleighBound {A : Type} {k : ℕ} {w : Fin (2 * k + 1) → A}
     {p : Fin (2 * (k + 1)) → Fin (k + 1)}
@@ -171,6 +143,7 @@ theorem kayleighBound {A : Type} {k : ℕ} {w : Fin (2 * k + 1) → A}
     omega
 
 
+/-- A Kayleigh graph path does not retreat too fast. -/
 theorem kayleighBound_lower {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A)
     (p : Fin (2 * (k + 1)) → Fin (k + 1))
     (h : accepts_path (@khδ A k w) 0 0 p) :
@@ -195,20 +168,13 @@ theorem kayleighBound_lower {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A)
 
 
 /-- If the Kayleigh graph ever uses the loop, we know when! -/
-theorem hyde_loop_when {A : Type} {k : ℕ}
-    (w : Fin (2 * k + 1) → A)
+theorem hyde_loop_when {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A)
     (p : Fin (2 * (k + 1)) → Fin (k + 1))
     (h : accepts_path (@khδ A k w) 0 0 p) (t : Fin (2 * k + 1))
     (ht : p ⟨t.1,by omega⟩ = Fin.last k ∧ p (⟨t.1+1, by omega⟩) = Fin.last k) :
     t = ⟨k, by omega⟩ := by
   by_contra H
-  have : t.1 < k ∨ t.1 > k := by
-    have : t.1 ≠ k := by
-      intro hc
-      apply H
-      exact Fin.eq_mk_iff_val_eq.mpr hc
-    exact lt_or_gt_of_ne this
-  cases this
+  cases lt_or_gt_of_ne fun hc => H <| Fin.eq_mk_iff_val_eq.mpr hc
   · have : (p ⟨t.1,by omega⟩).1 < k := by
       have : ∀ s, ∀ hs : s < 2*k+1, (p (⟨s+1,by omega⟩)).1 ≤ p ⟨s,by omega⟩ + 1 := by
         apply move_slowly; tauto
@@ -263,90 +229,89 @@ theorem hyde_loop_when {A : Type} {k : ℕ}
     change 1 ≤ (p (Fin.last (2*k+1))).1 at h₁
     simp_all
 
+/-- If a Kayleigh graph path never uses the loop, then it preserves parity. -/
 theorem hyde_parity {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A) (p : Fin (2 * (k + 1)) → Fin (k + 1))
-  (h : accepts_path (@khδ A k w) 0 0 p)
-  (H : ¬ ∃ t : Fin (2*k+1), p ⟨t.1,by omega⟩ = Fin.last k ∧ p (⟨t.1+1, by omega⟩) = Fin.last k) :
-  ∀ (t : ℕ) (ht : t < 2 * (k + 1)), (p ⟨t, ht⟩).1 % 2 = t % 2 := by
-      push_neg at H
-      intro t
-      induction t with
-      | zero =>
+    (h : accepts_path (@khδ A k w) 0 0 p)
+    (H : ¬ ∃ t : Fin (2*k+1), p ⟨t.1,by omega⟩ = Fin.last k ∧ p (⟨t.1+1, by omega⟩) = Fin.last k) :
+    ∀ (t : ℕ) (ht : t < 2 * (k + 1)), (p ⟨t, ht⟩).1 % 2 = t % 2 := by
+  push_neg at H
+  intro t
+  induction t with
+  | zero =>
+    simp [khδ,accepts_path] at h ⊢
+    rw [h.1]
+    simp
+  | succ n ih =>
+    intro ht
+    have h₀ := ih (by omega)
+    have ⟨a,h₁⟩ := h.2.2 ⟨n, by simp_all; omega⟩
+    simp [khδ] at h₁ -- timed out
+    split_ifs at h₁ with g₀ g₂ g₁
+    · have : k = 0 := by omega
+      subst this
+      simp_all
+      have := H (by omega)
+      exfalso
+      apply this
+      apply Fin.mk.inj_iff.mpr
+      simp
+    · have why := h₁.2
+      simp_rw [g₀] at why h₀
+      rw [why]
+      aesop
+    · cases h₁ with
+    | inl h₁ =>
+      have why := h₁.2
+      rw [← why]
+      specialize H ⟨n, by omega⟩ g₁
+      exfalso
+      apply H
+      apply Fin.eq_of_val_eq
+      rw [← why]
+      aesop
+    | inr h₁ =>
+      have why := h₁.2
+      simp_rw [g₁] at why
+      cases mod_two_eq_zero_or_one (p ⟨n + 1, ht⟩).1
+      · rw [h_1]
+        apply congrArg (fun x => x % 2) at why
+        rw [add_mod] at why
+        rw [h_1] at why
+        simp at why
+        have : (p ⟨n,by omega⟩).1 = k := by
+          exact (@Fin.mk.inj_iff (k+1) (p ⟨n, by omega⟩).1 k (by omega) (by omega)).mp
+            (by tauto)
+        apply congrArg (fun x => x % 2) at this
+        rw [this, ← why] at h₀
+        clear this why h_1 h₁ g₁ g₀ a
+        rw [add_mod, h₀]
         simp
-        simp [khδ,accepts_path] at h
-        rw [h.1]
+        rw [← two_mul]
         simp
-      | succ n ih =>
-        intro ht
-        have h₀ := ih (by omega)
-        have h₁ := h.2.2 ⟨n, by simp_all; omega⟩
-        simp [khδ] at h₁ -- timed out
-        obtain ⟨a,h₁⟩ := h₁
-        split_ifs at h₁ with g₀ g₂ g₁
-        · have : k = 0 := by omega
-          subst this
-          simp_all
-          have := H (by omega)
-          exfalso
-          apply this
-          apply Fin.mk.inj_iff.mpr
-          simp
-        · have why := h₁.2
-          simp_rw [g₀] at why h₀
-          rw [why]
-          aesop
-        · cases h₁ with
-        | inl h₁ =>
-          have why := h₁.2
-          rw [← why]
-          specialize H ⟨n, by omega⟩ g₁
-          exfalso
-          apply H
-          apply Fin.eq_of_val_eq
-          rw [← why]
-          aesop
-        | inr h₁ =>
-          have why := h₁.2
-          simp_rw [g₁] at why
-          cases mod_two_eq_zero_or_one (p ⟨n + 1, ht⟩).1
-          · rw [h_1]
-            apply congrArg (fun x => x % 2) at why
-            rw [add_mod] at why
-            rw [h_1] at why
-            simp at why
-            have : (p ⟨n,by omega⟩).1 = k := by
-              exact (@Fin.mk.inj_iff (k+1) (p ⟨n, by omega⟩).1 k (by omega) (by omega)).mp
-                (by tauto)
-            apply congrArg (fun x => x % 2) at this
-            rw [this, ← why] at h₀
-            clear this why h_1 h₁ g₁ g₀ a
-            rw [add_mod, h₀]
-            simp
-            rw [← two_mul]
-            simp
-          · rw [h_1]
-            apply congrArg (fun x => x % 2) at why
-            rw [add_mod] at why
-            rw [h_1] at why
-            simp at why
-            have : (p ⟨n,by omega⟩).1 = k := by
-              exact (@Fin.mk.inj_iff (k+1) (p ⟨n, by omega⟩).1 k (by omega) (by omega)).mp
-                (by tauto)
-            apply congrArg (fun x => x % 2) at this
-            rw [this, ← why] at h₀
-            rw [add_mod, ← h₀]
-        · cases h₁
-          · have why := h_1.2
-            rw [why, add_mod, h₀, ← add_mod]
-          · have why := h_1.2
-            apply congrArg (fun x => x % 2) at why
-            simp_rw [h₀] at why
-            clear h_1 g₁ g₀
-            symm at why
-            rw [add_mod]
-            rw [← why]
-            simp
-            rw [add_assoc]
-            simp
+      · rw [h_1]
+        apply congrArg (fun x => x % 2) at why
+        rw [add_mod] at why
+        rw [h_1] at why
+        simp at why
+        have : (p ⟨n,by omega⟩).1 = k := by
+          exact (@Fin.mk.inj_iff (k+1) (p ⟨n, by omega⟩).1 k (by omega) (by omega)).mp
+            (by tauto)
+        apply congrArg (fun x => x % 2) at this
+        rw [this, ← why] at h₀
+        rw [add_mod, ← h₀]
+    · cases h₁
+      · have why := h_1.2
+        rw [why, add_mod, h₀, ← add_mod]
+      · have why := h_1.2
+        apply congrArg (fun x => x % 2) at why
+        simp_rw [h₀] at why
+        clear h_1 g₁ g₀
+        symm at why
+        rw [add_mod]
+        rw [← why]
+        simp
+        rw [add_assoc]
+        simp
 
 
 theorem move_slowly_rev_aux {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A)
@@ -355,7 +320,7 @@ theorem move_slowly_rev_aux {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A)
     k ≤ k - ↑(p ⟨s₁ + k + 1, by omega⟩) + 1 + ↑(p ⟨s₁ + 1 + k + 1, by omega⟩) := by
   suffices k ≤ k + 1 + (p ⟨s₁ + 1 + k + 1, by omega⟩).1  - (p ⟨s₁ + k + 1, by omega⟩).1 by omega
   simp_rw [show s₁ + 1 + k + 1 = s₁ + k + 1 + 1 by ring]
-  have hmo := @move_slowly_reverse _ k w p h (s₁ + k + 1) (by omega)
+  have hmo := @kayleighBound_lower _ k w p h (s₁ + k + 1) (by omega)
   have : k + (1 + (p ⟨s₁ + k + 1 + 1, by omega⟩).1 - (p ⟨s₁ + k + 1, by omega⟩).1)
     = k + 1 + (p ⟨s₁ + k + 1 + 1, by omega⟩).1 - (p ⟨s₁ + k + 1, by omega⟩).1 := by
     apply Nat.eq_sub_of_add_eq'
@@ -369,7 +334,7 @@ theorem hyde_unique_path {A : Type} {k : ℕ} (w : Fin (2*k+1) → A)
   (p : Fin (2*(k+1)) → Fin (k+1))
   (h : accepts_path (@khδ A k w) 0 0 p) :
   p = fun t : Fin (2*(k+1)) => dite (t.1 ≤ k)
-    (fun ht => (⟨t.1,     Order.lt_add_one_iff.mpr ht⟩ : Fin (k+1)))
+    (fun ht => (⟨t.1,     by omega⟩ : Fin (k+1)))
     (fun ht => (⟨2*k+1-t.1,by omega⟩ : Fin (k+1)))  := by
   by_cases H : ∃ t : Fin (2*k+1), p ⟨t.1,by omega⟩ = Fin.last k ∧ p (⟨t.1+1, by omega⟩) = Fin.last k -- we use the loop
   · obtain ⟨t,ht⟩ := H
@@ -463,7 +428,7 @@ theorem hyde_unique_path_reading_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) �
   {p : Fin (2*(k+1)) → Fin (k+1)}
   (h : accepts_word_path (@khδ A k w) v 0 0 p) :
   p = fun t : Fin (2*(k+1)) => dite (t.1 ≤ k)
-    (fun ht => (⟨t.1,     Order.lt_add_one_iff.mpr ht⟩ : Fin (k+1)))
+    (fun ht => (⟨t.1,     by omega⟩ : Fin (k+1)))
     (fun ht => (⟨2*k+1-t.1,by omega⟩ : Fin (k+1)))  := by
   apply hyde_unique_path
   apply accepts_path_of_accepts_word_path <;> tauto
@@ -558,41 +523,24 @@ theorem hyde_unique_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
 
 theorem hyde_accepts {A : Type} {k : ℕ}  (w : Fin (2*k+1) → A) :
   accepts_word_path (@khδ A k w) w 0 0 fun t : Fin (2*(k+1)) => dite (t.1 ≤ k)
-    (fun ht => (⟨t.1,     Order.lt_add_one_iff.mpr ht⟩ : Fin (k+1)))
+    (fun ht => (⟨t.1,      by omega⟩ : Fin (k+1)))
     (fun ht => (⟨2*k+1-t.1,by omega⟩ : Fin (k+1))) := by
-  unfold khδ accepts_word_path
-  simp
+  simp [khδ, accepts_word_path]
   constructor
-  · intro h
-    exfalso
-    omega
+  · omega
   · intro i
-    split_ifs with g₀ g₁ g₂ g₃ g₄ g₅ g₆
-    · -- new
-      simp at g₁ g₂
-      have : i = 0 := Eq.symm (Fin.eq_of_val_eq (id (Eq.symm g₁)))
-      subst this
-      have : k = 0 := id (Eq.symm g₂)
-      subst this
-      simp
-      trivial
-    · simp_all
-      have : 1 ≤ k := by omega
+    split_ifs with g₀ g₁ g₂ g₃ g₄ g₅
+    · trivial
+    · have : 1 ≤ k := by omega
       simp_all
       show w ⟨i,by omega⟩ = w 0 ∧ 1 = 1
       simp_all
-    · simp_all
-      have : i.1 = k := Fin.mk.inj_iff.mp g₃
-      simp_rw [this]
+    · simp_rw [Fin.mk.inj_iff.mp g₃]
       simp
-      show k = 2 * k - k ∨ w i = w ⟨2 * k + 1 - k, by omega⟩ ∧ 2 * k - k + 1 = k
       left
+      show k = 2 * k - k
       omega
-    · have : ¬ i.1 = k := by
-        intro hc
-        apply g₃
-        exact Fin.mk.inj_iff.mpr hc
-      have : i.1 ≤ k := g₀
+    · have : ¬ i.1 = k := fun hc => g₃ <| Fin.mk.inj_iff.mpr hc
       have : i.1 + 1 ≤ k := by omega
       simp_all
       show i.1+1 = i.1 + 1 ∨ w i = w ⟨2 * k + 1 - i.1, by simp_all;omega⟩
@@ -602,51 +550,29 @@ theorem hyde_accepts {A : Type} {k : ℕ}  (w : Fin (2*k+1) → A) :
       simp at g₄ g₅
       simp_all
       subst g₄
-      have := i.2
-      have : i.1 = 0 := by omega
-      have : i = 0 := Eq.symm (Fin.eq_of_val_eq (id (Eq.symm this)))
+      have : i = 0 := Fin.eq_of_val_eq <| by omega
       subst this
       rfl
 
     · simp_all
-      have : ¬ i.1 + 1 ≤ k := by omega
-
-      simp_all
-      split_ifs with g₀
-      · exfalso
-        omega
-      · show w i = w 0 ∧ 2 * k - i.1 = 1
-        have : 2 * k + 1 - i.1 = 0 := by tauto
-        have : i.1 = 2 * k + 1 := by omega
-        simp_all
-        omega
-    · simp_all
-      have : 2 * k + 1 - i.1  = k := Fin.mk.inj_iff.mp (by tauto)
-      have : i.1 = k + 1 := by omega
-      simp_rw [this]
-      have : ¬ k + 1 + 1 ≤ k := by omega
-      rw [dif_neg this]
-      simp
-      show w i = w ⟨2 * k - k, by omega⟩ ∧
-      2 * k - k = (2*k-(k+1)) ∨ w i = w ⟨2 * k + 1 - (2 * k -k), by omega⟩
-      ∧ (2*k-(k+1)) + 1 = 2 * k - k
+      omega
+    · have : 2 * k + 1 - i.1  = k := Fin.mk.inj_iff.mp (by tauto)
+      simp_rw [show i.1 = k + 1 by omega]
+      rw [dif_neg (show ¬ k + 1 + 1 ≤ k by omega)]
       right
       constructor
       · congr
         apply Fin.mk.inj_iff.mpr
         omega
-      · omega
-    · have : ¬ i.1 + 1 ≤ k := by
+      · simp
+        show (2*k-(k+1)) + 1 = 2 * k - k
         omega
-      rw [dif_neg this]
-      show w i = w ⟨2 * k + 1 - i.1, by omega⟩ ∧ 2*k-i.1 = 2 * k + 1 - i.1 + 1 ∨
-      w i = w ⟨2 * k + 1 - (2 * k + 1 - i.1), by omega⟩ ∧
-      2 * k + 1 - i.1 = 2*k-i.1 + 1
+    · rw [dif_neg (show ¬ i.1 + 1 ≤ k by omega)]
       right
       constructor
-      · have : 2 * k + 1 - (2 * k + 1 - i) = i := by omega
-        simp_rw [this]
-      · omega
+      · simp_rw [show 2 * k + 1 - (2 * k + 1 - i) = i by omega]
+      · show 2 * k + 1 - i.1 = 2 * k - i.1 + 1
+        omega
 
 def nfa_complexity_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
   ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
@@ -654,6 +580,78 @@ def nfa_complexity_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Pro
     ∧ ∀ v : Fin n → A, ∀ p',
       @accepts_word_path Q A n (δ) v init final p' → p = p' ∧ w = v
 
+theorem restricting_construction {A : Type} {n : ℕ} {w : Fin (n + 1) → A} (Q : Type)
+    (δ : A → Q → Set Q) (init final : Q)
+    (p  : Fin (n + 1 + 1) → Q) (hp : accepts_word_path δ w init final              p) (v : Fin n → A)
+    (p' : Fin (n + 1) → Q)     (h  : accepts_word_path δ v init (p ⟨n, by omega⟩) p') :
+    accepts_word_path δ (Fin.snoc v (w (Fin.last n))) init final (Fin.snoc p' (p (Fin.last (n + 1)))) := by
+  constructor
+  · rw [← h.1]
+    conv =>
+      left
+      right
+      change @Fin.castSucc (n+1) 0
+    apply Fin.snoc_castSucc
+  · constructor
+    · have := hp.2.1
+      rw [← this]
+      simp
+    · intro i
+      by_cases hi : i.1 < n
+      · have := h.2.2 ⟨i.1, hi⟩
+        simp at this
+        revert this
+        apply Iff.mp
+        apply Eq.to_iff
+        congr
+        · symm
+          have : @Fin.snoc n (fun a ↦ A) v (w (Fin.last n)) i  = v ⟨i.1, hi⟩ := by
+            conv =>
+              left; right
+              change @Fin.castSucc (n) ⟨i.1,by omega⟩
+            apply Fin.snoc_castSucc
+          rw [this]
+          have : @Fin.snoc (n + 1) (fun a ↦ Q) p' (p (Fin.last (n + 1))) ⟨i.1, by omega⟩ = p' i := by
+            conv =>
+              left; right
+              change @Fin.castSucc (n+1) ⟨i.1,by omega⟩
+            apply Fin.snoc_castSucc
+          rw [this]
+        · symm
+          conv =>
+            left; right
+            change @Fin.castSucc (n+1) ⟨i.1 + 1,by omega⟩
+          apply Fin.snoc_castSucc
+      · have : i.1 = n := by omega
+        have : i = Fin.last n := Fin.eq_last_of_not_lt hi
+        subst this
+        simp_rw [this]
+        have := hp.2.2 ⟨n, by omega⟩
+        revert this;
+        apply Iff.mp
+        apply Eq.to_iff
+        congr
+        · simp
+          conv =>
+            left; left; right
+            change Fin.last n
+          have : @Fin.snoc (n + 1) (fun a ↦ Q) p' (p (Fin.last (n + 1))) ⟨n, by omega⟩ =
+            p ⟨n, by omega⟩ := by
+              have := h.2.1
+              rw [← this]
+              conv =>
+                left; right
+                change @Fin.castSucc (n+1) ⟨n,by omega⟩
+              apply Fin.snoc_castSucc
+          rw [this]
+        · symm
+          simp
+          conv =>
+            right; right
+            change Fin.last (n+1)
+          conv =>
+            left;right;change Fin.last (n+1)
+          simp
 
 /-- Jan 3, 2024: subword inequality -/
 theorem restricting
@@ -672,92 +670,24 @@ theorem restricting
         rfl
       · constructor
         · rfl
-        · intro i
-          exact hp.1.2.2 ⟨i.1, by omega⟩
+        · exact fun i => hp.1.2.2 ⟨i.1, by omega⟩
     · intro v p' h
+      have h₀ : accepts_word_path δ (Fin.snoc v (w (Fin.last n))) init final
+        (Fin.snoc p' (p (Fin.last (n + 1)))) := by
+        apply restricting_construction <;> tauto
       have use := hp.2 (Fin.snoc v (w (Fin.last n)))
-        (Fin.snoc p' (p (Fin.last (n+1)))) (by
-          constructor
-          · rw [← h.1]
-            conv =>
-              left
-              right
-              change @Fin.castSucc (n+1) 0
-            apply Fin.snoc_castSucc
-          · constructor
-            · have := hp.1.2.1
-              rw [← this]
-              simp
-            · intro i
-              have := hp.1.2.2 i
-              by_cases hi : i.1 < n
-              · have := h.2.2 ⟨i.1, hi⟩
-                simp at this
-                revert this
-                apply Iff.mp
-                apply Eq.to_iff
-                congr
-                · symm
-                  have : @Fin.snoc n (fun a ↦ A) v (w (Fin.last n)) i  = v ⟨i.1, hi⟩ := by
-                    conv =>
-                      left; right
-                      change @Fin.castSucc (n) ⟨i.1,by omega⟩
-                    apply Fin.snoc_castSucc
-                  rw [this]
-                  have : @Fin.snoc (n + 1) (fun a ↦ Q) p' (p (Fin.last (n + 1))) ⟨i.1, by omega⟩ = p' i := by
-                    conv =>
-                      left; right
-                      change @Fin.castSucc (n+1) ⟨i.1,by omega⟩
-                    apply Fin.snoc_castSucc
-                  rw [this]
-                · symm
-                  conv =>
-                    left; right
-                    change @Fin.castSucc (n+1) ⟨i.1 + 1,by omega⟩
-                  apply Fin.snoc_castSucc
-              · have : i.1 = n := by omega
-                have : i = Fin.last n := Fin.eq_last_of_not_lt hi
-                subst this
-                simp_rw [this]
-                have := hp.1.2.2 ⟨n, by omega⟩
-                revert this;
-                apply Iff.mp
-                apply Eq.to_iff
-                congr
-                · simp
-                  conv =>
-                    left; left; right
-                    change Fin.last n
-                  have : @Fin.snoc (n + 1) (fun a ↦ Q) p' (p (Fin.last (n + 1))) ⟨n, by omega⟩ =
-                    p ⟨n, by omega⟩ := by
-                      have := h.2.1
-                      rw [← this]
-                      conv =>
-                        left; right
-                        change @Fin.castSucc (n+1) ⟨n,by omega⟩
-                      apply Fin.snoc_castSucc
-                  rw [this]
-                · symm
-                  simp
-                  conv =>
-                    right; right
-                    change Fin.last (n+1)
-                  conv =>
-                    left;right;change Fin.last (n+1)
-                  simp
-        )
+        (Fin.snoc p' (p (Fin.last (n+1)))) h₀
       constructor
       · rw [use.1];simp
       · rw [use.2];simp
 
-theorem hydetheorem_odd
- {A : Type} {k : ℕ} (w : Fin (2*k+1) → A) :
+theorem hydetheorem_odd {A : Type} {k : ℕ} (w : Fin (2*k+1) → A) :
  nfa_complexity_at_most w (k+1) := by
  use Fin (k+1), Fin.fintype (k + 1)
  constructor
  · exact Fintype.card_fin (k + 1)
  · use khδ w, 0, 0, fun t : Fin (2*(k+1)) => dite (t.1 ≤ k)
-    (fun ht => (⟨t.1,     Order.lt_add_one_iff.mpr ht⟩ : Fin (k+1)))
+    (fun ht => (⟨t.1,     by omega⟩ : Fin (k+1)))
     (fun ht => (⟨2*k+1-t.1,by omega⟩ : Fin (k+1)))
    constructor
    · exact hyde_accepts w
@@ -765,7 +695,7 @@ theorem hydetheorem_odd
 
 /-- A word cannot have complexity 0,
  because then there'd be no initial state. -/
-theorem hyde_short₀₀ {A : Type} {n : ℕ} (w : Fin n → A) : ¬ nfa_complexity_at_most w 0 := by
+theorem nfa_complexity_ge_one {A : Type} {n : ℕ} (w : Fin n → A) : ¬ nfa_complexity_at_most w 0 := by
   intro ⟨Q,x,hx⟩
   obtain ⟨_, init, _⟩ := hx.2
   have : Inhabited Q := { default := init }
@@ -775,7 +705,7 @@ theorem hyde_short₀₀ {A : Type} {n : ℕ} (w : Fin n → A) : ¬ nfa_complex
 This version does not require the alphabet A to be nonempty,
 hence does not follow using `restricting`.
 -/
-theorem hyde_short₀ {A : Type} (w : Fin 0 → A) :
+theorem hyde_emp {A : Type} (w : Fin 0 → A) :
 nfa_complexity_at_most w 1 := by
   unfold nfa_complexity_at_most
   use Fin 1, (Fin.fintype 1), rfl, (fun a q => ∅), 0, 0, (fun t => 0)
@@ -795,7 +725,7 @@ nfa_complexity_at_most w 1 := by
       have := i.2
       simp at this
 
-theorem hyde_all_lengths₁ {A : Type} {n : ℕ} (hn : n ≥ 1) (w : Fin n → A) :
+theorem hyde_pos_length {A : Type} {n : ℕ} (hn : n ≥ 1) (w : Fin n → A) :
 nfa_complexity_at_most w (n/2+1) := by
   by_cases he : Odd n
   · obtain ⟨k,hk⟩ := he
@@ -816,8 +746,8 @@ theorem hyde_all_lengths {A : Type} {n : ℕ} (w : Fin n → A) :
     nfa_complexity_at_most w (n/2+1) := by
   by_cases H : n = 0
   · subst H
-    exact hyde_short₀ w
-  · exact hyde_all_lengths₁ (by omega) w
+    exact hyde_emp w
+  · exact hyde_pos_length (by omega) w
 
 theorem A_N_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
   ∃ q, nfa_complexity_at_most w q := by
