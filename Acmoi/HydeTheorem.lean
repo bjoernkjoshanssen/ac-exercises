@@ -15,30 +15,7 @@ open Finset Fintype Nat Classical
 
 section General
 
-/-- if a function f(0)=0, f(k)=k, f(s+1) ≤ f(s) + 1 in between, then f = id
--/
-lemma boundFuncAdd {k : ℕ} {f : Fin (k+1) → Fin (k+1)} (a b : Fin (k+1))
-    (h₀ : f a = b) (h : ∀ (s : ℕ) (hs : s < k),
-      (f (⟨s+1, add_lt_add_right hs 1⟩)).1
-    ≤ (f ⟨s, Nat.lt_add_right 1 hs⟩).1 + 1) :
-    ∀ (s : ℕ) (hs : s + a < k+1), (f ⟨s + a, hs⟩).1 ≤ s + b.1 := by
-    intro s
-    induction s with
-    | zero =>
-      intro hs
-      simp only [zero_add]
-      rw [h₀]
-    | succ n ih =>
-      intro hs
-      simp_rw [add_assoc, add_comm 1 a.1, ← add_assoc] at hs ⊢
-      simp_rw [add_assoc n 1, add_comm 1 b.1, ← add_assoc n b.1]
-      have h₀ := ih (lt_of_succ_lt hs)
-      have h₁ := h (n+a.1) (succ_lt_succ_iff.mp hs)
-      calc
-      _ ≤ (f ⟨n + a.1, lt_of_succ_lt hs⟩).1 + 1 := h₁
-      _ ≤ _                             := Nat.add_le_add_right (ih (lt_of_succ_lt hs)) 1
-
-/-- Version of boundFuncAdd that uses Fin API more. -/
+/--  Version of boundFuncAdd that uses Fin API more. -/
 lemma boundFuncAdd' {k : ℕ} {f : Fin (k+1) → Fin (k+1)} (a b : Fin (k+1))
     (h₀ : f a = b) (h : ∀ s : Fin k,
       (f s.succ).1
@@ -60,33 +37,7 @@ lemma boundFuncAdd' {k : ℕ} {f : Fin (k+1) → Fin (k+1)} (a b : Fin (k+1))
       _ ≤ (f ⟨n + a.1, lt_of_succ_lt hs⟩).1 + 1 := h₁
       _ ≤ _                             := Nat.add_le_add_right (ih (lt_of_succ_lt hs)) 1
 
--- #print axioms boundFuncAdd -- eliminated Classical.choice by eliminating linarith
 
-lemma id_of_slow {k : ℕ} {f : Fin (k+1) → Fin (k+1)}
-    (h₀ : f 0 = 0) (hk : f (Fin.last k) = (Fin.last k))
-    (h : ∀ (s : ℕ) (hs : s < k),
-      (f (⟨s+1, add_lt_add_right hs 1⟩)).1
-    ≤ (f ⟨s, Nat.lt_add_right 1 hs⟩).1 + 1) {a : ℕ} (ha : a < k) :
-    f ⟨a, Nat.lt_add_right 1 ha⟩ = ⟨a, Nat.lt_add_right 1 ha⟩ := by
-    let hak := Nat.lt_add_right 1 ha
-    by_contra H
-    have : (f ⟨a,hak⟩).1 < a := by
-      have := @boundFuncAdd k f 0 0 h₀ h a (by simp;omega)
-      simp at this ha
-      contrapose H
-      simp_all
-      exact Fin.eq_of_val_eq <| Nat.le_antisymm this H
-    let b := (f ⟨a,by omega⟩).1
-    have : (f (Fin.last k)).1 < k := by
-      have := @boundFuncAdd k f ⟨a, hak⟩ ⟨b,by omega⟩ rfl h (k-a)
-        (by simp;omega)
-      simp at this
-      simp_rw [Nat.sub_add_cancel <| le_of_lt_succ hak] at this
-      calc
-      _ ≤ k - a + b := this
-      _ < k := by omega
-    have : (f (Fin.last k)).1 = k := by simp_all
-    omega
 
 /-- Version of id_of_slow using Fin API more.-/
 lemma id_of_slow' {k : ℕ} {f : Fin (k+1) → Fin (k+1)}
@@ -97,7 +48,6 @@ lemma id_of_slow' {k : ℕ} {f : Fin (k+1) → Fin (k+1)}
     f a.castSucc = a.castSucc := by
     by_contra H
     have : (f a.castSucc).1 < a := by
-      -- have := @boundFuncAdd k f 0 0 h₀ h a (by simp;omega)
       have := @boundFuncAdd' k f 0 0 h₀ h a.1 (by
         simp;omega
       )
@@ -116,7 +66,6 @@ lemma id_of_slow' {k : ℕ} {f : Fin (k+1) → Fin (k+1)}
     have : (f (Fin.last k)).1 = k := by simp_all
     omega
 
-#print axioms id_of_slow
 end General
 
 /-- p is an accepting path for the word w in the NFA δ. -/
@@ -128,12 +77,12 @@ def accepts_word_path {Q A : Type*} {n : ℕ}
 #print axioms accepts_word_path
 /-- p is an accepting path for the NFA δ. -/
 def accepts_path {Q A : Type*} {n : ℕ}
-    (δ : A → Q → Set Q) (init : Q) (final : Q) (path : Fin (n+1) → Q) :=
+    (δ : A → Q → Set Q) (init final : Q) (path : Fin (n+1) → Q) :=
   path 0 = init ∧ path (Fin.last n) = final
   ∧ ∀ i : Fin n, ∃ a : A, path i.succ ∈ δ a (path i.castSucc)
 
 lemma accepts_path_of_accepts_word_path {Q A : Type*} {n : ℕ}
-    (δ : A → Q → Set Q) (w : Fin n → A) (init : Q) (final : Q) (path : Fin (n+1) → Q)
+    (δ : A → Q → Set Q) (w : Fin n → A) (init final : Q) (path : Fin (n+1) → Q)
     (h : accepts_word_path δ w init final path) :
     accepts_path δ init final path :=
   ⟨h.1, h.2.1, fun i => ⟨w i, by simp_all [accepts_word_path]⟩⟩
@@ -280,23 +229,18 @@ theorem hyde_parity' {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A) (p : Fin (
   exact @Fin.induction (2*k+1) (fun n => (p n).1 % 2 = n % 2)
     (by simp;rw [h.1];simp) (by
     intro n ih
-    have h₀ := ih
     have ⟨a,h₁⟩ := h.2.2 n
     simp [khδ] at h₁ -- timed out
     split_ifs at h₁ with g₀ g₂ g₁
     · have : k = 0 := by omega
       subst this
       simp_all
-      have := H 0
-      exfalso
-      apply this
-      have := (p (Fin.castSucc 0)).2
-      suffices (p (Fin.castSucc 0)).1 = 0 by aesop
-      omega
-      apply Fin.mk.inj_iff.mpr
-      simp
+      apply H 0
+      · omega
+      · apply Fin.mk.inj_iff.mpr
+        simp
     · have why := h₁.2
-      simp_rw [g₀] at why h₀
+      simp_rw [g₀] at why ih
       rw [why]
       aesop
     · cases h₁ with
@@ -316,84 +260,66 @@ theorem hyde_parity' {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A) (p : Fin (
       | inl h_1 =>
         rw [h_1]
         apply congrArg (fun x => x % 2) at why
-        rw [add_mod] at why
-        rw [h_1] at why
+        rw [add_mod, h_1] at why
         simp at why
-        have : (p n.castSucc).1 = k := by
-          exact (@Fin.mk.inj_iff (k+1) (p ⟨n, by omega⟩).1 k (by omega) (by omega)).mp
-            (by tauto)
-        apply congrArg (fun x => x % 2) at this
-        rw [this, ← why] at h₀
-        clear this why h_1 h₁ g₁ g₀ a
-        simp
-        simp at h₀
+        rw [Fin.mk.inj_iff.mp g₁, ← why] at ih
+        simp at ih ⊢
         rw [add_mod]
-        simp_rw [h₀]
-        simp
-        rw [← two_mul]
-        simp
+        simp_rw [ih]
+        simp [← two_mul]
       | inr h_1 =>
         rw [h_1]
         apply congrArg (fun x => x % 2) at why
-        rw [add_mod] at why
-        rw [h_1] at why
+        rw [add_mod, h_1] at why
         simp at why
-        have : (p n.castSucc).1 = k := by
-          exact (@Fin.mk.inj_iff (k+1) (p ⟨n, by omega⟩).1 k (by omega) (by omega)).mp
-            (by tauto)
-        apply congrArg (fun x => x % 2) at this
-        rw [this, ← why] at h₀
-        simp
-        simp at this
-        rw [add_mod]
-        simp at h₀
-        rw  [← h₀]
+        rw [Fin.mk.inj_iff.mp g₁, ← why] at ih
+        simp at ih ⊢
+        rw [add_mod, ← ih]
     · cases h₁ with
     | inl h_1 =>
         have why := h_1.2
-        rw [why, add_mod, h₀, ← add_mod]
+        rw [why, add_mod, ih, ← add_mod]
         simp
     | inr h_1 =>
         have why := h_1.2
         apply congrArg (fun x => x % 2) at why
-        simp_rw [h₀] at why
-        clear h_1 g₁ g₀
+        simp_rw [ih] at why
         symm at why
         simp
         rw [add_mod]
         simp at why
-        rw [← why]
-        simp
-        rw [add_assoc]
-        simp
+        simp [← why, add_assoc]
     ) t
 
 
 
 theorem move_slowly_rev_aux' {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A)
 (p : Fin (2 * (k + 1)) → Fin (k + 1))
-    (h : accepts_path (khδ w) 0 0 p) (s₁ : Fin k) :
-    k ≤ k - ↑(p ⟨s₁.1 + k + 1, by omega⟩) + 1 + ↑(p ⟨s₁.1 + 1 + k + 1, by omega⟩) := by
-  suffices k ≤ k + 1 + (p ⟨s₁ + 1 + k + 1, by omega⟩).1  - (p ⟨s₁ + k + 1, by omega⟩).1 by omega
-  simp_rw [show s₁ + 1 + k + 1 = s₁ + k + 1 + 1 by ring]
-  have hmo' := @kayleighBound_lower' A k w p h ⟨s₁ + k + 1, by omega⟩
+    (h : accepts_path (khδ w) 0 0 p) (s : Fin k) :
+    k ≤ k - (p ⟨s.1 + k + 1, by omega⟩).1 + 1
+          + (p ⟨s.1 + 1 + k + 1, by omega⟩).1 := by
+  suffices k ≤ k + 1 + (p ⟨s + 1 + k + 1, by omega⟩).1  - (p ⟨s + k + 1, by omega⟩).1 by omega
+  simp_rw [show s + 1 + k + 1 = s + k + 1 + 1 by ring]
+  have hmo' := @kayleighBound_lower' A k w p h ⟨s + k + 1, by omega⟩
   simp at hmo'
-  have h : k + (1 + (p ⟨s₁ + k + 1 + 1, by omega⟩).1 - (p ⟨s₁ + k + 1, by omega⟩).1)
-    = k + 1 + (p ⟨s₁ + k + 1 + 1, by omega⟩).1 - (p ⟨s₁ + k + 1, by omega⟩).1 := by
+  have h : k + (1 + (p ⟨s + k + 1 + 1, by omega⟩).1 - (p ⟨s + k + 1, by omega⟩).1)
+    = k + 1 + (p ⟨s + k + 1 + 1, by omega⟩).1 - (p ⟨s + k + 1, by omega⟩).1 := by
     apply Nat.eq_sub_of_add_eq'
     omega
   rw [← h]
   apply Nat.le_add_right
 
+lemma flipCast {t k : ℕ} (h : ¬ t < k + 1) :
+  2 * k + 1 - t < k + 1 := by omega
 
 /-- Hyde's theorem (2013). -/
 theorem hyde_unique_path' {A : Type} {k : ℕ} (w : Fin (2*k+1) → A)
   (p : Fin (2*(k+1)) → Fin (k+1))
   (h : accepts_path (khδ w) 0 0 p) :
-  p = fun t : Fin (2*(k+1)) => dite (t.1 ≤ k)
-    (fun ht => (⟨t.1,     by omega⟩ : Fin (k+1)))
-    (fun ht => (⟨2*k+1-t.1,by omega⟩ : Fin (k+1)))  := by
-  by_cases H : ∃ t : Fin (2*k+1), p ⟨t.1,by omega⟩ = Fin.last k ∧ p (⟨t.1+1, by omega⟩) = Fin.last k -- we use the loop
+  p = fun t : Fin (2*(k+1)) => dite (t.1 < k + 1)
+    (fun ht => (⟨t.1, ht⟩ : Fin (k+1)))
+    (fun ht => (⟨2*k+1-t.1, flipCast ht⟩ : Fin (k+1)))  := by
+  by_cases H : ∃ t : Fin (2*k+1), p t.castSucc = Fin.last k ∧ p t.succ = Fin.last k -- we use the loop
   · obtain ⟨t,ht⟩ := H
     have : t = ⟨k,by omega⟩ := by apply hyde_loop_when' <;> tauto
     ext s
@@ -405,7 +331,7 @@ theorem hyde_unique_path' {A : Type} {k : ℕ} (w : Fin (2*k+1) → A)
         (by simp;unfold accepts_path at h;tauto) (by simp;aesop)
         (by
           intro s;simp
-          exact @move_slowly' A k w p h ⟨s,by omega⟩
+          exact @move_slowly' A k w p h (s.castLT (by omega))
         ) ⟨s, by omega⟩
       simp at this
       simp at h₀'
@@ -415,49 +341,46 @@ theorem hyde_unique_path' {A : Type} {k : ℕ} (w : Fin (2*k+1) → A)
       clear this
       simp at g₀
       by_cases hh : s.1 = 2 * k + 1
-      · unfold accepts_path at h
-        have h₁ := h.2.1
-        simp_rw [hh]
+      · simp_rw [hh]
         simp
         have h₀ : s = Fin.last (2*k+1) := Fin.eq_of_val_eq hh
         rw [h₀]
-        exact (@Fin.mk.inj_iff ((k+1)) (p (Fin.last (2*k+1))).1 0
-          (by omega) (by omega)).mp h₁
+        exact Fin.mk.inj_iff.mp h.2.1
 
-      let f : Fin ((k+1)) → Fin ((k+1)) :=
-        fun u  => ⟨k - (p ⟨u + k + 1,by omega⟩).1, by omega⟩
+      · let f : Fin ((k+1)) → Fin ((k+1)) :=
+          fun u  => ⟨k - (p ⟨u + k + 1,by omega⟩).1, by omega⟩
 
-      simp
-      suffices (f ⟨s.1 - (k+1),by omega⟩).1 = s.1 - (k+1) by
+        simp
+        suffices (f ⟨s.1 - (k+1),by omega⟩).1 = s.1 - (k+1) by
+          unfold f at this
+          simp at this
+          have h₀ : s.1 - (k+1) + k + 1 = s.1 := by omega
+          simp_rw [h₀] at this
+          change k - (p s).1 = s.1 - (k+1) at this
+          omega
+        have := @id_of_slow' k f (by
+          unfold f;
+          simp_all
+        ) (by
+          unfold f;
+          unfold accepts_path at h
+          have := h.2.1
+          simp at this
+          simp
+          simp_rw [← two_mul]
+          apply Fin.mk.inj_iff.mpr
+          show  k - ↑(p (Fin.last (2*k+1))) = k
+          rw [this]
+          simp
+          ) (by
+            intro s₁
+            rw [tsub_le_iff_right]
+            apply move_slowly_rev_aux' <;> tauto
+          ) ⟨s - (k+1), by omega⟩
+        simp_all
         unfold f at this
         simp at this
-        have h₀ : s.1 - (k+1) + k + 1 = s.1 := by omega
-        simp_rw [h₀] at this
-        change k - (p s).1 = s.1 - (k+1) at this
-        omega
-      have := @id_of_slow' k (fun x => ⟨(f ⟨x, by omega⟩).1, by
-        unfold f
-        simp;omega
-      ⟩) (by
-        simp;unfold f;
-        simp_all
-      ) (by
-        simp;unfold f;
-        unfold accepts_path at h
-        have := h.2.1
-        simp at this
-        have hp : p (Fin.last (2 * k + 1)) = p ⟨k+k+1, by omega⟩ := by
-          congr
-          simp [Fin.last]
-          apply two_mul
-        simp_rw [← hp, this]
-        rfl
-        ) (by
-          intro s₁
-          rw [tsub_le_iff_right]
-          apply move_slowly_rev_aux' <;> tauto
-        ) ⟨s - (k+1), by omega⟩
-      simp_all
+        exact this
   · have : ∀ (t : Fin (2 * (k+1))), (p t).1 % 2 = t % 2 := by
       apply hyde_parity' <;> tauto
 
@@ -484,7 +407,7 @@ theorem hyde_unique_path' {A : Type} {k : ℕ} (w : Fin (2*k+1) → A)
 theorem hyde_unique_path_reading_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
   {p : Fin (2*(k+1)) → Fin (k+1)}
   (h : accepts_word_path (khδ w) v 0 0 p) :
-  p = fun t : Fin (2*(k+1)) => dite (t.1 ≤ k)
+  p = fun t : Fin (2*(k+1)) => dite (t.1 < k + 1)
     (fun ht => (⟨t.1,     by omega⟩ : Fin (k+1)))
     (fun ht => (⟨2*k+1-t.1,by omega⟩ : Fin (k+1)))  := by
   apply hyde_unique_path'
@@ -492,9 +415,9 @@ theorem hyde_unique_path_reading_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) �
 
 
 
-theorem aux₀' {A : Type} {k : ℕ} (w v : Fin (2 * k + 1) → A)
-  (i : Fin (2 * k + 1)) (g₀ : ¬ i.1 ≤ k)
-  (g₆ : ⟨2 * k + 1 - i, by have := i.2;omega⟩ = Fin.last k)
+theorem aux₀' {A : Type} {k : ℕ} {w v : Fin (2 * k + 1) → A}
+  {i : Fin (2 * k + 1)} (g₀ : ¬ i.1 < k + 1)
+  (g₆ : ⟨2 * k + 1 - i, flipCast g₀⟩ = Fin.last k)
   (h₂ :
     v i = w ⟨2 * k + 1 - i, by omega⟩ ∧ 2 * k + 1 - i = 2 * k - i ∨
       v i = w ⟨2 * k + 1 - (2 * k + 1 - i), by omega⟩ ∧ 2 * k - i + 1 = 2 * k + 1 - i) :
@@ -524,11 +447,11 @@ theorem hyde_unique_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
   simp at ha
   have h₂ := ha.2 ⟨i, hi⟩
   clear ha
-  have case1 (g₀ : i ≤ k) (g₁ : i=0) (g₂ : i=k) : w ⟨i,hi⟩ = v ⟨i,hi⟩ := by
+  have case1 (g₀ : i < k + 1) (g₁ : i=0) (g₂ : i=k) : w ⟨i,hi⟩ = v ⟨i,hi⟩ := by
     subst g₁
     simp_all
     exact h₂.symm
-  have case3 (g₀ : i ≤ k) (g₁ : i≠ 0) (g₃ : ⟨i,by omega⟩= Fin.last k) : w ⟨i,hi⟩ = v ⟨i,hi⟩ := by
+  have case3 (g₀ : i < k + 1) (g₁ : i≠ 0) (g₃ : ⟨i,by omega⟩= Fin.last k) : w ⟨i,hi⟩ = v ⟨i,hi⟩ := by
     have : i = k := Fin.mk.inj_iff.mp g₃
     subst this
     simp_all
@@ -537,10 +460,10 @@ theorem hyde_unique_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
     | inr h =>
       simp at h
       omega
-  have case4 (g₀ : i ≤ k) (g₁ : i≠ 0) (g₃ : ¬ ⟨i,by omega⟩= Fin.last k) : w ⟨i,hi⟩ = v ⟨i,hi⟩ := by
-    have : i ≤ k := g₀
+  have case4 (g₀ : i < k + 1) (g₁ : i≠ 0) (g₃ : ¬ ⟨i,by omega⟩= Fin.last k) : w ⟨i,hi⟩ = v ⟨i,hi⟩ := by
     have : i ≠ k := fun hc => g₃ <| Fin.mk.inj_iff.mpr hc
-    have : i + 1 ≤ k := by omega
+    have : i < k := by omega
+    have : i < k + 1 := by omega
     simp_all
     cases h₂ with
     | inl h => tauto
@@ -548,13 +471,11 @@ theorem hyde_unique_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
       have := h.2
       simp at this
       omega
-  have case5 (g₀ : ¬ i ≤ k) (g₄ : 2*k+1-i=0) (g₅: 2*k+1-i=k) : w ⟨i,hi⟩ = v ⟨i,hi⟩ := by
-    have : ¬ i ≤ k := g₀
+  have case5 (g₀ : ¬ i < k + 1) (g₄ : 2*k+1-i=0) (g₅: 2*k+1-i=k) : w ⟨i,hi⟩ = v ⟨i,hi⟩ := by
     have : ¬ i + 1 ≤ k := by omega
     simp_all
     omega
-  have case6 (g₀ : ¬ i ≤ k) (g₄ : 2*k+1-i=0) (g₅: 2*k+1-i≠ k) : w ⟨i,hi⟩ = v ⟨i,hi⟩ := by
-    have : ¬ i ≤ k := g₀
+  have case6 (g₀ : ¬ i < k + 1) (g₄ : 2*k+1-i=0) (g₅: 2*k+1-i≠ k) : w ⟨i,hi⟩ = v ⟨i,hi⟩ := by
     have : ¬ i + 1 ≤ k := by omega
     simp_all
     omega
@@ -567,12 +488,17 @@ theorem hyde_unique_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
   · apply case6 <;> tauto
   · -- g₀ : ¬ i ≤ k; g₃ : 2k+1-i≠ 0; g₄: 2k+1-i=k
     simp_all
-    have : ¬ i ≤ k := g₀
-    have : ¬ i + 1 ≤ k := by omega
+    have h₀ : ¬ i < k + 1 := by simp_all
+    have h₁ : ¬ i < k := by omega
+    have : ¬ i ≤ k := by omega
     simp_all
-    apply aux₀' <;> tauto
-  · have : ¬ i ≤ k := g₀
-    have : ¬ i + 1 ≤ k := by omega
+    apply aux₀'
+    exact h₂
+    simp
+    tauto
+    exact g₆
+  · have h₀ : ¬ i < k + 1 := by simp_all
+    have h₁ : ¬ i < k := by omega
     simp_all
     cases h₂ with
     | inl h =>
@@ -585,16 +511,16 @@ theorem hyde_unique_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
 
 
 theorem hyde_accepts {A : Type} {k : ℕ}  (w : Fin (2*k+1) → A) :
-  accepts_word_path (khδ w) w 0 0 fun t : Fin (2*(k+1)) => dite (t.1 ≤ k)
-    (fun ht => (⟨t.1,      by omega⟩ : Fin (k+1)))
-    (fun ht => (⟨2*k+1-t.1,by omega⟩ : Fin (k+1))) := by
+  accepts_word_path (khδ w) w 0 0 fun t : Fin (2*(k+1)) => dite (t.1 < k + 1)
+    (fun ht => (⟨t.1,      ht⟩ : Fin (k+1)))
+    (fun ht => (⟨2*k+1-t.1,flipCast ht⟩ : Fin (k+1))) := by
   simp [khδ, accepts_word_path]
   constructor
   · omega
   · intro i
     split_ifs with g₀ g₁ g₂ g₃ g₄ g₅
     · trivial
-    · have : 1 ≤ k := by omega
+    · have : 0 < k := by omega
       simp_all
       show w ⟨i,by omega⟩ = w 0 ∧ 1 = 1
       simp_all
@@ -604,9 +530,10 @@ theorem hyde_accepts {A : Type} {k : ℕ}  (w : Fin (2*k+1) → A) :
       show k = 2 * k - k
       omega
     · have : ¬ i.1 = k := fun hc => g₃ <| Fin.mk.inj_iff.mpr hc
-      have : i.1 + 1 ≤ k := by omega
+      have : i.1 < k := by omega
       simp_all
-      show i.1+1 = i.1 + 1 ∨ w i = w ⟨2 * k + 1 - i.1, by simp_all;omega⟩
+      simp at g₁
+      show i.1+1 = i.1 + 1 ∨ w i = w ⟨2 * k + 1 - i.1, by omega⟩
         ∧ i.1 = i.1+1 + 1
       simp
     · -- new
@@ -628,10 +555,8 @@ theorem hyde_accepts {A : Type} {k : ℕ}  (w : Fin (2*k+1) → A) :
         omega
       · simp
         have : ¬ k + 1 + 1 ≤ k := by omega
-        rw [dif_neg this]
-        show (2*k-(k+1)) + 1 = 2 * k - k
         omega
-    · rw [dif_neg (show ¬ i.1 + 1 ≤ k by omega)]
+    · rw [dif_neg (show ¬ i.1 < k by omega)]
       right
       constructor
       · simp_rw [show 2 * k + 1 - (2 * k + 1 - i) = i by omega]
@@ -640,9 +565,9 @@ theorem hyde_accepts {A : Type} {k : ℕ}  (w : Fin (2*k+1) → A) :
 
 def nfa_complexity_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
   ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
-    ∃ δ init final p, @accepts_word_path Q A n (δ) w init final p
+    ∃ δ init final p, @accepts_word_path Q A n δ w init final p
     ∧ ∀ v : Fin n → A, ∀ p',
-      @accepts_word_path Q A n (δ) v init final p' → p = p' ∧ w = v
+      @accepts_word_path Q A n δ v init final p' → p = p' ∧ w = v
 open Fin
 
 theorem restricting_construction {A Q : Type} {δ : A → Q → Set Q} {init final : Q} {n : ℕ}
@@ -699,9 +624,9 @@ theorem hydetheorem_odd {A : Type} {k : ℕ} (w : Fin (2*k+1) → A) :
  use Fin (k+1), Fin.fintype (k + 1)
  constructor
  · exact Fintype.card_fin (k + 1)
- · use khδ w, 0, 0, fun t : Fin (2*(k+1)) => dite (t.1 ≤ k)
-    (fun ht => (⟨t.1,     by omega⟩ : Fin (k+1)))
-    (fun ht => (⟨2*k+1-t.1,by omega⟩ : Fin (k+1)))
+ · use khδ w, 0, 0, fun t : Fin (2*(k+1)) => dite (t.1 < k + 1)
+    (fun ht => (⟨t.1,     ht⟩ : Fin (k+1)))
+    (fun ht => (⟨2*k+1-t.1,flipCast ht⟩ : Fin (k+1)))
    constructor
    · exact hyde_accepts w
    · exact fun _ _ h => ⟨(hyde_unique_path_reading_word h).symm, hyde_unique_word h⟩
@@ -738,7 +663,7 @@ nfa_complexity_at_most w 1 := by
       have := i.2
       simp at this
 
-theorem hyde_pos_length {A : Type} {n : ℕ} (hn : n ≥ 1) (w : Fin n → A) :
+theorem hyde_pos_length {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin n → A) :
 nfa_complexity_at_most w (n/2+1) := by
   by_cases he : Odd n
   · obtain ⟨k,hk⟩ := he
@@ -751,8 +676,8 @@ nfa_complexity_at_most w (n/2+1) := by
     subst hk
     have : (2 * k)/2 + 1 = k + 1 := by omega
     rw [this]
-    have : Inhabited A := Classical.inhabited_of_nonempty <| Nonempty.intro <| w ⟨0,by omega⟩
-    let w' := @Fin.snoc (2*k) (fun _ => A) w (Inhabited.default)
+    have a := (Classical.inhabited_of_nonempty <| (Nonempty.intro <| w ⟨0,by omega⟩)).default
+    let w' := @Fin.snoc (2*k) (fun _ => A) w a
     exact (Fin.init_snoc _ _) ▸ restricting <| hydetheorem_odd w'
 
 theorem hyde_all_lengths {A : Type} {n : ℕ} (w : Fin n → A) :
@@ -760,7 +685,7 @@ theorem hyde_all_lengths {A : Type} {n : ℕ} (w : Fin n → A) :
   by_cases H : n = 0
   · subst H
     exact hyde_emp w
-  · exact hyde_pos_length (by omega) w
+  · exact hyde_pos_length H w
 
 theorem A_N_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
   ∃ q, nfa_complexity_at_most w q := by
