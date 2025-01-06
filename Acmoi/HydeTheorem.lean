@@ -149,9 +149,8 @@ theorem kayleighBound_lower' {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A)
     (p : Fin (2 * k + 1 + 1) → Fin (k + 1)) (h : accepts_path (khδ w) 0 0 p)
     (s : Fin (2 * k + 1)) : (p s.succ).1 ≥ (p s.castSucc).1 - 1 :=
   @Fin.induction (2*k)
-    (fun n : Fin (2*k+1) =>
-      (p n.castSucc).1 - 1 ≤ (p n.succ).1
-    ) (by simp; rw [h.1]; simp) (by
+    (fun n : Fin (2*k+1) => (p n.castSucc).1 - 1 ≤ (p n.succ).1)
+    (by simp; rw [h.1]; simp) (by
       intro n hn
       unfold accepts_path at h
       obtain ⟨a,ha⟩ := h.2.2 n.succ
@@ -169,16 +168,18 @@ theorem hyde_loop_when' {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A)
     (ht : p t.castSucc = Fin.last k ∧ p t.succ = Fin.last k) :
     t = ⟨k, by omega⟩ := by
   by_contra H
-  cases lt_or_gt_of_ne fun hc => H <| Fin.eq_mk_iff_val_eq.mpr hc
-  · have : (p t.castSucc).1 < k := by
-      have : ∀ s : Fin (2*k+1), (p s.succ).1 ≤ p s.castSucc + 1 := by
-        apply move_slowly'; tauto
-      have : ∀ s : Fin (2*(k+1)), (p s).1 ≤ s := by
+  cases lt_or_gt_of_ne fun hc => H <| Fin.eq_mk_iff_val_eq.mpr hc with
+  | inl h' =>
+    have : (p t.castSucc).1 < k := by
+      have h₁ : (p t.castSucc).1 ≤ t.castSucc := by
         apply kayleighBound'; tauto
-      have := this t.castSucc
-      simp at this;omega
+      simp at h₁
+      calc
+      _ ≤ _ := h₁
+      _ < _ := h'
     rw [ht.1] at this
     simp at this
+  | inr h' =>
   · have g₀ : t.1 < 2*k + 1 := by
       by_contra H
       have ht2 := t.2
@@ -369,7 +370,7 @@ theorem hyde_unique_path' {A : Type} {k : ℕ} (w : Fin (2*k+1) → A)
           simp
           simp_rw [← two_mul]
           apply Fin.mk.inj_iff.mpr
-          show  k - ↑(p (Fin.last (2*k+1))) = k
+          show  k - (p (Fin.last (2*k+1))).1 = k
           rw [this]
           simp
           ) (by
@@ -457,9 +458,7 @@ theorem hyde_unique_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
     simp_all
     cases h₂ with
     | inl h => tauto
-    | inr h =>
-      simp at h
-      omega
+    | inr h => simp at h; omega
   have case4 (g₀ : i < k + 1) (g₁ : i≠ 0) (g₃ : ¬ ⟨i,by omega⟩= Fin.last k) : w ⟨i,hi⟩ = v ⟨i,hi⟩ := by
     have : i ≠ k := fun hc => g₃ <| Fin.mk.inj_iff.mpr hc
     have : i < k := by omega
@@ -493,10 +492,10 @@ theorem hyde_unique_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
     have : ¬ i ≤ k := by omega
     simp_all
     apply aux₀'
+    exact g₆
     exact h₂
     simp
     tauto
-    exact g₆
   · have h₀ : ¬ i < k + 1 := by simp_all
     have h₁ : ¬ i < k := by omega
     simp_all
@@ -533,8 +532,7 @@ theorem hyde_accepts {A : Type} {k : ℕ}  (w : Fin (2*k+1) → A) :
       have : i.1 < k := by omega
       simp_all
       simp at g₁
-      show i.1+1 = i.1 + 1 ∨ w i = w ⟨2 * k + 1 - i.1, by omega⟩
-        ∧ i.1 = i.1+1 + 1
+      rw [Set.mem_def]
       simp
     · -- new
       simp at g₄ g₅
@@ -601,14 +599,14 @@ theorem restricting
   obtain ⟨δ,init,final,p,hp⟩ := hx.2
   constructor
   · tauto
-  · use δ, init, p ⟨n, by omega⟩, Fin.init p
+  · use δ, init, p (Fin.last n).castSucc, Fin.init p
     constructor
     · constructor
       · rw [← hp.1.1]
         rfl
       · constructor
         · rfl
-        · exact fun i => hp.1.2.2 ⟨i.1, by omega⟩
+        · exact fun i => hp.1.2.2 i.castSucc
     · intro v p' h
       have h₀ : accepts_word_path δ (Fin.snoc v (w (Fin.last n))) init final
         (Fin.snoc p' (p (Fin.last (n + 1)))) := by

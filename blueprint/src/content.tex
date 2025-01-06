@@ -293,7 +293,7 @@ The Kolmogorov complexity of a finite word $w$ is, roughly speaking,
 			Case $t=1$:	A 1-rainbow word of length $k$ exists, namely any permutation of the symbols in $\Sigma$ (\Cref{word-as-permutation}).
 		For $t>1$, let $x$ be a \emph{de Bruijn} word $B(k,t)$ of length $k^t$ and let $w= x^2\restrict (k^t+t-1)$.
 		\end{proof}
-		\begin{definition}\label{df:power}\label{df:IEEEref}
+		\begin{definition}\label{df:power}
 			Let $\alpha$ be a word of length $n$, and let $\alpha_i$ be the $i^{\text{th}}$ letter of $\alpha$ for $1\le i\le n$.
 			We define the $u^{\text{th}}$ power\index{power} of $\alpha$ for certain values of
 			$u\in\mathbb Q_{\ge 0}$ (the set of nonnegative rational numbers) as follows.
@@ -346,7 +346,7 @@ The Kolmogorov complexity of a finite word $w$ is, roughly speaking,
 			Therefore, $\mathrm{ce}(w)=\sup T=\inf S$.
 		\end{proof}
 
-		As an example of \Cref{df:IEEEref}, we have $\mt{0110}^{3/2}=\mt{011001}$.
+		As an example of \Cref{df:power}, we have $\mt{0110}^{3/2}=\mt{011001}$.
 		Note that the expected Power Rule for Exponents\index{power rule for exponents} fails for word exponentiation.
 		In general, $(x^a)^b\ne x^{ab}$, for instance
 		\[
@@ -372,6 +372,162 @@ The Kolmogorov complexity of a finite word $w$ is, roughly speaking,
 				\item\label{t:3} There exist integers $i,j>0$ such that $x^i=y^j$.
 			\end{enumerate}
 		\end{theorem}
+
+
+	\section{Automata}
+		In \Cref{def:NFA}, some basic objects of study in this book are introduced.
+
+		\begin{definition}\label{def:NFA}
+			Let $\Sigma$ be a finite alphabet and let $Q$ be a finite set whose elements are called \emph{states}.\index{states}
+			A \emph{nondeterministic finite automaton} (NFA)\index{NFA} is a 5-tuple
+			\(
+				M=(Q,\Sigma,\delta,q_0,F).
+			\)
+			The \emph{transition function}\index{transition function} $\delta\fr Q\times\Sigma\to\mathcal P(Q)$ maps each $(q,b)\in Q\times\Sigma$ to a subset of $Q$.
+			Within $Q$ we find the \emph{initial state} $q_0\in Q$ and
+			the set of \emph{final states} $F\subseteq Q$.
+			The function $\delta$ is extended to a function $\delta^*\fr Q\times\Sigma^*\to\mathcal P(Q)$ by
+			structural induction:
+			\begin{eqnarray*}
+				\delta^*(q,\eps) &=& \{q\},\\
+				\delta^*(q,\sigma\dolon i)&=&\bigcup_{s\in \delta^*(q,\sigma)}\delta(s,i).
+			\end{eqnarray*}
+			Overloading notation, we may also write $\delta=\delta^*$.
+			The \emph{language accepted by $M$} is
+			\[
+				L(M)=\{x \in \Sigma^*\st  \delta(q,x)\cap F\ne\emptyset\}.
+			\]
+			A \emph{deterministic finite automaton} (DFA)\index{DFA} is also a 5-tuple
+			\(
+				M=(Q,\Sigma,\delta,q_0,F).
+			\)
+			In this case, $\delta\fr Q\times\Sigma\to Q$ is a total function and is extended to $\delta^*\fr Q\times\Sigma^*\to Q$ by
+			\begin{equation}\label{eq:recursion}
+			\delta^*(q,\sigma \dolon i)=\delta(\delta^*(q,\sigma),i).
+			\end{equation}
+			If the domain of $\delta$ is a subset of $Q\times\Sigma$, $M$ is an \emph{incomplete DFA}.
+			In this case, $M$ coincides with an NFA with a special property which we can check for effectively.
+			We denote a partial function $f$ from $A$ to $B$ by $f\fr (\subseteq A)\to B$ or $f\mathrel{\vdots}A\to B$\index{$\vdots$}.
+
+			Finally,
+			the set of words accepted by $M$ is
+			\[
+				L(M)=\{x \in \Sigma^*\st  \delta(q,x)\in F\}.
+			\]
+		\end{definition}
+
+		Automata may be viewed as an instance of graph theory, where
+		the automaton is a directed graph (digraph) with labeled edges, a state is a vertex and a transition is an edge.
+		This point of view we introduce now, and return to frequently.
+
+
+		\begin{definition}\label{df:digraph}\index{digraph}
+			A \emph{digraph} $D=(V,E)$ consists of a set of \emph{vertices} $V$ and a set of \emph{edges} $E\subseteq V^2$.
+			Let $s,t\in V$.
+			Let $n\ge 0$, $n\in\mathbb Z$. 
+			A \emph{walk} of length $n$ from $s$ to $t$ is a function $\Delta:\{0,1,\dots,n\}\to V$
+			such that $\Delta(0)=s$, $\Delta(n)=t$, and $(\Delta(k),\Delta(k+1))\in E$ for each $0\le k<n$.
+
+			A \emph{cycle} of length $n=\abs{\Delta}\ge 1$ in $D$ is a walk from $s$ to $s$, for some $s\in V$, such that
+			$\Delta(t_1)=\Delta(t_2), t_1\ne t_2\implies \{t_1,t_2\}=\{0, n\}$.
+			Two cycles are \emph{disjoint} if their ranges are disjoint.
+		\end{definition}
+
+
+		\Cref{eq:recursion} may be viewed as a closure property:
+		if $(q,\sigma,r)\in\delta^*$ then $(q,\sigma\dolon i,\delta(r,i))\in\delta^*$.
+		Formally, then, $\delta^*$ is the intersection of all functions that contain $\delta$ (viewing symbols as length-1 strings) and is closed under this closure property.
+		Using the fact that $\N$ is well-ordered and is the range of the length function on strings,
+		we can define $G(n)$ to be $\delta^*$ restricted to words of length $n$, and then $G(n)$ is defined from $G\restrict n$ by $G(n)=F(n,G\restrict n)$, where
+		\[
+			F(n,g)=
+			\begin{cases}
+				\delta,														 & n=0,\\
+				\{(q,\sigma\dolon i,\delta(r,i)) \st (q,\sigma,r)\in g(n-1)\},  & n>0, n-1\in\mathrm{dom}(g),\\
+				\emptyset,													  & n>0, n-1\not\in\mathrm{dom}(g).
+			\end{cases}
+		\]
+		Note that $(G\restrict n)(n-1)=G(n-1)$ so that the third clause does not occur in our application.
+		Since $G\restrict 0$ is the empty function, we need to carve out the special case $n=0$.
+
+		\Cref{may3-2022} is the special case of the wellorder $(\N,<)$ from Schimmerling~\cite[Theorem 3.8]{MR2839729}.
+		We apply it with $B=\{f\st f\mathrel{\vdots} Q\times\Sigma^*\to Q\}$.
+		\begin{theorem}\label{may3-2022}
+			Let $B$ be a set and let $P$ be the set of all partial functions from $\N$ to $B$.
+			For each $F\fr \N\times P\to B$, there is a unique function $G\fr \N\to B$ such that
+			\[
+				G(n)=F(n,G\restrict n)
+			\]
+			for all $n\in\N$.
+		\end{theorem}
+
+		\begin{remark}
+			Sipser, 2nd edition~\cite{sipser2012introduction} does not introduce $\delta^*$ at all but discusses everything in terms of a sequence of values of $\delta$.
+			Shallit~\cite{Shallit:2008:SCF:1434864}, and Hopcroft and Ullman~\cite{MR645539}, introduce $\delta^*$ but do not give a justification for its existence.
+		\end{remark}
+
+
+		\begin{definition}\label{df:A A^-}
+			Let $\Sigma$ be an alphabet.
+			Let DFA$_\Sigma$ denote the class of all DFAs over $\Sigma$ and let partDFA$_\Sigma$ denote the class of all partial DFAs over $\Sigma$.
+			If a DFA $M$ over $\Sigma$ has the property that it accepts a string $x$, but no other strings of length $\abs{x}$, i.e.,
+			\[
+			L(M)\cap\Sigma^{\abs{x}}=\{x\},
+			\]
+			then we say that $M$ \emph{accepts $x$ uniquely}\index{accepts uniquely, DFA}.
+			Let $x\in\Sigma^*$ with $\abs{x}=n$.
+			Define $A(x,\Sigma)$,\index{$A(x,\Sigma)$}
+			the \emph{automatic complexity}\index{automatic complexity} of $x$ (with respect to $\Sigma$)
+			to be the least number of states in any $M\in\mathrm{DFA}_\Sigma$ such that $M$ accepts $x$ uniquely.
+
+			If we consider $x$ to be a function $x\fr [n]\to\Sigma$, then $x\in\Sigma^*$ where $\Sigma=\mathrm{range}(x)$.
+			We define $\tilde A(x)=A(x,\mathrm{range}(x))$.\index{$\tilde A(x)$}
+
+			Similarly, we define $A^-(x,\Sigma)$,\index{$A^-(x,\Sigma)$}
+			the \emph{partial automatic complexity} of $x$,
+			to be the least number of states in any $M\in\mathrm{partDFA}_\Sigma$ such that $L(M)\cap \Sigma^n=\{x\}$.
+		\end{definition}
+
+		In most cases below, if we write $A(x)$ we intend $\tilde A(x)$.\index{$A(x)$}
+
+
+		\begin{theorem}\label{dec13-2022-II}
+			Let $x$ be a word in a finite alphabet $\Sigma$. We have $A^-(x)\le A(x)$.
+			If $\abs{x}=1$ and $\abs{\Sigma}>1$ then $A^-(x)=1<2=A(x)$.
+		\end{theorem}
+		\begin{proof}
+			The inequality $A^-(x)\le A(x)$ follows from the inclusion $\mathrm{DFA}_\Sigma\subseteq\mathrm{partDFA}_\Sigma$.
+			Assume $\abs{x}=1$ and $\abs{\Sigma}>1$. Without much loss of generality, $x=\mt 0$ and $\Sigma=\{\mt 0, \mt 1, \mt 2\}$.
+			The witnessing partial DFA for $A^-(x)$ is shown in \eqref{egreg},
+			and the witnessing DFA for $A(x,\Sigma)$ is shown in \eqref{egreg-2}.
+			\begin{eqnarray}
+				\begin{gathered}\label{egreg}
+				\xymatrix{
+					\text{start}\ar[r] & *+[Foo]{q_0}\ar@(dr,ur)_{\mt{0}}
+				}
+				\end{gathered}\\
+				\begin{gathered}\label{egreg-2}
+				\xymatrix{
+					\text{start}\ar[r] & *+[Foo]{q_0}\ar@(ul,ur)^{\mt 0}\ar[r]_{\mt{1}, \mt{2}} & *+[Fo]{q_1}\ar@(dr,ur)_{\mt{0},\mt{1},\mt{2}}
+				}
+				\end{gathered}
+			\end{eqnarray}
+		\end{proof}
+		\begin{definition}[{\cite{MR3386523,MR1897300}}]\label{precise}
+			\lean{A_N}
+			Let $L(M)$ be the language recognized by the automaton $M$.
+			Let $x$ be a finite word.
+			The (unique-acceptance) nondeterministic automatic complexity
+			$A_N(w)=A_{Nu}(w)$\index{$A_N(x)$} of $w$ is
+			the minimum number of states of an NFA $M$
+			such that $M$ accepts $w$ and the number of walks
+			along which $M$ accepts words of length $\abs{w}$ is 1.
+
+			The exact-acceptance nondeterministic automatic complexity
+			$A_{Ne}(w)$\index{$A_{Ne}(x)$} of $w$ is
+			the minimum number of states of an NFA $M$
+			such that $M$ accepts $w$ and $L(M)\cap\Sigma^{\abs{w}}=\{w\}$.
+		\end{definition}
 
 
 \chapter{Nondeterminism and overlap-free words}\label{chap:EJC}
@@ -400,6 +556,7 @@ The Kolmogorov complexity of a finite word $w$ is, roughly speaking,
 		\begin{theorem}[Hyde~\cite{Hyde}]\label{Hyde}\label{hydebound}
 			\lean{A_N_bound}
 			\leanok
+			\uses{A_N}
 			The nondeterministic automatic complexity $A_N(x)$ of a string $x$ of length $n$ satisfies
 			\[
 				A_N(x) \le b(n):={\lfloor} n/2 {\rfloor} + 1\text{.}
