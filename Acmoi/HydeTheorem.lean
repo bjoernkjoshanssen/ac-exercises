@@ -561,11 +561,19 @@ theorem hyde_accepts {A : Type} {k : ℕ}  (w : Fin (2*k+1) → A) :
       · show 2 * k + 1 - i.1 = 2 * k - i.1 + 1
         omega
 
-def nfa_complexity_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
+def A_N_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
   ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
-    ∃ δ init final p, @accepts_word_path Q A n δ w init final p
-    ∧ ∀ v : Fin n → A, ∀ p',
-      @accepts_word_path Q A n δ v init final p' → p = p' ∧ w = v
+    ∃ δ init final p, accepts_word_path δ w init final p
+    ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
+      accepts_word_path δ v init final p' → p = p' ∧ w = v
+
+/-- The relation behind exact nondeterministic automatic complexity. -/
+def A_Ne_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
+  ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
+    ∃ δ init final p, accepts_word_path δ w init final p
+    ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
+      accepts_word_path δ v init final p' → w = v
+
 open Fin
 
 theorem restricting_construction {A Q : Type} {δ : A → Q → Set Q} {init final : Q} {n : ℕ}
@@ -592,7 +600,7 @@ theorem restricting_construction {A Q : Type} {δ : A → Q → Set Q} {init fin
 /-- Jan 3, 2024: subword inequality -/
 theorem restricting
  {A : Type} {n q : ℕ} {w : Fin (n+1) → A}
- (h : nfa_complexity_at_most w q) : nfa_complexity_at_most (Fin.init w) q := by
+ (h : A_N_at_most w q) : A_N_at_most (Fin.init w) q := by
   obtain ⟨Q,hQ⟩ := h
   obtain ⟨x,hx⟩ := hQ
   use Q, x
@@ -618,7 +626,7 @@ theorem restricting
       · rw [use.2];simp
 
 theorem hydetheorem_odd {A : Type} {k : ℕ} (w : Fin (2*k+1) → A) :
- nfa_complexity_at_most w (k+1) := by
+ A_N_at_most w (k+1) := by
  use Fin (k+1), Fin.fintype (k + 1)
  constructor
  · exact Fintype.card_fin (k + 1)
@@ -629,9 +637,22 @@ theorem hydetheorem_odd {A : Type} {k : ℕ} (w : Fin (2*k+1) → A) :
    · exact hyde_accepts w
    · exact fun _ _ h => ⟨(hyde_unique_path_reading_word h).symm, hyde_unique_word h⟩
 
+theorem A_Ne_le_A_N {A : Type} {n q : ℕ} {w : Fin n → A}
+    (h : A_N_at_most w q) : A_Ne_at_most w q := by
+  obtain ⟨Q, fQ, hQ⟩ := h
+  obtain ⟨δ, init, final, p, hδ⟩ := hQ.2
+  use Q, fQ
+  constructor
+  · exact hQ.1
+  · use δ, init, final, p
+    constructor
+    · exact hδ.1
+    · intro v p' hp'
+      exact (hδ.2 v p' hp').2
+
 /-- A word cannot have complexity 0,
  because then there'd be no initial state. -/
-theorem nfa_complexity_ge_one {A : Type} {n : ℕ} (w : Fin n → A) : ¬ nfa_complexity_at_most w 0 := by
+theorem nfa_complexity_ge_one {A : Type} {n : ℕ} (w : Fin n → A) : ¬ A_N_at_most w 0 := by
   intro ⟨Q,x,hx⟩
   obtain ⟨_, init, _⟩ := hx.2
   have : Inhabited Q := { default := init }
@@ -642,8 +663,8 @@ This version does not require the alphabet A to be nonempty,
 hence does not follow using `restricting`.
 -/
 theorem hyde_emp {A : Type} (w : Fin 0 → A) :
-nfa_complexity_at_most w 1 := by
-  unfold nfa_complexity_at_most
+A_N_at_most w 1 := by
+  unfold A_N_at_most
   use Fin 1, (Fin.fintype 1), rfl, (fun a q => ∅), 0, 0, (fun t => 0)
   constructor
   · constructor
@@ -662,7 +683,7 @@ nfa_complexity_at_most w 1 := by
       simp at this
 
 theorem hyde_pos_length {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin n → A) :
-nfa_complexity_at_most w (n/2+1) := by
+A_N_at_most w (n/2+1) := by
   by_cases he : Odd n
   · obtain ⟨k,hk⟩ := he
     subst hk
@@ -679,19 +700,28 @@ nfa_complexity_at_most w (n/2+1) := by
     exact (Fin.init_snoc _ _) ▸ restricting <| hydetheorem_odd w'
 
 theorem hyde_all_lengths {A : Type} {n : ℕ} (w : Fin n → A) :
-    nfa_complexity_at_most w (n/2+1) := by
+    A_N_at_most w (n/2+1) := by
   by_cases H : n = 0
   · subst H
     exact hyde_emp w
   · exact hyde_pos_length H w
 
 theorem A_N_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
-  ∃ q, nfa_complexity_at_most w q := by
+  ∃ q, A_N_at_most w q := by
   use n/2+1
   apply hyde_all_lengths
 
+theorem A_Ne_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
+  ∃ q, A_Ne_at_most w q := by
+  use n/2+1
+  exact A_Ne_le_A_N <| hyde_all_lengths w
+
 noncomputable def A_N {A : Type} : {n : ℕ} → (Fin n → A) → ℕ :=
   fun w => Nat.find (A_N_bounded w)
+
+/-- Exact nondeterministic automatic complexity. -/
+noncomputable def A_Ne {A : Type} : {n : ℕ} → (Fin n → A) → ℕ :=
+  fun w => Nat.find (A_Ne_bounded w)
 
 theorem A_N_bound {A : Type} {n : ℕ} (w : Fin n → A) :
   A_N w ≤ n/2+1 := find_le <| hyde_all_lengths w
