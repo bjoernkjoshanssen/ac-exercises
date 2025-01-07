@@ -3,7 +3,7 @@ import Mathlib.Algebra.Order.Floor
 import Mathlib.Data.Nat.Log
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Fin.Tuple.Take
-
+set_option maxHeartbeats 2000000
 /-!
 
   # Hyde's Theorem
@@ -566,6 +566,190 @@ def A_N_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
     ∃ δ init final p, accepts_word_path δ w init final p
     ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
       accepts_word_path δ v init final p' → p = p' ∧ w = v
+
+def A_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
+  ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
+    ∃ δ init final p, (∀ a q, Fintype.card (δ a q) = 1) ∧ accepts_word_path δ w init final p
+    ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
+      accepts_word_path δ v init final p' → p = p'
+
+def ringδ {A : Type} {n : ℕ} (w : Fin n → A) : A → Fin (n+1) → Set (Fin (n+1)) := by
+      intro a q
+      by_cases H₀ : q = Fin.last n
+      · exact {Fin.last n} -- Fin.last n is a dead state
+      · by_cases H₁ : q.1 < n - 1
+        · by_cases H₂ : a = w ⟨q.1, by omega⟩
+          · exact {⟨q.1 + 1, by omega⟩} -- continue around the cycle
+          · exact {Fin.last n} -- go to dead state
+        · by_cases H₂ : a = w ⟨q.1, by
+            have : q.1 ≠ n := fun hc => H₀ <| Fin.eq_of_val_eq hc
+            omega
+          ⟩
+          · exact {0} -- complete the cycle
+          · exact {Fin.last n} -- go to dead state
+
+theorem deadRingδ₀  {A : Type} {n : ℕ} (w v : Fin n → A) (p : Fin (n+1) → (Fin (n+1)))
+  (h : accepts_word_path (ringδ w) v 0 0 p)
+  (t : Fin n)
+  (ht : p t.castSucc = Fin.last n) :
+  p t.succ = Fin.last n := by
+    unfold accepts_word_path at h
+    have := h.2.2 t
+    unfold ringδ at this
+    simp at this
+    simp_all
+
+theorem deadRingδ₂  {A : Type} {n : ℕ} (w v : Fin n → A) (p : Fin (n+1) → (Fin (n+1)))
+  (h : accepts_word_path (ringδ w) v 0 0 p)
+  (t : Fin (n+1))
+  (ht : p t = Fin.last n) (s : Fin (n+1)) (hs : t.1 ≤ s.1) :
+    p s = Fin.last n := by
+  have := @Fin.induction n (fun k => t.1 ≤ k.1 → p k = Fin.last n) (by
+    simp;intro hh;rw [← ht];congr;symm;exact Fin.eq_of_val_eq hh
+  ) (by
+  simp
+  intro i h₀ h₁
+  by_cases H : t.1 ≤ i.1
+  · have := h₀ (by omega)
+    apply deadRingδ₀
+    exact h
+    exact this
+  · have : t.1 = i.1 + 1 := by omega
+    rw [← ht]
+    congr
+    symm at this
+    exact Fin.eq_of_val_eq this
+  )
+  simp at this
+  tauto
+
+theorem deadRingδ₁  {A : Type} {n : ℕ} (hn : n ≠ 0) (w v : Fin n → A) (p : Fin (n+1) → (Fin (n+1)))
+  (h : accepts_word_path (ringδ w) v 0 0 p)
+  (t : Fin (n+1)) :
+  p t ≠ Fin.last n := by
+  intro hc
+  have : p (Fin.last n) = Fin.last n := by
+    apply deadRingδ₂
+    exact h
+    exact hc
+    simp
+    omega
+  unfold accepts_word_path at h
+  rw [h.2.1] at this
+  apply hn
+  symm at this
+  exact Fin.last_eq_zero_iff.mp this
+
+theorem liveRingδ₁  {A : Type} {n : ℕ} (hn : n ≠ 0) (w v : Fin n → A) (p : Fin (n+1) → (Fin (n+1)))
+  (h : accepts_word_path (ringδ w) v 0 0 p)
+  (t : Fin (n+1)) : t ≠ Fin.last n → p t = t := by
+  have := @Fin.induction n (fun k  => k ≠ Fin.last n → p k = k) (by
+    simp;intro;unfold accepts_word_path at h;tauto
+  ) (by
+    intro i h₀ h₁
+    have := h₀ (by
+      have := i.2; have : i.1 ≠ n := Nat.ne_of_lt this;exact
+      Ne.symm (Fin.ne_of_val_ne (id (Ne.symm this)));)
+    have hdead := @deadRingδ₁ A n hn w v p (by tauto) i.succ
+    unfold accepts_word_path at h
+    have := h.2.2 ⟨i.1, by omega⟩
+    unfold ringδ at this
+    simp at this
+    split_ifs at this with g₀ g₁ g₂
+    · simp_all
+    · simp_all;rfl
+    · simp at this
+      tauto
+    · simp_all
+      symm
+      exfalso
+      have : i.1 + 1 = n := by omega
+      apply h₁
+      exact Eq.symm (Fin.eq_of_val_eq (id (Eq.symm this)))
+    · simp at this
+      tauto
+  )
+  simp at this
+  intro hl
+  exact this t (by tauto)
+
+theorem A_bound {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin n → A) : A_at_most w (n+1) := by
+  use Fin (n+1)
+  use (Fin.fintype (n + 1))
+  constructor
+  · exact Fintype.card_fin (n + 1)
+  · use ringδ w
+    use 0, 0
+    use (by
+      intro t
+      by_cases H : t = Fin.last n
+      · exact 0
+      · exact ⟨t.1, by omega⟩
+    )
+    constructor
+    · intros
+      unfold ringδ
+      split_ifs <;> rfl
+    ·
+      constructor
+      · constructor
+        · simp
+        · unfold ringδ
+          simp
+          intro i
+          split_ifs with g₀ g₁ g₂ g₃ g₄ g₅ g₆
+          · simp
+            exact Fin.last_eq_zero_iff.mp g₁.symm
+          · have : n = 0 := Fin.last_eq_zero_iff.mp g₁.symm
+            subst this
+            simp_all
+          · have : i.1 = n := Fin.mk.inj_iff.mp g₀
+            omega -- contradiction with i.2
+          · have : i.1 = n := Fin.mk.inj_iff.mp g₀
+            have : n = 1 := by
+              apply le_antisymm
+              · contrapose g₃
+                simp_all
+              · contrapose g₁
+                simp_all
+            subst this
+            simp_all
+          · tauto
+          · tauto
+          · simp_all
+            intro h
+            revert g₆
+            simp
+            have : i.1 + 1 = n := Fin.mk.inj_iff.mp h
+            omega
+          · simp_all
+            intro h
+            have : i.1 = n := by
+              apply le_antisymm
+              · omega
+              · exfalso
+                apply h <| Fin.last_le_iff.mp g₆
+            simp_rw [this] at g₄
+            exfalso
+            apply g₄ rfl
+      · intro v p' h
+        have hdead: ∀ s, p' s ≠ Fin.last n := by
+          intro s
+          apply deadRingδ₁
+          exact hn
+          exact h
+        unfold accepts_word_path ringδ at h
+        · ext i
+          split_ifs with g₀
+          · have := h.2.1
+            rw [← g₀] at this
+            symm
+            simp
+            exact Fin.mk.inj_iff.mp this
+          · simp
+            symm
+            have := @liveRingδ₁ A n hn w v p' h i g₀
+            exact congrArg Fin.val this
 
 /-- The relation behind exact nondeterministic automatic complexity. -/
 def A_Ne_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
