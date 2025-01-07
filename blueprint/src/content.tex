@@ -562,6 +562,11 @@ The Kolmogorov complexity of a finite word $w$ is, roughly speaking,
 				A_N(x) \le b(n):={\lfloor} n/2 {\rfloor} + 1\text{.}
 			\]
 		\end{theorem}
+		\begin{proof}
+			\leanok
+			Let $n=2m+1$ be odd and let $K_m$ be a Kayleigh graph, \Cref{fig:hyde}.
+			For a proof by induction it is convenient to label the states in the opposite order of the usual:
+
 
 			\begin{tikzpicture}[shorten >=1pt,node distance=1.5cm,on grid,auto]
 				\tikzstyle{every state}=[fill={rgb:black,1;white,10}]
@@ -588,6 +593,82 @@ The Kolmogorov complexity of a finite word $w$ is, roughly speaking,
 					(q_1)	 edge [bend left]  node		   {$x_n$}	 (q_0);
 			\end{tikzpicture}
 
+
+			Then we just observe that there are no walks of odd length $<n$ accepted, and there is exactly one walk of odd length $n$
+			accepted, and these two observations persist inductively.
+
+			For a number perspective, let $W_{m,k}$ be the number of accepting walks in $K_M$ of length $k$.
+			We show by induction on $m$ that $W_{m,2m+1}=1$ and $W_{m,2s+1}=0$ whenever $s<m$.
+			
+			% If $m=0$, the NFA $K_m$ is simply
+			% \[
+			% \xymatrix{
+			% \text{start}\ar[r]&*+[Foo]{q_0}\ar@(ul,ur)_{x_1}
+			% }
+			% \]
+			% which accepts one word of length 1 and, of course, no word of shorter odd lengths.
+			%
+			% For the inductive step, note that $K_m$ is schematically:
+			% \[
+			% \xymatrix{
+			% 			\text{start}\ar[r]
+			% 			&*+[Foo]{q_0}\ar@/_/[r]_{x_1}
+			% 			&*+[Fo]{K_{m-1}}\ar@/_/[l]_{x_n}
+			% }
+			% \]
+			An accepting walk of length $2m+1$ consists of the edge labeled $x_1$, followed by a walk of length $2m-1$, followed by the edge labeled $x_n$.
+			The walk of length $2m-1$ can stay within $K_{m-1}$ in which case by induction there is exactly one possible walk.
+			Or it can venture out of $K_{m-1}$ to visit $q_0$ a certain number $0<t\le m-1$ of times; each such time contributes a walk of length 2.
+			Between these times, an accepting walk in $K_{m-1}$ must be performed.
+			
+			By the induction hypothesis, these walks have lengths $\ell_0,\dots,\ell_t$ where if $t>0$ and $W_{m-1,\ell_i}>0$ then $\ell_i$ is even.
+			So if $t>0$, they have lengths that must add up to an odd number
+			\[
+			\sum_{i=0}^{t} \ell_i = 2m-1 - 2t
+			\]
+			which is impossible.
+			The number of walks is
+			\begin{align*}
+		   W_{m,2m+1}&=& \sum_{t=0}^{m-1}\sum_{\makecell{\{\ell_0,\dots,\ell_t\ge 0:\\ \sum\ell_i = 2m-1-2t\}}}\prod_{i=0}^t W_{m-1,\ell_i}\\
+		   &=& \sum_{\makecell{\{\ell_0\ge 0:\\ \ell_0 = 2m-1\}}}W_{m-1,\ell_0}\\
+			&=&W_{m-1,2m-1} \\
+			&=&1&&(\text{ind.~hyp.})
+			\end{align*}
+
+			If $n>0$ is even then $x=ya$ where $\abs{y}$ is odd; by the second subword inequality \Cref{subword} \Cref{AN case}, $A_N(x)\le A_N(y)+1$, as desired.
+			Finally, if $n=0$ then the result follows from $A_N(\eps)=1$.
+		\end{proof}
+		\begin{figure}
+			\begin{tikzpicture}[shorten >=1pt,node distance=1.5cm,on grid,auto]
+				\tikzstyle{every state}=[fill={rgb:black,1;white,10}]
+				\node[state,initial, accepting] (q_0)   {$q_0$}; 
+				\node[state] (q_1)	 [right=of q_0   ] {$q_1$}; 
+				\node[state] (q_2)	 [right=of q_1   ] {$q_2$}; 
+				\node[state] (q_3)	 [right=of q_2   ] {$q_3$};
+				\node		(q_dots)  [right=of q_3   ] {$\dots$};
+				\node[state] (q_{m-1})	 [right=of q_dots] {$q_{m-1}$};
+				\node[state] (q_m) [right=of q_{m-1}   ] {$q_m$}; 
+				\path[->] 
+					(q_0)	 edge [bend left]  node		   {$x_1$}	 (q_1)
+					(q_1)	 edge [bend left]  node		   {$x_2$}	 (q_2)
+					(q_2)	 edge [bend left]  node		   {$x_3$}	 (q_3)
+					(q_3)	 edge [bend left]  node [pos=.45] {$x_4$}	 (q_dots)
+					(q_dots)  edge [bend left]  node [pos=.6]  {$x_{m-1}$} (q_{m-1})
+					(q_{m-1})	 edge [bend left]  node [pos=.56] {$x_m$}	 (q_m)
+					(q_m) edge [loop above] node		   {$x_{m+1}$} ()
+					(q_m) edge [bend left]  node [pos=.45] {$x_{m+2}$} (q_{m-1})
+					(q_{m-1})	 edge [bend left]  node [pos=.4]  {$x_{m+3}$} (q_dots)
+					(q_dots)  edge [bend left]  node [pos=.6]  {$x_{n-3}$} (q_3)
+					(q_3)	 edge [bend left]  node		   {$x_{n-2}$} (q_2)
+					(q_2)	 edge [bend left]  node		   {$x_{n-1}$} (q_1)
+					(q_1)	 edge [bend left]  node		   {$x_n$}	 (q_0);
+			\end{tikzpicture}
+			\caption{
+				A nondeterministic finite automaton, a \emph{Kayleigh graph}\index{Kayleigh graph}, that only accepts one string
+				$x= x_1x_2x_3x_4 \cdots x_n$ of length $n = 2m + 1$.
+			}
+			\label{fig:hyde}
+		\end{figure}
 \chapter{Edge complexity and digraphs}\label{chap:digraph}
 
 	\section{Edge-counting automatic complexity}
