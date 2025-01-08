@@ -74,7 +74,7 @@ def accepts_word_path {Q A : Type*} {n : ℕ}
   path 0 = init ∧ path (Fin.last n) = final
   ∧ ∀ i : Fin n, path i.succ ∈ δ (w i) (path i.castSucc)
 
-#print axioms accepts_word_path
+-- #print axioms accepts_word_path
 /-- p is an accepting path for the NFA δ. -/
 def accepts_path {Q A : Type*} {n : ℕ}
     (δ : A → Q → Set Q) (init final : Q) (path : Fin (n+1) → Q) :=
@@ -571,7 +571,7 @@ def A_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
   ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
     ∃ δ init final p, (∀ a q, Fintype.card (δ a q) = 1) ∧ accepts_word_path δ w init final p
     ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
-      accepts_word_path δ v init final p' → p = p'
+      accepts_word_path δ v init final p' → p = p' ∧ w = v
 
 def ringδ {A : Type} {n : ℕ} (w : Fin n → A) : A → Fin (n+1) → Set (Fin (n+1)) := by
       intro a q
@@ -673,7 +673,114 @@ theorem liveRingδ₁  {A : Type} {n : ℕ} (hn : n ≠ 0) (w v : Fin n → A) (
   intro hl
   exact this t (by tauto)
 
-theorem A_bound {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin n → A) : A_at_most w (n+1) := by
+theorem ringδ_unique_word {A : Type} {n : ℕ} (hn : n ≠ 0) (w v : Fin n → A)
+(h : accepts_word_path (ringδ w) v 0 0 ((by
+      intro t
+      by_cases t = Fin.last n
+      · exact 0
+      · exact ⟨t.1, by omega⟩
+    ))) : w = v := by
+  have hdead := @deadRingδ₁ A n hn w v ((by
+      intro t
+      by_cases H : t = Fin.last n
+      · exact 0
+      · exact ⟨t.1, by omega⟩
+    )) h
+  have ⟨m,hm⟩ : ∃ m, n = m+1 := by exact exists_eq_succ_of_ne_zero hn
+  subst hm
+  ext t
+  have := @Fin.induction m (fun k => w k = v k) (by
+    simp
+    unfold accepts_word_path ringδ at h
+    have := h.2.2 0
+    simp at this
+    split_ifs at this with g₀ g₁ g₂ g₃
+    · exfalso
+      simp at this
+    · tauto
+    · simp at this
+    · simp at this
+      tauto
+    · tauto
+    · simp at this
+    · simp at this
+    · simp_all
+  ) (by
+    simp
+    intro i hi
+    unfold accepts_word_path ringδ at h
+    simp at h
+    have := h i.succ
+    simp at this
+    split_ifs at this with g₀ g₁ g₂ g₃ g₄ g₅ g₆
+    · exfalso;simp at this
+    · exfalso; simp at g₁
+    ·
+      simp at this
+      have hmi' : i.1 + 1 = m + 1 := by simp at g₀;exact Fin.mk.inj_iff.mp g₀
+      have hmi : m = i.1 := by omega
+
+      have h₀ : i.succ ≠ Fin.last m := by
+        intro hc
+        have : i.1 + 1 = m := Fin.mk.inj_iff.mp hc
+        omega
+      rw [if_neg h₀] at this
+      by_cases H : v i.succ = w 0
+      simp_all
+      have : i.1 + 1 + 1 = 1 := Fin.mk.inj_iff.mp this
+      omega
+      have hey := h ⟨i.1,by omega⟩
+      split_ifs at hey with g₉ g₁₀ g₁₁ g₁₂
+      · have : i.1 = m + 1 := by simp at g₉;exact Fin.mk.inj_iff.mp g₉
+        omega
+      · simp at hey
+      · exfalso; apply g₁₁;exact False.elim (g₉ g₁₀)
+      · simp_rw [hmi] at g₁₂;simp at g₁₂
+      · have hio : ⟨i.1, by omega⟩ = Fin.last m := Fin.eq_mk_iff_val_eq.mpr hmi.symm
+        rw [hio] at hey
+        simp at hey
+        rw [if_neg H] at this
+        simp at this
+        have : i.1 + 1 + 1 = m + 1 := Fin.mk.inj_iff.mp this
+        omega
+    · have : m = 0 := by simp_all
+      subst this
+      have := i.2
+      simp_all
+    · simp at this
+    · have hmi: m = i.1 := by simp at g₄;exact False.elim (g₀ g₄)
+      simp_all;have : i.1 + 1 + 1 = m + 1 := by exact False.elim (g₀ g₄)
+      omega
+    · have him : i.succ ≠ Fin.last m := by
+        intro hc
+        have : i.1 + 1 = m := Fin.mk.inj_iff.mp hc
+        simp at g₆
+        omega
+      rw [if_neg him] at this
+      simp at this
+      symm
+      by_contra H
+      have hw : w i.succ = w ⟨i.1 + 1, by omega⟩ := by congr
+      simp_rw [← hw] at this
+      rw [if_neg H] at this
+      simp at this
+      have : i.1 + 1 + 1 = m + 1 := Fin.mk.inj_iff.mp this
+      simp at g₆
+      omega
+    · have him : i.succ = Fin.last m := by exact Fin.eq_last_of_not_lt g₆
+      rw [if_pos him] at this
+      simp at this
+      symm
+      by_contra H
+      have hw : w i.succ = w ⟨i.1 + 1, by omega⟩ := by congr
+      simp_rw [← hw] at this
+      rw [if_neg H] at this
+      simp at this
+  )
+  tauto
+
+
+theorem A_bound₀ {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin n → A) : A_at_most w (n+1) := by
   use Fin (n+1)
   use (Fin.fintype (n + 1))
   constructor
@@ -691,8 +798,8 @@ theorem A_bound {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin n → A) : A_at_mos
       unfold ringδ
       split_ifs <;> rfl
     ·
-      constructor
-      · constructor
+      have hac :  accepts_word_path (ringδ w) w 0 0 fun t ↦ if H : t = Fin.last n then 0 else ⟨↑t, by omega⟩ := by
+        constructor
         · simp
         · unfold ringδ
           simp
@@ -732,14 +839,17 @@ theorem A_bound {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin n → A) : A_at_mos
             simp_rw [this] at g₄
             exfalso
             apply g₄ rfl
+      constructor
+      · apply hac
       · intro v p' h
         have hdead: ∀ s, p' s ≠ Fin.last n := by
           intro s
           apply deadRingδ₁
           exact hn
           exact h
-        unfold accepts_word_path ringδ at h
-        · ext i
+
+        have hp : (fun t ↦ if H : t = Fin.last n then 0 else ⟨↑t, by omega⟩) = p' := by
+          ext i
           split_ifs with g₀
           · have := h.2.1
             rw [← g₀] at this
@@ -750,6 +860,48 @@ theorem A_bound {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin n → A) : A_at_mos
             symm
             have := @liveRingδ₁ A n hn w v p' h i g₀
             exact congrArg Fin.val this
+
+        constructor
+        · apply hp
+        · exact @ringδ_unique_word A n hn w v (by
+            rw [← hp] at h
+            tauto
+          )
+
+theorem A_bound {A : Type} {n : ℕ} (w : Fin n → A) : A_at_most w (n+1) := by
+  by_cases hn : n = 0
+  · subst hn
+    simp
+    unfold A_at_most
+    use Fin 1
+    use (Fin.fintype 1)
+    constructor
+    · rfl
+    · use (fun a q => Set.univ)
+      use 0
+      use 0
+      use (by simp;intro z;exact z)
+      constructor
+      · intro a z
+        have : (Set.univ : Set (Fin 1)) = {0} := by aesop
+        aesop
+      · constructor
+        · constructor
+          · simp
+          · constructor
+            · simp
+            · intro i
+              have := i.2
+              omega
+        · intro v p' h
+          constructor
+          · simp;ext i; calc
+            _ = 0 := by exact Fin.val_eq_zero i
+            _ = _ := by exact Eq.symm (Fin.val_eq_zero (p' i))
+          · ext i
+            have := i.2
+            omega
+  · apply A_bound₀;tauto
 
 /-- The relation behind exact nondeterministic automatic complexity. -/
 def A_Ne_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
@@ -890,6 +1042,12 @@ theorem hyde_all_lengths {A : Type} {n : ℕ} (w : Fin n → A) :
     exact hyde_emp w
   · exact hyde_pos_length H w
 
+theorem A_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
+  ∃ q, A_at_most w q := by
+  use n+1
+  exact A_bound w
+
+
 theorem A_N_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
   ∃ q, A_N_at_most w q := by
   use n/2+1
@@ -910,4 +1068,4 @@ noncomputable def A_Ne {A : Type} : {n : ℕ} → (Fin n → A) → ℕ :=
 theorem A_N_bound {A : Type} {n : ℕ} (w : Fin n → A) :
   A_N w ≤ n/2+1 := find_le <| hyde_all_lengths w
 
-#print axioms A_N_bound
+-- #print axioms A_N_bound
