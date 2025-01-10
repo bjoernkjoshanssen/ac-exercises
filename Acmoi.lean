@@ -5,6 +5,7 @@ import Acmoi.TestingDimensionBound
 import Acmoi.dimVC
 import Acmoi.HydeTheorem
 import Acmoi.Theorem1_49
+import Acmoi.Lemma9Singapore
 import Acmoi.QuasTheorem
 import Acmoi.Exercise1_3
 import Acmoi.Exercise1_4

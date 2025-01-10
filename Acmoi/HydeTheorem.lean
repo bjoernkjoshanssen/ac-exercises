@@ -582,6 +582,12 @@ def A_minus_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
     ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
       accepts_word_path δ v init final p' → p = p' ∧ w = v
 
+def A_N_tot_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
+  ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
+    ∃ δ init final p, (∀ a q, Fintype.card (δ a q) ≥ 1) ∧ accepts_word_path δ w init final p
+    ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
+      accepts_word_path δ v init final p' → p = p' ∧ w = v
+
 
 open Fin
 
