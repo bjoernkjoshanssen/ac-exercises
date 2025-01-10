@@ -4,6 +4,7 @@ import Acmoi.Basic
 import Acmoi.TestingDimensionBound
 import Acmoi.dimVC
 import Acmoi.HydeTheorem
+import Acmoi.Theorem1_49
 import Acmoi.QuasTheorem
 import Acmoi.Exercise1_3
 import Acmoi.Exercise1_4
