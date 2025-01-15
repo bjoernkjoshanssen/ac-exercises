@@ -136,6 +136,167 @@ def complet {A Q : Type} (δ : A → Q → Set Q) : A → Option Q → Set (Opti
 
 open Option
 
+lemma complet_card {A Q : Type} [Fintype Q] {δ : A → Q → Set Q} (q : Q) (a : A):
+    Fintype.card ((complet δ) a q) = max (Fintype.card ((δ) a q)) 1 := by
+  unfold complet
+  have : some q ≠ none := by simp
+  rw [dif_neg this]
+  split_ifs with g₀
+  · simp at g₀; rw [g₀]; simp
+  · simp at g₀
+    have h₀: Fintype.card ↑(some '' δ a ((some q).get rfl)) = (Fintype.card ↑(δ a q)) := by
+      apply Fintype.card_congr
+      simp
+      unfold Set.Elem at *
+      use (fun x => ⟨by exact x.1.get (by
+        have := x.2
+        obtain ⟨b,hb⟩ := this
+        refine isSome_iff_exists.mpr ?a
+        use b
+        tauto), by
+        obtain ⟨b,hb⟩ := x.2
+        simp_rw [← hb.2]
+        tauto⟩)
+      · intro x
+        exact ⟨x.1, by simp⟩
+      · intro x
+        simp
+      · intro x;
+        simp
+    have h₂: (Fintype.card ↑(δ a q)) ≠ 0 := by
+      intro hc
+      apply g₀
+      have := (@card_eq_zero_iff ↑(δ a q) _).mp hc
+      exact Set.isEmpty_coe_sort.mp this
+    have h₁: (Fintype.card ↑(δ a q)) ≥ 1 := by omega
+    rw [h₀];exact Eq.symm (Nat.max_eq_left h₁)
+
+
+lemma complet_extends_paths {A Q : Type} {δ : A → Q → Set Q} {n : ℕ} {w : Fin n → A}
+    {init final : Q} {p : Fin (n+1) → Q}
+    (hδ : accepts_word_path          δ  w init final                 p   ) :
+          accepts_word_path (complet δ) w init final (fun x => some (p x)) := by
+  constructor
+  · simp
+    exact hδ.1
+  · constructor
+    · simp
+      exact hδ.2.1
+    · intro i
+      simp [complet]
+      have : ¬ δ (w i) (p i.castSucc) = ∅ := by
+        intro hc
+        have := hδ.2.2 i
+        rw [hc] at this
+        simp at this
+      rw [if_neg this]
+      simp
+      exact hδ.2.2 i
+
+lemma complet_conservative {A Q : Type} {δ : A → Q → Set Q} {n : ℕ} {w : Fin n → A}
+    {init final : Q} {p : Fin (n+1) → Q}
+    (hδ : accepts_word_path (complet δ) w init final (fun x => some (p x)) ) :
+          accepts_word_path δ w init final p := by
+  constructor
+  · have :=hδ.1
+    simp at this
+    tauto
+  · constructor
+    · have := hδ.2.1
+      simp_all
+    · intro i
+      have := hδ.2.2 i
+      simp [complet] at this
+      split_ifs at this <;> simp_all
+lemma complet_preserves_unique_path' {A Q : Type} {δ : A → Q → Set Q} {n : ℕ}
+    {init final : Q} {p : Fin (n+1) → Q} {v : Fin n → A}
+    (hv : ∀  p', accepts_word_path          δ  v init final  p' →                 p     =  p') :
+          ∀ op', accepts_word_path (complet δ) v init final op' → (fun x => some (p x)) = op'  := by
+  intro op' h
+  have H : ¬ ∃ j, op' j = none := by
+    intro hc
+    obtain ⟨j₀,hj₀⟩ := hc
+    have h₀ : ∀ j, j₀.1 ≤ j.1 → op' j = none :=
+      @Fin.induction n (fun j => j₀.1 ≤ j.1 → op' j = none) (by
+        simp
+        intro h;have : j₀ = 0 := Eq.symm (Fin.eq_of_val_eq (id (Eq.symm h)))
+        rw [this] at hj₀
+        exact hj₀
+      ) (by
+        intro i;simp;intro ih hi
+        by_cases H : j₀.1 = i.1 + 1
+        · rw [← hj₀]
+          congr
+          symm
+          exact Eq.symm (Fin.eq_of_val_eq (id (Eq.symm H)))
+        · have h₀ : op' i.castSucc = none := by apply ih;omega
+          have h₁ := h.2.2 i
+          simp [complet] at h₁
+          split_ifs at h₁
+          exact h₁
+      )
+    have h₁ := h₀ (Fin.last n) (by simp;omega)
+    -- dead lemma
+    have := h.2.1
+    simp_all
+  push_neg at H
+  let f (j : Fin (n+1)) : Q :=
+    (op' j).get (isSome_iff_ne_none.mpr (H j))
+  have h₀ : op' = fun j => some (f j) := by ext; simp [f]
+  have h₁ := (hv f (by
+    unfold f
+    unfold accepts_word_path at h ⊢
+    constructor
+    · have h₁ := h.1
+      simp_rw [h₁]
+      simp
+    · constructor
+      · simp_rw [h.2.1]
+        simp
+      · simp [complet] at h
+        intro i
+        have h₂ := h.2.2 i
+        split_ifs at h₂ <;> simp_all
+      ))
+  rw [h₀, h₁]
+
+
+lemma complet_preserves_unique {A Q : Type} {δ : A → Q → Set Q} {n : ℕ} {w : Fin n → A}
+    {init final : Q} {p : Fin (n+1) → Q}
+    (hδ :
+            ∀ (v : Fin n → A) (p' : Fin (n + 1) → Q),
+            accepts_word_path δ v init final p' → p = p' ∧ w = v) :
+            ∀ (v : Fin n → A) (op' : Fin (n + 1) → Option Q),
+            accepts_word_path (complet δ) v init final op' →
+            (fun x => some (p x)) = op' ∧ w = v
+
+             := by
+    · intro v op' h
+      have h₀ := @complet_preserves_unique_path' A Q δ n init final p v (fun p' h => (hδ v p' h).1) op' (by tauto)
+      constructor
+      · exact h₀
+      have h₂ := @complet_conservative A Q δ n v init final p (by rw [← h₀] at h;exact h)
+      have h₁ := @complet_extends_paths A Q δ n v init final p h₂
+      exact (hδ v p h₂).2
+
+
+/-- Silly, but used twice. -/
+lemma complet_and {A Q : Type} {δ : A → Q → Set Q} {n : ℕ} {w : Fin n → A}
+    {init final : Q} {p : Fin (n+1) → Q}
+    (hδ : accepts_word_path δ w init final p ∧
+            ∀ (v : Fin n → A) (p' : Fin (n + 1) → Q),
+            accepts_word_path δ v init final p' → p = p' ∧ w = v) :
+          accepts_word_path (complet δ) w init final (fun x => some (p x)) ∧
+            ∀ (v : Fin n → A) (op' : Fin (n + 1) → Option Q),
+            accepts_word_path (complet δ) v init final op' →
+            (fun x => some (p x)) = op' ∧ w = v
+             := by
+  · constructor
+    · apply complet_extends_paths
+      exact hδ.1
+    · apply complet_preserves_unique
+      exact hδ.2
+
 
 theorem none_state_completion' {A : Type} {n : ℕ} (w : Fin n → A) :
 A_N_at_most w q → A_N_tot_at_most w (q+1) := by
@@ -156,72 +317,11 @@ A_N_at_most w q → A_N_tot_at_most w (q+1) := by
       simp at H
       apply H
       exact Set.nonempty_iff_ne_empty.mpr g₁
-  · constructor
-    · constructor
-      · simp
-        exact hδ.1.1
-      · constructor
-        · simp
-          exact hδ.1.2.1
-        · intro i
-          simp [complet]
-          split_ifs with g₀
-          · exfalso
-            have := hδ.1.2.2 i
-            rw [g₀] at this
-            simp at this
-          · simp
-            exact hδ.1.2.2 i
-    · intro v op' h
-      have hv := hδ.2 v
-      have H : ¬ ∃ j, op' j = none := by
-        intro hc
-        obtain ⟨j₀,hj₀⟩ := hc
-        have h₀ : ∀ j, j₀.1 ≤ j.1 → op' j = none := by
-          exact @Fin.induction n (fun j => j₀.1 ≤ j.1 → op' j = none) (by
-            simp
-            intro h;have : j₀ = 0 := Eq.symm (Fin.eq_of_val_eq (id (Eq.symm h)))
-            rw [this] at hj₀
-            exact hj₀
-          ) (by
-            intro i;simp;intro ih hi
-            by_cases H : j₀.1 = i.1 + 1
-            · rw [← hj₀]
-              congr
-              symm
-              exact Eq.symm (Fin.eq_of_val_eq (id (Eq.symm H)))
-            · have h₀ : op' i.castSucc = none := by apply ih;omega
-              have h₁ := h.2.2 i
-              simp [complet] at h₁
-              split_ifs at h₁
-              exact h₁
-          )
-        have h₁ := h₀ (Fin.last n) (by simp;omega)
-        -- dead lemma
-        have := h.2.1
-        simp_all
-      push_neg at H
-      let f (j : Fin (n+1)) : Q :=
-        (op' j).get (isSome_iff_ne_none.mpr (H j))
-      have h₀ : op' = fun j => some (f j) := by ext; simp [f]
-      have h₁ := (hv f (by
-        unfold f
-        unfold accepts_word_path at h ⊢
-        constructor
-        · have h₁ := h.1
-          simp_rw [h₁]
-          simp
-        · constructor
-          · simp_rw [h.2.1]
-            simp
-          · simp [complet] at h
-            intro i
-            have h₂ := h.2.2 i
-            split_ifs at h₂ <;> simp_all
-          ))
-      constructor
-      · rw [h₀, h₁.1]
-      · exact h₁.2
+  · apply complet_and
+    exact hδ
+
+
+-- #print A_minus_at_most
 
 /-- Dead-state completion lemma. -/
 theorem none_state_completion {A : Type} {n : ℕ} (w : Fin n → A) :
@@ -240,6 +340,17 @@ A_minus_at_most w q →  A_at_most w (q+1) := by
     · rfl
     · rfl
     · have h₀ := hδ.1 a (o.get (isSome_iff_ne_none.mpr g₀))
+      -- ALTERNATIVE PROOF:
+      -- have hcl := @complet₁ A Q _ δ (o.get (isSome_iff_ne_none.mpr g₀)) a
+      -- unfold complet at hcl
+      -- simp only [some_get, dite_eq_ite, ne_eq] at hcl
+      -- rw [dif_neg g₀] at hcl
+      -- rw [if_neg g₁] at hcl
+      -- simp_all
+      -- rw [← hcl]
+      -- congr
+      -- ext u
+      -- simp
       cases Or.symm (Nat.eq_or_lt_of_le h₀) with
       | inl h₄ =>
         have h₁ : Fintype.card (δ a (o.get (isSome_iff_ne_none.mpr g₀))) = 0 :=
@@ -252,72 +363,8 @@ A_minus_at_most w q →  A_at_most w (q+1) := by
         apply Set.card_image_of_inj_on
         intro x hx y hy h
         apply some_injective _ h
-  · constructor
-    · constructor
-      · simp
-        exact hδ.2.1.1
-      · constructor
-        · simp
-          exact hδ.2.1.2.1
-        · intro i
-          simp [complet]
-          split_ifs with g₀
-          · exfalso
-            have := hδ.2.1.2.2 i
-            rw [g₀] at this
-            simp at this
-          · simp
-            exact hδ.2.1.2.2 i
-    · intro v op' h
-      have hv := hδ.2.2 v
-      have H : ¬ ∃ j, op' j = none := by
-        intro hc
-        obtain ⟨j₀,hj₀⟩ := hc
-        have h₀ : ∀ j, j₀.1 ≤ j.1 → op' j = none := by
-          exact @Fin.induction n (fun j => j₀.1 ≤ j.1 → op' j = none) (by
-            simp
-            intro h;have : j₀ = 0 := Eq.symm (Fin.eq_of_val_eq (id (Eq.symm h)))
-            rw [this] at hj₀
-            exact hj₀
-          ) (by
-            intro i;simp;intro ih hi
-            by_cases H : j₀.1 = i.1 + 1
-            · rw [← hj₀]
-              congr
-              symm
-              exact Eq.symm (Fin.eq_of_val_eq (id (Eq.symm H)))
-            · have h₀ : op' i.castSucc = none := by apply ih;omega
-              have h₁ := h.2.2 i
-              simp [complet] at h₁
-              split_ifs at h₁
-              exact h₁
-          )
-        have h₁ := h₀ (Fin.last n) (by simp;omega)
-        -- dead lemma
-        have := h.2.1
-        simp_all
-      push_neg at H
-      let f (j : Fin (n+1)) : Q :=
-        (op' j).get (isSome_iff_ne_none.mpr (H j))
-      have h₀ : op' = fun j => some (f j) := by ext; simp [f]
-      have h₁ := (hv f (by
-        unfold f
-        unfold accepts_word_path at h ⊢
-        constructor
-        · have h₁ := h.1
-          simp_rw [h₁]
-          simp
-        · constructor
-          · simp_rw [h.2.1]
-            simp
-          · simp [complet] at h
-            intro i
-            have h₂ := h.2.2 i
-            split_ifs at h₂ <;> simp_all
-          ))
-      constructor
-      · rw [h₀, h₁.1]
-      · exact h₁.2
+  · apply complet_and
+    tauto
 
 /-- This is the main result of Theorem1_49.lean with a more modular proof. -/
 theorem A_bound₀'extendMod {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin n → A)
