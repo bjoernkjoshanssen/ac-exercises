@@ -15,8 +15,8 @@ open Finset Fintype Nat Classical
 
 section General
 
-/--  Version of boundFuncAdd that uses Fin API more. -/
-lemma boundFuncAdd' {k : ℕ} {f : Fin (k+1) → Fin (k+1)} (a b : Fin (k+1))
+/--  Discrete version of the Racecar Principle. -/
+lemma racecar {k : ℕ} {f : Fin (k+1) → Fin (k+1)} (a b : Fin (k+1))
     (h₀ : f a = b) (h : ∀ s : Fin k,
       (f s.succ).1
     ≤ (f s.castSucc).1 + 1) :
@@ -39,8 +39,8 @@ lemma boundFuncAdd' {k : ℕ} {f : Fin (k+1) → Fin (k+1)} (a b : Fin (k+1))
 
 
 
-/-- Version of id_of_slow using Fin API more.-/
-lemma id_of_slow' {k : ℕ} {f : Fin (k+1) → Fin (k+1)}
+/-- Bidirectional version of the Discrete Racecar Principle. -/
+lemma exact_racecar {k : ℕ} {f : Fin (k+1) → Fin (k+1)}
     (h₀ : f 0 = 0) (hk : f (Fin.last k) = (Fin.last k))
     (h : ∀ (s : Fin k),
       (f s.succ).1
@@ -48,7 +48,7 @@ lemma id_of_slow' {k : ℕ} {f : Fin (k+1) → Fin (k+1)}
     f a.castSucc = a.castSucc := by
     by_contra H
     have : (f a.castSucc).1 < a := by
-      have := @boundFuncAdd' k f 0 0 h₀ h a.1 (by
+      have := @racecar k f 0 0 h₀ h a.1 (by
         simp;omega
       )
       simp at this
@@ -57,7 +57,7 @@ lemma id_of_slow' {k : ℕ} {f : Fin (k+1) → Fin (k+1)}
       exact Fin.eq_of_val_eq <| Nat.le_antisymm this H
     let b := (f a.castSucc)
     have : (f (Fin.last k)).1 < k := by
-      have := @boundFuncAdd' k f a.castSucc b rfl h (k-a)
+      have := @racecar k f a.castSucc b rfl h (k-a)
         (by simp)
       simp at this
       calc
@@ -330,7 +330,7 @@ theorem hyde_unique_path' {A : Type} {k : ℕ} (w : Fin (2*k+1) → A)
     · by_cases hh : s.1 = k
       · have : s = ⟨k, by omega⟩ := Fin.eq_of_val_eq hh
         aesop
-      have h₀':= @id_of_slow' k (fun x => p ⟨x.1,by have := x.2;linarith⟩)
+      have h₀':= @exact_racecar k (fun x => p ⟨x.1,by have := x.2;linarith⟩)
         (by simp;unfold accepts_path at h;tauto) (by simp;aesop)
         (by
           intro s;simp
@@ -361,7 +361,7 @@ theorem hyde_unique_path' {A : Type} {k : ℕ} (w : Fin (2*k+1) → A)
           simp_rw [h₀] at this
           change k - (p s).1 = s.1 - (k+1) at this
           omega
-        have := @id_of_slow' k f (by
+        have := @exact_racecar k f (by
           unfold f;
           simp_all
         ) (by

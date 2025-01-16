@@ -8,31 +8,18 @@ import Acmoi.QuasTheorem
 set_option maxHeartbeats 20000000
 /-!
 
-  # Kjos-Hanssen's part of the K-H Quas theorem
+  # Kjos-Hanssen / Quas theorem
 
-
+We prove that permutation automatic complexity A^perm can be characterized by
+A^perm(x) = |x| + 1.
+The upper bound was asserted in [SAM] 2017.
+and the lower bound uses [Quas] 2020.
+The full result appears as Theorems 4.41 and 4.42 in [ACMOI] 2024.
 -/
 
 open Finset Fintype Nat Classical
 
-
-
-def leastnotinrange' {n q : ℕ} (h : q < n) (f : Fin (q) → Fin (n)) : Fin (n) := by
-    exact min' (filter (fun k => ∀ l : Fin (q), f ⟨l.1,by omega⟩ ≠ k) univ) (by
-    by_contra h₂
-    simp at h₂
-    have : ∀ k : Fin (n), k ∉  filter (fun k ↦ ∀ (l : Fin (q)), ¬ f ⟨l.1, by omega⟩ = k) univ := by
-        intro k
-        rw [h₂]
-        simp
-    simp at this
-    have : Function.Surjective f := this
-    have := Fintype.card_le_of_surjective f this
-    simp at this
-    omega
-    )
-#print axioms leastnotinrange'
-
+/-- The least element not hit by a function into a larger set. -/
 def leastnotinrange {n q : ℕ} (h : q < n) (f : Fin (q+1) → Fin (n+1)) : Fin (n+1) := by
     exact min' (filter (fun k => ∀ l : Fin (q+1), f ⟨l.1,by omega⟩ ≠ k) univ) (by
     by_contra h₂
@@ -42,12 +29,12 @@ def leastnotinrange {n q : ℕ} (h : q < n) (f : Fin (q+1) → Fin (n+1)) : Fin 
         rw [h₂]
         simp
     simp at this
-    have : Function.Surjective f := this
     have := Fintype.card_le_of_surjective f this
     simp at this
     omega
     )
 
+/-- The DFA `δ` witnessing the permutation-automatic complexity of a word `w`. -/
 noncomputable def Perm_δ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n+1)) :  (Fin (n+1)) := match q with
 | 0 => by
   by_cases hn : n = 0
@@ -64,68 +51,67 @@ noncomputable def Perm_δ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : Fi
     · have hqn : q < n := by omega
       exact leastnotinrange hqn (fun i => Perm_δ w a ⟨i.1, by omega⟩)
 
--- example {n : ℕ} (a b : Fin n) : (a + b).1 = a.1 + b.1 := by refine Fin.eq_mk_iff_val_eq.mp ?a✝
-
+/-- The minimum of a set `s` belongs to `s`. This version does not require mentioning `s` explicitly. -/
 theorem memofeqmin {α : Type} [LinearOrder α] {s : Finset α} (H : s.Nonempty) {a : α} (h : a = min' s H) : a ∈ s := by
   have := @min'_mem α _ s H
   rw [← h] at this
   tauto
 
+/-- If `q+2` is the least element not in the range of a function with domain size `m+1` then `q+2≤ m+1`. -/
 theorem hbig {n : ℕ} {q : ℕ} {δa : Fin (n+1) → Fin (n+1)}
-  {l : Fin (n + 1)} {m : ℕ} (hm : ↑l = m + 1)
-  (hq₂ : q + 2 < n + 1)
-  (hc : (leastnotinrange (by omega) fun i : Fin (m + 1) ↦ δa ⟨i.1, by omega⟩) = ⟨q + 1, by omega⟩ + 1) :
-  Fintype.card (Fin (q + 2)) ≤ Fintype.card (Fin (m + 1)) := by
-            have : ∀ x : Fin (q+2), ∃ y : Fin (m+1),
-                δa ⟨y.1, by omega⟩ = ⟨x.1, by omega⟩ := by
-                intro x
-                by_contra H
-                push_neg at H
-                unfold leastnotinrange at hc
-                have : (⟨q+2, hq₂⟩ : Fin (n+1)) ≤ ⟨x.1, by omega⟩ := by
-                    rw [Fin.add_def] at hc
-                    simp at hc
-                    have : q + 1 + 1 < n + 1 := hq₂ -- as above
-                    have : (q+1+1) % (n+1) = q+1+1 := by exact mod_eq_of_lt this
-                    simp_rw [this] at hc
-                    rw [← hc]
-                    apply min'_le
-                    simp
-                    tauto
-                have : q + 2 ≤ x.1 := by exact this
-                have : x.1 < q + 2 := x.2
-                omega
-            let f := fun k : Fin (q+2) => (@Fin.find (m+1)
-                (fun y : Fin (m+1) =>
-                    δa ⟨y.1, by omega⟩ = ⟨k.1, by omega⟩) _
-                ).get (by
-                apply Fin.isSome_find_iff.mpr
-                exact this k)
-            have := @Fintype.card_le_of_injective (Fin (q+2)) (Fin (m+1)) _ _
-                f (by
-                intro u v huv
-                unfold f at huv
+    {l : Fin (n + 1)} {m : ℕ} (hm : ↑l = m + 1)
+    (hq₂ : q + 2 < n + 1)
+    (hc : (leastnotinrange (by omega) fun i : Fin (m + 1) ↦ δa ⟨i.1, by omega⟩) = ⟨q + 1, by omega⟩ + 1) :
+    Fintype.card (Fin (q + 2)) ≤ Fintype.card (Fin (m + 1)) := by
+  have : ∀ x : Fin (q+2), ∃ y : Fin (m+1),
+    δa ⟨y.1, by omega⟩ = ⟨x.1, by omega⟩ := by
+    intro x
+    by_contra H
+    push_neg at H
+    unfold leastnotinrange at hc
+    have : (⟨q+2, hq₂⟩ : Fin (n+1)) ≤ ⟨x.1, by omega⟩ := by
+        rw [Fin.add_def] at hc
+        simp at hc
+        have : q + 1 + 1 < n + 1 := hq₂ -- as above
+        have : (q+1+1) % (n+1) = q+1+1 := by exact mod_eq_of_lt this
+        simp_rw [this] at hc
+        rw [← hc]
+        apply min'_le
+        simp
+        tauto
+    have : q + 2 ≤ x.1 := this
+    have : x.1 < q + 2 := x.2
+    omega
+  let f := fun k : Fin (q+2) => (@Fin.find (m+1)
+    (fun y : Fin (m+1) =>
+        δa ⟨y.1, by omega⟩ = ⟨k.1, by omega⟩) _
+    ).get (by
+    apply Fin.isSome_find_iff.mpr
+    exact this k)
+  have := @Fintype.card_le_of_injective (Fin (q+2)) (Fin (m+1)) _ _ f (by
+    intro u v huv
+    unfold f at huv
+    have hu := @Fin.find_spec (m+1)
+        (fun y : Fin (m+1) =>
+        δa ⟨y.1, by omega⟩ = ⟨u.1, by omega⟩) _
+        (@Option.get (Fin (m + 1))
+        (Fin.find fun y ↦ δa ⟨↑y, by omega⟩ = ⟨↑u, by omega⟩) (by
+            exact Fin.isSome_find_iff.mpr (this u)
+        ) : Fin (m + 1)) (by aesop)
+    have hv := @Fin.find_spec (m+1)
+        (fun y : Fin (m+1) =>
+        δa ⟨y.1, by omega⟩ = ⟨v.1, by omega⟩) _
+        (@Option.get (Fin (m + 1))
+        (Fin.find fun y ↦ δa ⟨↑y, by omega⟩ = ⟨↑u, by omega⟩) (by
+            exact Fin.isSome_find_iff.mpr (this u)
+        ) : Fin (m + 1)) (by aesop)
+    simp at hu hv
+    suffices (⟨u.1, by omega⟩ : Fin (n+1)) = ⟨v.1, by omega⟩ by aesop
+    apply hu.symm.trans
+    tauto)
+  exact this
 
-                have hu := @Fin.find_spec (m+1)
-                    (fun y : Fin (m+1) =>
-                    δa ⟨y.1, by omega⟩ = ⟨u.1, by omega⟩) _
-                    (@Option.get (Fin (m + 1))
-                    (Fin.find fun y ↦ δa ⟨↑y, by omega⟩ = ⟨↑u, by omega⟩) (by
-                        exact Fin.isSome_find_iff.mpr (this u)
-                    ) : Fin (m + 1)) (by aesop)
-                have hv := @Fin.find_spec (m+1)
-                    (fun y : Fin (m+1) =>
-                    δa ⟨y.1, by omega⟩ = ⟨v.1, by omega⟩) _
-                    (@Option.get (Fin (m + 1))
-                    (Fin.find fun y ↦ δa ⟨↑y, by omega⟩ = ⟨↑u, by omega⟩) (by
-                        exact Fin.isSome_find_iff.mpr (this u)
-                    ) : Fin (m + 1)) (by aesop)
-                simp at hu hv
-                suffices (⟨u.1, by omega⟩ : Fin (n+1)) = ⟨v.1, by omega⟩ by aesop
-                apply hu.symm.trans
-                tauto)
-            exact this
-
+/-- The DFA `Perm_δ` does not advance by more than one at each step. -/
 theorem Perm_δ_bound {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n+1))
     (hqn : q ≠ Fin.last n):
     (Perm_δ w a q) ≤ q + 1 := match q with
@@ -260,8 +246,6 @@ theorem Perm_δ_bound {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n
                     exact rfl
           rw [dif_neg h₁]
           intro hc
-          -- if q+2 is the smallest not in range of a functin from m+1
-          -- then m+1 ≥ q+2 AS BEFORE so q+1 ≤ m so...
           have hbig: Fintype.card (Fin (q+2)) ≤ Fintype.card (Fin (m+1)) := by
             apply hbig; tauto; exact ⟨l.1, by omega⟩; exact hm; exact hq₂;
           have hf₀: Fintype.card (Fin (m+1)) = m+1 := Fintype.card_fin (m + 1)
@@ -271,11 +255,11 @@ theorem Perm_δ_bound {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n
                 omega
           omega
 
-
+/-- Casting the DFA `Perm_δ` into an NFA. -/
 noncomputable def Permδ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n+1)) :  Set (Fin (n+1)) :=
     {Perm_δ w a q}
 
-
+/-- The DFA `Perm_δ w` does accept the word `w`.  -/
 theorem accepts_perm  {A : Type} {n : ℕ} (w : Fin n → A) :
     accepts_word_path (Permδ w) w 0 (Fin.last n) id := by
   constructor
@@ -350,9 +334,7 @@ theorem accepts_perm  {A : Type} {n : ℕ} (w : Fin n → A) :
             · have := i.2
               omega
 
-/-- instead of all, this
--- how about just use `Perm_δ_bound` and the fact that you have
--- to get to Fin.last n in n steps.  -/
+/-- If `Perm_δ w` accepts a word then it does so along a path that advances at most one step at a time. -/
 theorem perm_path_bound {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n + 1) → Fin (n + 1))
   (h : accepts_word_path (Permδ w) v 0 (Fin.last n) p)
   : ∀ (s : Fin n),
@@ -386,6 +368,7 @@ theorem perm_path_bound {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n + 1
         have : ((p i.castSucc).1 + 1) % (n + 1) = (p i.castSucc).1 + 1 := mod_eq_of_lt this
         rw [this]
 
+/-- `Perm_δ w` accepts a word of length `|w|` only along the path `id` that advances one step at a time. -/
 theorem accepts_perm_path  {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n+1) → Fin (n+1))
     (h : accepts_word_path (Permδ w) v 0 (Fin.last n) p) : p = id := by
     ext i
@@ -393,13 +376,14 @@ theorem accepts_perm_path  {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n+
     · simp
       rw [hi]
       rw [h.2.1]
-    · have := @id_of_slow' n p h.1 h.2.1 (by
+    · have := @exact_racecar n p h.1 h.2.1 (by
         apply perm_path_bound <;> tauto
       ) (i.castPred hi)
       simp at this
       rw [this]
       simp
 
+/-- If `Perm_δ w` accepts a word of length `|w|` then that word must be `w`. -/
 theorem accepts_perm_word  {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n+1) → Fin (n+1))
     (h : accepts_word_path (Permδ w) v 0 (Fin.last n) p) : w = v := by
   rw [accepts_perm_path v w p h] at h
@@ -452,7 +436,8 @@ theorem accepts_perm_word  {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n+
   ext i
   exact this i
 
-theorem injCase₁ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q.succ < n + 1) (r : ℕ)
+/-- Injectivity of `Perm_δ`, "forward" case. -/
+theorem injCase₁ {A : Type} {n : ℕ} (w : Fin n → A) {a : A} {q : ℕ} (hq : q.succ < n + 1) {r : ℕ}
     (hr : r.succ < n + 1) (h : Perm_δ w a ⟨q.succ, hq⟩ = Perm_δ w a ⟨r.succ, hr⟩)
     (h₀ : ∃ (h₁ : q + 1 < n), a = w ⟨q + 1, h₁⟩) : q = r := by
           unfold Perm_δ at h
@@ -542,6 +527,7 @@ theorem injCase₁ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq 
               simp
               simp_rw [dif_pos h₀]
 
+/-- Injectivity of `Perm_δ`, zero case. -/
 theorem injCase₀ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q.succ < n + 1)
     (h : Perm_δ w a 0 = Perm_δ w a ⟨q.succ, hq⟩) : False := by
     by_cases hn : n = 0
@@ -580,6 +566,7 @@ theorem injCase₀ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq 
       apply this 0
       rfl
 
+/-- Injectivity of `Perm_δ`, "backward" case. -/
 theorem injCase {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q.succ < n + 1) (r : ℕ)
     (hr : r.succ < n + 1) (h : Perm_δ w a ⟨q.succ, hq⟩ = Perm_δ w a ⟨r.succ, hr⟩)
     (h₀ : ¬∃ (h₁ : q + 1 < n), a = w ⟨q + 1, h₁⟩) (h₁ : ¬∃ (h₁ : r + 1 < n), a = w ⟨r + 1, h₁⟩)
@@ -611,6 +598,7 @@ theorem injCase {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q
         rfl
     -- @both the current bit is not a, but they are part of the same run of a's
 
+/-- Injectivity of `Perm_δ`, which is its key property. -/
 theorem Perm_δ_injective  {A : Type} {n : ℕ} (w : Fin n → A) (a : A) :
   Function.Injective (Perm_δ w a) := by
   intro x y h
@@ -629,7 +617,7 @@ theorem Perm_δ_injective  {A : Type} {n : ℕ} (w : Fin n → A) (a : A) :
           · exact (@injCase₁ A n w a r hr q hq h.symm h₁).symm
           · by_cases h₃ : q + 1 < n <;> (by_cases h₂ : r + 1 < n <;> (apply injCase <;> tauto))
 
-
+/-- The permutation-automatic complexity of `w` admits a witness of size `q`. -/
 def A_perm_witness_size {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
   ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
     ∃ δ : A → Q → Q,
@@ -640,6 +628,7 @@ def A_perm_witness_size {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :
     ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
       accepts_word_path Δ v init final p' → p = p' ∧ w = v
 
+/-- The permutation-automatic complexity of `w` is upper bounded by `|w|+1` [Kjos-Hanssen 2017]. -/
 theorem kjos_upper_bound  {A : Type} {n : ℕ} (w : Fin n → A) :
     A_perm_witness_size w (n+1) := by
   use Fin (n+1)
@@ -661,6 +650,7 @@ theorem kjos_upper_bound  {A : Type} {n : ℕ} (w : Fin n → A) :
         · apply @accepts_perm_word A n v w p'
           tauto
 
+/-- The extended transition function δ* plays well with concatenation. -/
 lemma ast_take  {A : Type} [Fintype A] {n : ℕ} (w : Fin n → A)
     (δ : A → Q → Q) : ∀ (a : A),
 ast δ (Fin.snoc w a) init = δ a (ast δ w init) := by
@@ -673,6 +663,7 @@ ast δ (Fin.snoc w a) init = δ a (ast δ w init) := by
         · apply Fin.init_snoc
 
 
+/-- A value of the extended transition function δ* is implied by the existence of a path. -/
 lemma the_connection₁  {A : Type} [Fintype A]
     (δ : A → Q → Q) : ∀ {n : ℕ} (w : Fin n → A) (c d : Q),
     (∃ p, accepts_word_path (fun a q ↦ {δ a q}) w c d p) →
@@ -711,6 +702,7 @@ lemma the_connection₁  {A : Type} [Fintype A]
         rw [← this]
         tauto
 
+/-- A value of the extended transition function δ* is equivalent to the existence of a path. -/
 lemma the_connection₀ {A : Type} [Fintype A] (δ : A → Q → Q) {n : ℕ} (w : Fin n → A) :
     (∃ p, accepts_word_path (fun a q ↦ {δ a q}) w init final p) ↔
     ast δ w init = final := by
@@ -731,7 +723,7 @@ lemma the_connection₀ {A : Type} [Fintype A] (δ : A → Q → Q) {n : ℕ} (w
           apply ast_take
 
 
-
+/-- The permutation-automatic complexity of `w` is lower by `|w|+1` [Quas 2020]. -/
 theorem quas_lower_bound {A : Type} [Fintype A] (hA : Fintype.card A ≥ 2) {m n : ℕ} (w : Fin n → A)
     (hmn : m ≤ n):
     ¬ A_perm_witness_size w m := by
@@ -767,20 +759,17 @@ theorem quas_lower_bound {A : Type} [Fintype A] (hA : Fintype.card A ≥ 2) {m n
   ) hA
   omega
 
+/-- The permutation-automatic complexity of `w` is well-defined. -/
 theorem A_perm_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
   ∃ q, A_perm_witness_size w q := by
   use n+1
   exact kjos_upper_bound w
+
+/-- The permutation-automatic complexity of `w`. -/
 noncomputable def A_perm {A : Type} : {n : ℕ} → (Fin n → A) → ℕ :=
   fun w => Nat.find (A_perm_bounded w)
 
--- lemma A_perm_witness_size_mono {A : Type} [Fintype A] (hA : Fintype.card A ≥ 2)
---     {n : ℕ} (w : Fin n → A) (q₁ q₂ : ℕ) (hq : q₁ ≤ q₂)
---     (h : A_perm_witness_size w q₁): A_perm_witness_size w q₂ := by
---   unfold A_perm_witness_size at h ⊢
---   -- add spurious states
---   sorry
-
+/-- The permutation-automatic complexity of `w` is exactly `|w|+1`. -/
 theorem A_perm_characterization {A : Type} [Fintype A] (hA : Fintype.card A ≥ 2)
     {n : ℕ} (w : Fin n → A) : A_perm w = n+1 := by
   have : A_perm w ≤ n+1 := find_le <| kjos_upper_bound w
