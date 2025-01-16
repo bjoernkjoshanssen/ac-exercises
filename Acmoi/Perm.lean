@@ -4,6 +4,7 @@ import Mathlib.Data.Nat.Log
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Fin.Tuple.Take
 import Acmoi.HydeTheorem
+import Acmoi.QuasTheorem
 set_option maxHeartbeats 20000000
 /-!
 
@@ -30,7 +31,7 @@ def leastnotinrange' {n q : ℕ} (h : q < n) (f : Fin (q) → Fin (n)) : Fin (n)
     simp at this
     omega
     )
-
+#print axioms leastnotinrange'
 
 def leastnotinrange {n q : ℕ} (h : q < n) (f : Fin (q+1) → Fin (n+1)) : Fin (n+1) := by
     exact min' (filter (fun k => ∀ l : Fin (q+1), f ⟨l.1,by omega⟩ ≠ k) univ) (by
@@ -541,7 +542,6 @@ theorem injCase₁ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq 
               simp
               simp_rw [dif_pos h₀]
 
-
 theorem injCase₀ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q.succ < n + 1)
     (h : Perm_δ w a 0 = Perm_δ w a ⟨q.succ, hq⟩) : False := by
     by_cases hn : n = 0
@@ -579,9 +579,6 @@ theorem injCase₀ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq 
       simp at this
       apply this 0
       rfl
-
-
-
 
 theorem injCase {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q.succ < n + 1) (r : ℕ)
     (hr : r.succ < n + 1) (h : Perm_δ w a ⟨q.succ, hq⟩ = Perm_δ w a ⟨r.succ, hr⟩)
@@ -631,3 +628,169 @@ theorem Perm_δ_injective  {A : Type} {n : ℕ} (w : Fin n → A) (a : A) :
         · by_cases h₁ : ∃ (h₁ : r + 1 < n), a = w ⟨r + 1, h₁⟩
           · exact (@injCase₁ A n w a r hr q hq h.symm h₁).symm
           · by_cases h₃ : q + 1 < n <;> (by_cases h₂ : r + 1 < n <;> (apply injCase <;> tauto))
+
+
+def A_perm_witness_size {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
+  ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
+    ∃ δ : A → Q → Q,
+    ∃ init final p,
+    (∀ a, Function.Injective (δ a)) ∧
+    let Δ : A → Q → Set (Q) := fun a q => {δ a q}
+    accepts_word_path Δ w init final p
+    ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
+      accepts_word_path Δ v init final p' → p = p' ∧ w = v
+
+theorem kjos_upper_bound  {A : Type} {n : ℕ} (w : Fin n → A) :
+    A_perm_witness_size w (n+1) := by
+  use Fin (n+1)
+  use Fin.fintype (n + 1)
+  constructor
+  · exact Fintype.card_fin (n + 1)
+  · use Perm_δ w, 0, Fin.last n, id
+    constructor
+    · exact Perm_δ_injective w
+    · constructor
+      · apply accepts_perm
+      · intro v p' h
+        have := @accepts_perm_path
+        have hp' : p' = id := by
+          apply this
+          exact h
+        constructor
+        · symm; tauto
+        · apply @accepts_perm_word A n v w p'
+          tauto
+
+lemma ast_take  {A : Type} [Fintype A] {n : ℕ} (w : Fin n → A)
+    (δ : A → Q → Q) : ∀ (a : A),
+ast δ (Fin.snoc w a) init = δ a (ast δ w init) := by
+    intro a
+    cases n with
+    | zero => simp; rfl
+    | succ n =>
+        unfold ast;congr
+        · apply Fin.snoc_last
+        · apply Fin.init_snoc
+
+
+lemma the_connection₁  {A : Type} [Fintype A]
+    (δ : A → Q → Q) : ∀ {n : ℕ} (w : Fin n → A) (c d : Q),
+    (∃ p, accepts_word_path (fun a q ↦ {δ a q}) w c d p) →
+    ast δ w c = d := by
+    intro n
+    induction n with
+    | zero =>
+        intro w c d ⟨p,hp⟩
+        unfold ast
+        unfold accepts_word_path at hp
+        apply hp.1.symm.trans
+        exact hp.2.1
+    | succ n ih =>
+        intro w c d ⟨p,hp⟩
+        unfold ast
+        unfold accepts_word_path at hp
+        have := ih (Fin.init w) c (p (Fin.last n).castSucc) (by
+            use Fin.init p
+            constructor
+            · rw [← hp.1]
+              exact rfl
+            · constructor
+              · rfl
+              · intro i
+                simp
+                have := hp.2.2 i.castSucc
+                simp at this
+                have : Fin.init p i.succ =  p i.castSucc.succ := by rfl
+                have : δ (Fin.init w i) (Fin.init p i.castSucc) =
+                    δ (w i.castSucc) (p i.castSucc.castSucc) := by rfl
+                tauto
+        )
+        rw [this]
+        have := hp.2.2 (Fin.last n)
+        simp at this
+        rw [← this]
+        tauto
+
+lemma the_connection₀ {A : Type} [Fintype A] (δ : A → Q → Q) {n : ℕ} (w : Fin n → A) :
+    (∃ p, accepts_word_path (fun a q ↦ {δ a q}) w init final p) ↔
+    ast δ w init = final := by
+    constructor
+    · apply the_connection₁
+    · intro h
+      use (fun k => ast δ (Fin.take k (Fin.is_le k) w) init)
+      constructor
+      · rfl
+      · constructor
+        · simp
+          exact h
+        · intro i
+          simp
+          have := @Fin.take_succ_eq_snoc n (fun _ => A) i.1 i.2 w
+          rw [this]
+          simp
+          apply ast_take
+
+
+
+theorem quas_lower_bound {A : Type} [Fintype A] (hA : Fintype.card A ≥ 2) {m n : ℕ} (w : Fin n → A)
+    (hmn : m ≤ n):
+    ¬ A_perm_witness_size w m := by
+  unfold A_perm_witness_size
+  push_neg
+  intro Q _ hQ δ init final p ha hΔ
+
+  have hquas := @quas' Q A _ _ δ ha n init final (by
+    have h₀ := @the_connection₀ Q init final A _ δ n
+    have h₁ : (fun w : Fin n → A ↦ ast δ w init = final)
+        = (fun w => (∃ p, accepts_word_path (fun a q ↦ {δ a q}) w init final p)) := by
+            ext
+            rw [h₀]
+    simp_rw [h₁]
+    have : #{w}=1 := rfl
+    simp_rw [← this]
+    congr
+    ext v
+    constructor
+    · intro h
+      simp at h
+      obtain ⟨p', hp'⟩ := h
+      have := (hΔ.2 v p' hp').2
+      simp
+      rw [this]
+    · intro h
+      simp at h
+      symm at h
+      subst h
+      simp
+      use p
+      exact hΔ.1
+  ) hA
+  omega
+
+theorem A_perm_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
+  ∃ q, A_perm_witness_size w q := by
+  use n+1
+  exact kjos_upper_bound w
+noncomputable def A_perm {A : Type} : {n : ℕ} → (Fin n → A) → ℕ :=
+  fun w => Nat.find (A_perm_bounded w)
+
+-- lemma A_perm_witness_size_mono {A : Type} [Fintype A] (hA : Fintype.card A ≥ 2)
+--     {n : ℕ} (w : Fin n → A) (q₁ q₂ : ℕ) (hq : q₁ ≤ q₂)
+--     (h : A_perm_witness_size w q₁): A_perm_witness_size w q₂ := by
+--   unfold A_perm_witness_size at h ⊢
+--   -- add spurious states
+--   sorry
+
+theorem A_perm_characterization {A : Type} [Fintype A] (hA : Fintype.card A ≥ 2)
+    {n : ℕ} (w : Fin n → A) : A_perm w = n+1 := by
+  have : A_perm w ≤ n+1 := find_le <| kjos_upper_bound w
+  have : ¬ A_perm w ≤ n := by
+    intro hc
+    simp [A_perm] at hc
+    obtain ⟨m,hm⟩ := hc
+    exact quas_lower_bound hA w hm.1 hm.2
+  omega
+
+example : A_perm ![(0 : Fin 2),1,1] = 4 := by
+    apply A_perm_characterization
+    simp
