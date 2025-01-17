@@ -664,7 +664,7 @@ ast δ (Fin.snoc w a) init = δ a (ast δ w init) := by
 
 
 /-- A value of the extended transition function δ* is implied by the existence of a path. -/
-lemma the_connection₁  {A : Type} [Fintype A]
+lemma star_if_path  {A : Type} [Fintype A]
     (δ : A → Q → Q) : ∀ {n : ℕ} (w : Fin n → A) (c d : Q),
     (∃ p, accepts_word_path (fun a q ↦ {δ a q}) w c d p) →
     ast δ w c = d := by
@@ -703,11 +703,11 @@ lemma the_connection₁  {A : Type} [Fintype A]
         tauto
 
 /-- A value of the extended transition function δ* is equivalent to the existence of a path. -/
-lemma the_connection₀ {A : Type} [Fintype A] (δ : A → Q → Q) {n : ℕ} (w : Fin n → A) :
+lemma path_iff_star {A : Type} [Fintype A] (δ : A → Q → Q) {n : ℕ} (w : Fin n → A) :
     (∃ p, accepts_word_path (fun a q ↦ {δ a q}) w init final p) ↔
     ast δ w init = final := by
     constructor
-    · apply the_connection₁
+    · apply star_if_path
     · intro h
       use (fun k => ast δ (Fin.take k (Fin.is_le k) w) init)
       constructor
@@ -732,7 +732,7 @@ theorem quas_lower_bound {A : Type} [Fintype A] (hA : Fintype.card A ≥ 2) {m n
   intro Q _ hQ δ init final p ha hΔ
 
   have hquas := @quas' Q A _ _ δ ha n init final (by
-    have h₀ := @the_connection₀ Q init final A _ δ n
+    have h₀ := @path_iff_star Q init final A _ δ n
     have h₁ : (fun w : Fin n → A ↦ ast δ w init = final)
         = (fun w => (∃ p, accepts_word_path (fun a q ↦ {δ a q}) w init final p)) := by
             ext

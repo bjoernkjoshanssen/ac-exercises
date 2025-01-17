@@ -74,13 +74,13 @@ def accepts_word_path {Q A : Type*} {n : ℕ}
   path 0 = init ∧ path (Fin.last n) = final
   ∧ ∀ i : Fin n, path i.succ ∈ δ (w i) (path i.castSucc)
 
--- #print axioms accepts_word_path
 /-- p is an accepting path for the NFA δ. -/
 def accepts_path {Q A : Type*} {n : ℕ}
     (δ : A → Q → Set Q) (init final : Q) (path : Fin (n+1) → Q) :=
   path 0 = init ∧ path (Fin.last n) = final
   ∧ ∀ i : Fin n, ∃ a : A, path i.succ ∈ δ a (path i.castSucc)
 
+/-- If an NFA accepts a word along a path `p`, then `p` is an accepting path. -/
 lemma accepts_path_of_accepts_word_path {Q A : Type*} {n : ℕ}
     (δ : A → Q → Set Q) (w : Fin n → A) (init final : Q) (path : Fin (n+1) → Q)
     (h : accepts_word_path δ w init final path) :
@@ -88,7 +88,7 @@ lemma accepts_path_of_accepts_word_path {Q A : Type*} {n : ℕ}
   ⟨h.1, h.2.1, fun i => ⟨w i, by simp_all [accepts_word_path]⟩⟩
 
 
-/-- Kayleigh Hyde's δ. -/
+/-- Kayleigh Hyde's "Kayleigh graph" transition function δ. -/
 def khδ {A : Type} {k : ℕ} --(hk : k ≥ 1)
   (w : Fin (2*k+1) → A) : A → Fin (k+1) → Set (Fin (k+1)) := by
   let n := 2*k + 1
@@ -104,7 +104,8 @@ def khδ {A : Type} {k : ℕ} --(hk : k ≥ 1)
     · exact (b = b₀ ∧ r.1 = q.1 + 1) ∨ (b = b₁ ∧ q.1 = r.1 + 1) -- generic case
 
 
-/-- A version of move_slowly using the Fin API more. -/
+/-- If a Kayleigh graph accepts a word then it never advances by more than one.
+NOTE: More is true, it is sufficient that ``khδ` *process* the word. -/
 theorem move_slowly' {A : Type} {k : ℕ} {w : Fin (2 * k + 1) → A}
     {p : Fin (2 * (k + 1)) → Fin (k + 1)}
     {final : Fin (n+1)}
@@ -130,7 +131,8 @@ theorem move_slowly' {A : Type} {k : ℕ} {w : Fin (2 * k + 1) → A}
     omega
 
 
-/-- A proof of kayleighBound that uses Fin API instead of ⟨,⟩ notation -/
+/-- If a Kayleigh graph accepts a word then its position is dominated by the identity.
+NOTE: More is true, it is sufficient that ``khδ` *process* the word. -/
 theorem kayleighBound' {A : Type} {k : ℕ} {w : Fin (2 * k + 1) → A}
     {p : Fin (2 * k + 1 + 1) → Fin (k + 1)}
     (h : accepts_path (khδ w) 0 0 p) :
@@ -295,7 +297,7 @@ theorem hyde_parity' {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A) (p : Fin (
     ) t
 
 
-
+/-- A baffling auxiliary lemma about accepting paths in the Kayleigh graph NFA. -/
 theorem move_slowly_rev_aux' {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A)
 (p : Fin (2 * (k + 1)) → Fin (k + 1))
     (h : accepts_path (khδ w) 0 0 p) (s : Fin k) :
@@ -312,10 +314,12 @@ theorem move_slowly_rev_aux' {A : Type} {k : ℕ} (w : Fin (2 * k + 1) → A)
   rw [← h]
   apply Nat.le_add_right
 
+/-- If we are not yet half-way there, then if we started at the destination,
+we would not yet be half-way home. -/
 lemma flipCast {t k : ℕ} (h : ¬ t < k + 1) :
   2 * k + 1 - t < k + 1 := by omega
 
-/-- Hyde's theorem (2013). -/
+/-- The Kayleigh graph NFA for an odd-length word `w` accepts along only the intended path. -/
 theorem hyde_unique_path' {A : Type} {k : ℕ} (w : Fin (2*k+1) → A)
   (p : Fin (2*(k+1)) → Fin (k+1))
   (h : accepts_path (khδ w) 0 0 p) :
@@ -406,7 +410,8 @@ theorem hyde_unique_path' {A : Type} {k : ℕ} (w : Fin (2*k+1) → A)
 
 
 
-/-- Hyde's theorem (2013). -/
+/-- The Kayleigh graph NFA for an odd-length word `w` accepts along only the intended path,
+ no matter what word `v` with `|v| = |w|` is read. -/
 theorem hyde_unique_path_reading_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
   {p : Fin (2*(k+1)) → Fin (k+1)}
   (h : accepts_word_path (khδ w) v 0 0 p) :
@@ -417,8 +422,8 @@ theorem hyde_unique_path_reading_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) �
   apply accepts_path_of_accepts_word_path <;> tauto
 
 
-
-theorem aux₀' {A : Type} {k : ℕ} {w v : Fin (2 * k + 1) → A}
+/-- A strange auxiliary lemma about odd-length tuples. -/
+lemma odd_tuples_aux {A : Type} {k : ℕ} {w v : Fin (2 * k + 1) → A}
   {i : Fin (2 * k + 1)} (g₀ : ¬ i.1 < k + 1)
   (g₆ : ⟨2 * k + 1 - i, flipCast g₀⟩ = Fin.last k)
   (h₂ :
@@ -438,7 +443,7 @@ theorem aux₀' {A : Type} {k : ℕ} {w v : Fin (2 * k + 1) → A}
       simp_all
       simp_rw [← this]
 
-
+/-- The Kayleigh graph NFA for `w` accepts no word of length `|w|` other than `w`. -/
 theorem hyde_unique_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
     {p : Fin (2*(k+1)) → Fin (k+1)}
     (ha : accepts_word_path (khδ w) v 0 0 p) :
@@ -487,13 +492,12 @@ theorem hyde_unique_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
   · apply case4 <;> tauto
   · apply case5 <;> tauto
   · apply case6 <;> tauto
-  · -- g₀ : ¬ i ≤ k; g₃ : 2k+1-i≠ 0; g₄: 2k+1-i=k
-    simp_all
+  · simp_all
     have h₀ : ¬ i < k + 1 := by simp_all
     have h₁ : ¬ i < k := by omega
     have : ¬ i ≤ k := by omega
     simp_all
-    apply aux₀'
+    apply odd_tuples_aux
     exact g₆
     exact h₂
     simp
@@ -510,7 +514,7 @@ theorem hyde_unique_word {A : Type} {k : ℕ} {w v : Fin (2*k+1) → A}
       simp_rw [this] at h
       tauto
 
-
+/-- The Kayleigh graph NFA for `w` accepts `w` along the intended path. -/
 theorem hyde_accepts {A : Type} {k : ℕ}  (w : Fin (2*k+1) → A) :
   accepts_word_path (khδ w) w 0 0 fun t : Fin (2*(k+1)) => dite (t.1 < k + 1)
     (fun ht => (⟨t.1,      ht⟩ : Fin (k+1)))
@@ -562,13 +566,14 @@ theorem hyde_accepts {A : Type} {k : ℕ}  (w : Fin (2*k+1) → A) :
       · simp_rw [show 2 * k + 1 - (2 * k + 1 - i) = i by omega]
       · show 2 * k + 1 - i.1 = 2 * k - i.1 + 1
         omega
-
+/-- Nondeterministic automatic complexity, relational form. -/
 def A_N_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
   ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
     ∃ δ init final p, accepts_word_path δ w init final p
     ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
       accepts_word_path δ v init final p' → p = p' ∧ w = v
 
+/-- Total automatic complexity, relational form. -/
 def A_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
   ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
     ∃ δ init final p, (∀ a q, Fintype.card (δ a q) = 1) ∧ accepts_word_path δ w init final p
@@ -582,6 +587,7 @@ def A_minus_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
     ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
       accepts_word_path δ v init final p' → p = p' ∧ w = v
 
+/-- Total nondeterministic automatic complexity, relational form.  -/
 def A_N_tot_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
   ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
     ∃ δ init final p, (∀ a q, Fintype.card (δ a q) ≥ 1) ∧ accepts_word_path δ w init final p
@@ -590,7 +596,7 @@ def A_N_tot_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
 
 
 open Fin
-
+/-- If an NFA accepts a word then by changing the final state we can also accept its prefixes. -/
 theorem restricting_construction {A Q : Type} {δ : A → Q → Set Q} {init final : Q} {n : ℕ}
     {w₁ : Fin (n + 1) → A} {p₁ : Fin (n + 1 + 1) → Q} (h₁ : accepts_word_path δ w₁ init final p₁)
     {w₀ : Fin n → A}       {p₀ : Fin (n + 1)     → Q} (h₀ : accepts_word_path δ w₀ init (p₁ (last n).castSucc) p₀) :
@@ -612,7 +618,7 @@ theorem restricting_construction {A Q : Type} {δ : A → Q → Set Q} {init fin
         repeat rw [snoc_castSucc]
         exact h₀.2.2 (i.castPred hi)
 
-/-- Jan 3, 2024: subword inequality -/
+/-- Subword inequality for A_N. -/
 theorem restricting
  {A : Type} {n q : ℕ} {w : Fin (n+1) → A}
  (h : A_N_at_most w q) : A_N_at_most (Fin.init w) q := by
@@ -640,6 +646,7 @@ theorem restricting
       · rw [use.1];simp
       · rw [use.2];simp
 
+/-- Hyde's theorem for odd-length words. -/
 theorem hydetheorem_odd {A : Type} {k : ℕ} (w : Fin (2*k+1) → A) :
  A_N_at_most w (k+1) := by
  use Fin (k+1), Fin.fintype (k + 1)
@@ -651,6 +658,7 @@ theorem hydetheorem_odd {A : Type} {k : ℕ} (w : Fin (2*k+1) → A) :
    constructor
    · exact hyde_accepts w
    · exact fun _ _ h => ⟨(hyde_unique_path_reading_word h).symm, hyde_unique_word h⟩
+
 /-- A word cannot have complexity 0,
  because then there'd be no initial state. -/
 theorem nfa_complexity_ge_one {A : Type} {n : ℕ} (w : Fin n → A) : ¬ A_N_at_most w 0 := by
@@ -682,6 +690,8 @@ A_N_at_most w 1 := by
     · ext i
       have := i.2
       simp at this
+
+/-- Hyde's theorem for positive-length words. -/
 theorem hyde_pos_length {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin n → A) :
 A_N_at_most w (n/2+1) := by
   by_cases he : Odd n
@@ -698,18 +708,26 @@ A_N_at_most w (n/2+1) := by
     have a := (Classical.inhabited_of_nonempty <| (Nonempty.intro <| w ⟨0,by omega⟩)).default
     let w' := @Fin.snoc (2*k) (fun _ => A) w a
     exact (Fin.init_snoc _ _) ▸ restricting <| hydetheorem_odd w'
+
+/-- Hyde's theorem in relational form. -/
 theorem hyde_all_lengths {A : Type} {n : ℕ} (w : Fin n → A) :
     A_N_at_most w (n/2+1) := by
   by_cases H : n = 0
   · subst H
     exact hyde_emp w
   · exact hyde_pos_length H w
+
+/-- A_N is well-defined. -/
 theorem A_N_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
   ∃ q, A_N_at_most w q := by
   use n/2+1
   apply hyde_all_lengths
+
+/-- Nondeterministic automatic complexity. -/
 noncomputable def A_N {A : Type} : {n : ℕ} → (Fin n → A) → ℕ :=
   fun w => Nat.find (A_N_bounded w)
+
+/-- Hyde's theorem (2013). -/
 theorem A_N_bound {A : Type} {n : ℕ} (w : Fin n → A) :
   A_N w ≤ n/2+1 := find_le <| hyde_all_lengths w
 -- end of Hyde
