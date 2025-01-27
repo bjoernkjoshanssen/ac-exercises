@@ -539,6 +539,19 @@ theorem A_Ne_le_A_N {A : Type} {n q : ℕ} {w : Fin n → A}
       exact (hδ.2 v p' hp').2
 
 theorem A_N_le_A_minus {A : Type} {n q : ℕ} {w : Fin n → A}
+    (h : A_minus_at_most w q) : A_N_at_most w q := by
+  obtain ⟨Q, fQ, hQ⟩ := h
+  obtain ⟨δ, init, final, p, hδ⟩ := hQ.2
+  use Q, fQ
+  constructor
+  · exact hQ.1
+  · use δ, init, final, p
+    constructor
+    · exact hδ.2.1
+    · intro v p' hp'
+      exact hδ.2.2 v p' hp'
+
+theorem A_Ne_le_A_minus {A : Type} {n q : ℕ} {w : Fin n → A}
     (h : A_minus_at_most w q) : A_Ne_at_most w q := by
   obtain ⟨Q, fQ, hQ⟩ := h
   obtain ⟨δ, init, final, p, hδ⟩ := hQ.2
@@ -565,7 +578,7 @@ theorem A_minus_le_A {A : Type} {n q : ℕ} {w : Fin n → A}
     · tauto
 
 
-theorem A_N_le_A {A : Type} {n q : ℕ} {w : Fin n → A}
+theorem A_Ne_le_A {A : Type} {n q : ℕ} {w : Fin n → A}
     (h : A_at_most w q) : A_Ne_at_most w q := by
   obtain ⟨Q, fQ, hQ⟩ := h
   obtain ⟨δ, init, final, p, hδ⟩ := hQ.2

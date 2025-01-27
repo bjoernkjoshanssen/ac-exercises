@@ -469,13 +469,13 @@ lemma arith' {n : ℕ} (r : ℕ → ℕ) (h : r 0 ≥ 1) (hr : ∀ j < n, r j < 
   omega
 
 
-/-- Quas' Theorem. -/
-theorem quas' {Q A : Type} [Fintype Q] [Fintype A]
+theorem quas_family {Q A : Type} [Fintype Q] [Fintype A]
     {δ : A → Q → Q} (hinj : ∀ a, Function.Injective (δ a))
-    {n : ℕ} {c d : Q} (h₀ : #(filter (fun w => ast δ w c = d) (univ : Finset (Fin n → A))) = 1)
-    (hA : card A ≥ 2)
+    {n : ℕ} {c d : Q}
+    (h₀ : #(filter (fun w => ast δ w c = d) (univ : Finset (Fin n → A))) ≥ 1)
+    (h₁ : #(filter (fun w => ast δ w c = d) (univ : Finset (Fin n → A))) < card A)
 : card Q ≥ n + 1 := by
-    -- First, show that #A ≥ 2 gives us a Nonempty instance and a specific `a : A`.
+    have hA : card A ≥ 2 := by omega
     have hcA : card A ≠ 0 := by exact Nat.not_eq_zero_of_lt hA
     have huA : (univ : Finset A) ≠ ∅ := by
       intro hc
@@ -533,3 +533,10 @@ theorem quas' {Q A : Type} [Fintype Q] [Fintype A]
     have : card Q = #(univ : Finset Q) := rfl
     rw [this]
     exact card_filter_le univ fun q ↦ ∃ w, q = ast δ w c
+
+/-- Quas' Theorem. -/
+theorem quas' {Q A : Type} [Fintype Q] [Fintype A]
+    {δ : A → Q → Q} (hinj : ∀ a, Function.Injective (δ a))
+    {n : ℕ} {c d : Q} (h₀ : #(filter (fun w => ast δ w c = d) (univ : Finset (Fin n → A))) = 1)
+    (hA : card A ≥ 2) : card Q ≥ n + 1 :=
+  @quas_family Q A _ _ δ hinj n c d (by omega) (by omega)

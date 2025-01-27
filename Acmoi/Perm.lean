@@ -628,6 +628,18 @@ def A_perm_witness_size {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :
     ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
       accepts_word_path Δ v init final p' → p = p' ∧ w = v
 
+/-- The permutation-automatic complexity of a family `𝓕` admits a witness of size `q`. -/
+def A_perm_witness_size_family {A : Type} {n : ℕ} (𝓕 : Set (Fin n → A)) (q : ℕ): Prop :=
+  ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
+    ∃ δ : A → Q → Q,
+    ∃ init final p,
+    (∀ a, Function.Injective (δ a)) ∧
+    let Δ : A → Q → Set (Q) := fun a q => {δ a q}
+    (∀ w ∈ 𝓕, accepts_word_path Δ w init final p)
+    ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
+      accepts_word_path Δ v init final p' → v ∈ 𝓕
+
+
 /-- The permutation-automatic complexity of `w` is upper bounded by `|w|+1` [Kjos-Hanssen 2017]. -/
 theorem kjos_upper_bound  {A : Type} {n : ℕ} (w : Fin n → A) :
     A_perm_witness_size w (n+1) := by

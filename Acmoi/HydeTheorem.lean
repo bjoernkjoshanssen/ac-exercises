@@ -661,7 +661,7 @@ theorem hydetheorem_odd {A : Type} {k : ℕ} (w : Fin (2*k+1) → A) :
 
 /-- A word cannot have complexity 0,
  because then there'd be no initial state. -/
-theorem nfa_complexity_ge_one {A : Type} {n : ℕ} (w : Fin n → A) : ¬ A_N_at_most w 0 := by
+theorem A_N_ge_one {A : Type} {n : ℕ} (w : Fin n → A) : ¬ A_N_at_most w 0 := by
   intro ⟨Q,x,hx⟩
   obtain ⟨_, init, _⟩ := hx.2
   have : Inhabited Q := { default := init }
