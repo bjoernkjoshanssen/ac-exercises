@@ -3,7 +3,7 @@ import Mathlib.Algebra.Order.Floor
 import Mathlib.Data.Nat.Log
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Fin.Tuple.Take
-import Acmoi.HydeTheorem
+import Acmoi.HydePrelim
 import Acmoi.QuasTheorem
 set_option maxHeartbeats 20000000
 /-!
@@ -35,7 +35,7 @@ def leastnotinrange {n q : ℕ} (h : q < n) (f : Fin (q+1) → Fin (n+1)) : Fin 
     )
 
 /-- The DFA `δ` witnessing the permutation-automatic complexity of a word `w`. -/
-noncomputable def Perm_δ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n+1)) :  (Fin (n+1)) := match q with
+noncomputable def Perm_δ {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n+1)) :  (Fin (n+1)) := match q with
 | 0 => by
   by_cases hn : n = 0
   · exact ⟨0, by omega⟩
@@ -52,7 +52,7 @@ noncomputable def Perm_δ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : Fi
       exact leastnotinrange hqn (fun i => Perm_δ w a ⟨i.1, by omega⟩)
 
 /-- The minimum of a set `s` belongs to `s`. This version does not require mentioning `s` explicitly. -/
-theorem memofeqmin {α : Type} [LinearOrder α] {s : Finset α} (H : s.Nonempty) {a : α} (h : a = min' s H) : a ∈ s := by
+theorem memofeqmin {α : Type*} [LinearOrder α] {s : Finset α} (H : s.Nonempty) {a : α} (h : a = min' s H) : a ∈ s := by
   have := @min'_mem α _ s H
   rw [← h] at this
   tauto
@@ -112,7 +112,7 @@ theorem hbig {n : ℕ} {q : ℕ} {δa : Fin (n+1) → Fin (n+1)}
   exact this
 
 /-- The DFA `Perm_δ` does not advance by more than one at each step. -/
-theorem Perm_δ_bound {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n+1))
+theorem Perm_δ_bound {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n+1))
     (hqn : q ≠ Fin.last n):
     (Perm_δ w a q) ≤ q + 1 := match q with
   | 0 => by
@@ -256,11 +256,11 @@ theorem Perm_δ_bound {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n
           omega
 
 /-- Casting the DFA `Perm_δ` into an NFA. -/
-noncomputable def Permδ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n+1)) :  Set (Fin (n+1)) :=
+noncomputable def Permδ {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n+1)) :  Set (Fin (n+1)) :=
     {Perm_δ w a q}
 
 /-- The DFA `Perm_δ w` does accept the word `w`.  -/
-theorem accepts_perm  {A : Type} {n : ℕ} (w : Fin n → A) :
+theorem accepts_perm  {A : Type*} {n : ℕ} (w : Fin n → A) :
     accepts_word_path (Permδ w) w 0 (Fin.last n) id := by
   constructor
   · rfl
@@ -335,7 +335,7 @@ theorem accepts_perm  {A : Type} {n : ℕ} (w : Fin n → A) :
               omega
 
 /-- If `Perm_δ w` accepts a word then it does so along a path that advances at most one step at a time. -/
-theorem perm_path_bound {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n + 1) → Fin (n + 1))
+theorem perm_path_bound {A : Type*} {n : ℕ} (v w : Fin n → A) (p : Fin (n + 1) → Fin (n + 1))
   (h : accepts_word_path (Permδ w) v 0 (Fin.last n) p)
   : ∀ (s : Fin n),
   (p s.succ).1 ≤ ↑(p s.castSucc).1 + 1 := by
@@ -369,7 +369,7 @@ theorem perm_path_bound {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n + 1
         rw [this]
 
 /-- `Perm_δ w` accepts a word of length `|w|` only along the path `id` that advances one step at a time. -/
-theorem accepts_perm_path  {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n+1) → Fin (n+1))
+theorem accepts_perm_path  {A : Type*} {n : ℕ} (v w : Fin n → A) (p : Fin (n+1) → Fin (n+1))
     (h : accepts_word_path (Permδ w) v 0 (Fin.last n) p) : p = id := by
     ext i
     by_cases hi : i = Fin.last n
@@ -384,7 +384,7 @@ theorem accepts_perm_path  {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n+
       simp
 
 /-- If `Perm_δ w` accepts a word of length `|w|` then that word must be `w`. -/
-theorem accepts_perm_word  {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n+1) → Fin (n+1))
+theorem accepts_perm_word  {A : Type*} {n : ℕ} (v w : Fin n → A) (p : Fin (n+1) → Fin (n+1))
     (h : accepts_word_path (Permδ w) v 0 (Fin.last n) p) : w = v := by
   rw [accepts_perm_path v w p h] at h
   by_cases hn : n = 0
@@ -437,7 +437,7 @@ theorem accepts_perm_word  {A : Type} {n : ℕ} (v w : Fin n → A) (p : Fin (n+
   exact this i
 
 /-- Injectivity of `Perm_δ`, "forward" case. -/
-theorem injCase₁ {A : Type} {n : ℕ} (w : Fin n → A) {a : A} {q : ℕ} (hq : q.succ < n + 1) {r : ℕ}
+theorem injCase₁ {A : Type*} {n : ℕ} (w : Fin n → A) {a : A} {q : ℕ} (hq : q.succ < n + 1) {r : ℕ}
     (hr : r.succ < n + 1) (h : Perm_δ w a ⟨q.succ, hq⟩ = Perm_δ w a ⟨r.succ, hr⟩)
     (h₀ : ∃ (h₁ : q + 1 < n), a = w ⟨q + 1, h₁⟩) : q = r := by
           unfold Perm_δ at h
@@ -528,7 +528,7 @@ theorem injCase₁ {A : Type} {n : ℕ} (w : Fin n → A) {a : A} {q : ℕ} (hq 
               simp_rw [dif_pos h₀]
 
 /-- Injectivity of `Perm_δ`, zero case. -/
-theorem injCase₀ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q.succ < n + 1)
+theorem injCase₀ {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q.succ < n + 1)
     (h : Perm_δ w a 0 = Perm_δ w a ⟨q.succ, hq⟩) : False := by
     by_cases hn : n = 0
     · subst hn
@@ -567,7 +567,7 @@ theorem injCase₀ {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq 
       rfl
 
 /-- Injectivity of `Perm_δ`, "backward" case. -/
-theorem injCase {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q.succ < n + 1) (r : ℕ)
+theorem injCase {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q.succ < n + 1) (r : ℕ)
     (hr : r.succ < n + 1) (h : Perm_δ w a ⟨q.succ, hq⟩ = Perm_δ w a ⟨r.succ, hr⟩)
     (h₀ : ¬∃ (h₁ : q + 1 < n), a = w ⟨q + 1, h₁⟩) (h₁ : ¬∃ (h₁ : r + 1 < n), a = w ⟨r + 1, h₁⟩)
     : q = r := by
@@ -599,7 +599,7 @@ theorem injCase {A : Type} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q
     -- @both the current bit is not a, but they are part of the same run of a's
 
 /-- Injectivity of `Perm_δ`, which is its key property. -/
-theorem Perm_δ_injective  {A : Type} {n : ℕ} (w : Fin n → A) (a : A) :
+theorem Perm_δ_injective  {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) :
   Function.Injective (Perm_δ w a) := by
   intro x y h
   match x with
@@ -618,7 +618,7 @@ theorem Perm_δ_injective  {A : Type} {n : ℕ} (w : Fin n → A) (a : A) :
           · by_cases h₃ : q + 1 < n <;> (by_cases h₂ : r + 1 < n <;> (apply injCase <;> tauto))
 
 /-- The permutation-automatic complexity of `w` admits a witness of size `q`. -/
-def A_perm_witness_size {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
+def A_perm_witness_size {A : Type*} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
   ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
     ∃ δ : A → Q → Q,
     ∃ init final p,
@@ -629,7 +629,7 @@ def A_perm_witness_size {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :
       accepts_word_path Δ v init final p' → p = p' ∧ w = v
 
 /-- The permutation-automatic complexity of a family `𝓕` admits a witness of size `q`. -/
-def A_perm_witness_size_family {A : Type} {n : ℕ} (𝓕 : Set (Fin n → A)) (q : ℕ): Prop :=
+def A_perm_witness_size_family {A : Type*} {n : ℕ} (𝓕 : Set (Fin n → A)) (q : ℕ): Prop :=
   ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
     ∃ δ : A → Q → Q,
     ∃ init final p,
@@ -641,7 +641,7 @@ def A_perm_witness_size_family {A : Type} {n : ℕ} (𝓕 : Set (Fin n → A)) (
 
 
 /-- The permutation-automatic complexity of `w` is upper bounded by `|w|+1` [Kjos-Hanssen 2017]. -/
-theorem kjos_upper_bound  {A : Type} {n : ℕ} (w : Fin n → A) :
+theorem kjos_upper_bound  {A : Type*} {n : ℕ} (w : Fin n → A) :
     A_perm_witness_size w (n+1) := by
   use Fin (n+1)
   use Fin.fintype (n + 1)
@@ -663,7 +663,7 @@ theorem kjos_upper_bound  {A : Type} {n : ℕ} (w : Fin n → A) :
           tauto
 
 /-- The extended transition function δ* plays well with concatenation. -/
-lemma ast_take  {A : Type} [Fintype A] {n : ℕ} (w : Fin n → A)
+lemma ast_take  {A : Type*} [Fintype A] {n : ℕ} (w : Fin n → A)
     (δ : A → Q → Q) : ∀ (a : A),
 ast δ (Fin.snoc w a) init = δ a (ast δ w init) := by
     intro a
@@ -676,22 +676,15 @@ ast δ (Fin.snoc w a) init = δ a (ast δ w init) := by
 
 
 /-- A value of the extended transition function δ* is implied by the existence of a path. -/
-lemma star_if_path  {A : Type} [Fintype A]
+lemma star_if_path  {A : Type*} [Fintype A]
     (δ : A → Q → Q) : ∀ {n : ℕ} (w : Fin n → A) (c d : Q),
     (∃ p, accepts_word_path (fun a q ↦ {δ a q}) w c d p) →
     ast δ w c = d := by
     intro n
     induction n with
-    | zero =>
-        intro w c d ⟨p,hp⟩
-        unfold ast
-        unfold accepts_word_path at hp
-        apply hp.1.symm.trans
-        exact hp.2.1
+    | zero => exact fun w c d ⟨p,hp⟩ => hp.1.symm.trans hp.2.1
     | succ n ih =>
         intro w c d ⟨p,hp⟩
-        unfold ast
-        unfold accepts_word_path at hp
         have := ih (Fin.init w) c (p (Fin.last n).castSucc) (by
             use Fin.init p
             constructor
@@ -708,14 +701,16 @@ lemma star_if_path  {A : Type} [Fintype A]
                     δ (w i.castSucc) (p i.castSucc.castSucc) := by rfl
                 tauto
         )
+        unfold ast
         rw [this]
         have := hp.2.2 (Fin.last n)
         simp at this
         rw [← this]
+        unfold accepts_word_path at hp
         tauto
 
 /-- A value of the extended transition function δ* is equivalent to the existence of a path. -/
-lemma path_iff_star {A : Type} [Fintype A] (δ : A → Q → Q) {n : ℕ} (w : Fin n → A) :
+lemma path_iff_star {A : Type*} [Fintype A] (δ : A → Q → Q) {n : ℕ} (w : Fin n → A) :
     (∃ p, accepts_word_path (fun a q ↦ {δ a q}) w init final p) ↔
     ast δ w init = final := by
     constructor
@@ -736,7 +731,7 @@ lemma path_iff_star {A : Type} [Fintype A] (δ : A → Q → Q) {n : ℕ} (w : F
 
 
 /-- The permutation-automatic complexity of `w` is lower by `|w|+1` [Quas 2020]. -/
-theorem quas_lower_bound {A : Type} [Fintype A] (hA : Fintype.card A ≥ 2) {m n : ℕ} (w : Fin n → A)
+theorem quas_lower_bound {A : Type*} [Fintype A] (hA : Fintype.card A ≥ 2) {m n : ℕ} (w : Fin n → A)
     (hmn : m ≤ n):
     ¬ A_perm_witness_size w m := by
   unfold A_perm_witness_size
@@ -772,17 +767,17 @@ theorem quas_lower_bound {A : Type} [Fintype A] (hA : Fintype.card A ≥ 2) {m n
   omega
 
 /-- The permutation-automatic complexity of `w` is well-defined. -/
-theorem A_perm_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
+theorem A_perm_bounded {A : Type*} {n : ℕ} (w : Fin n → A) :
   ∃ q, A_perm_witness_size w q := by
   use n+1
   exact kjos_upper_bound w
 
 /-- The permutation-automatic complexity of `w`. -/
-noncomputable def A_perm {A : Type} : {n : ℕ} → (Fin n → A) → ℕ :=
+noncomputable def A_perm {A : Type*} : {n : ℕ} → (Fin n → A) → ℕ :=
   fun w => Nat.find (A_perm_bounded w)
 
 /-- The permutation-automatic complexity of `w` is exactly `|w|+1`. -/
-theorem A_perm_characterization {A : Type} [Fintype A] (hA : Fintype.card A ≥ 2)
+theorem A_perm_characterization {A : Type*} [Fintype A] (hA : Fintype.card A ≥ 2)
     {n : ℕ} (w : Fin n → A) : A_perm w = n+1 := by
   have : A_perm w ≤ n+1 := find_le <| kjos_upper_bound w
   have : ¬ A_perm w ≤ n := by

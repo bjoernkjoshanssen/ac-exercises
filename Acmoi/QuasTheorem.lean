@@ -115,7 +115,7 @@ example : accepts myδ ![0,1,1] 0 0 ![0,1,1,0] := by
 
 
 -- Now we can define general Kayleigh graph for odd-length words.
-def kayleighδ {A : Type} {k : ℕ} (hk : k ≥ 1)
+def kayleighδ {A : Type*} {k : ℕ} (hk : k ≥ 1)
   {w : Fin (2*k+1) → A} : A → Fin (k+1) → Set (Fin (k+1)) := by
   let n := 2*k + 1
   intro b q r -- is r reachable in one step from q reading b?
@@ -307,7 +307,7 @@ theorem claimByQuas {Q A : Type*} [Fintype A] [Fintype Q] {δ : A → Q → Q} (
       simp
       congr
 
-lemma compl_of_card_lt (α : Type) [Fintype α]:
+lemma compl_of_card_lt (α : Type*) [Fintype α]:
         ∀ X ⊆ (Finset.univ : Finset α),
         #X < #(Finset.univ : Finset α) →
         ∃ b', b' ∈ (Finset.univ : Finset α) \ X := by
@@ -319,7 +319,7 @@ lemma compl_of_card_lt (α : Type) [Fintype α]:
         exact nonempty_iff_ne_empty.mpr this
 
 open Fin
-lemma ast_append  {Q A : Type} [Fintype Q] [Fintype A] [Nonempty A]
+lemma ast_append  {Q A : Type*} [Fintype Q] [Fintype A] [Nonempty A]
     (δ : A → Q → Q) {u v : ℕ} (U : Fin u → A) (V : Fin v → A) (c : Q) :
     ast δ (append U V) c = ast δ V (ast δ U c) := by
   induction v with
@@ -348,7 +348,7 @@ lemma Fin.rtake {M m : ℕ} (hmM : m + 1 ≤ M) (w : Fin M → A):
     split_ifs
     rfl
 /-- Claim 4.43 in `Automatic complexity`. -/
-theorem claim443 {Q A : Type} [Fintype Q] [Fintype A] [Nonempty A]
+theorem claim443 {Q A : Type*} [Fintype Q] [Fintype A] [Nonempty A]
     {δ : A → Q → Q} (hinj : ∀ a, Function.Injective (δ a))
     {c : Q} {m : ℕ} (h : r (δ := δ) m c = r (δ := δ) m.succ c)
     {M : ℕ} (hM : M > m)
@@ -469,7 +469,7 @@ lemma arith' {n : ℕ} (r : ℕ → ℕ) (h : r 0 ≥ 1) (hr : ∀ j < n, r j < 
   omega
 
 
-theorem quas_family {Q A : Type} [Fintype Q] [Fintype A]
+theorem quas_family {Q A : Type*} [Fintype Q] [Fintype A]
     {δ : A → Q → Q} (hinj : ∀ a, Function.Injective (δ a))
     {n : ℕ} {c d : Q}
     (h₀ : #(filter (fun w => ast δ w c = d) (univ : Finset (Fin n → A))) ≥ 1)
@@ -535,7 +535,7 @@ theorem quas_family {Q A : Type} [Fintype Q] [Fintype A]
     exact card_filter_le univ fun q ↦ ∃ w, q = ast δ w c
 
 /-- Quas' Theorem. -/
-theorem quas' {Q A : Type} [Fintype Q] [Fintype A]
+theorem quas' {Q A : Type*} [Fintype Q] [Fintype A]
     {δ : A → Q → Q} (hinj : ∀ a, Function.Injective (δ a))
     {n : ℕ} {c d : Q} (h₀ : #(filter (fun w => ast δ w c = d) (univ : Finset (Fin n → A))) = 1)
     (hA : card A ≥ 2) : card Q ≥ n + 1 :=

@@ -3,7 +3,7 @@ import Mathlib.Algebra.Order.Floor
 import Mathlib.Data.Nat.Log
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Fin.Tuple.Take
-import Acmoi.HydeTheorem
+import Acmoi.HydePrelim
 set_option maxHeartbeats 2000000
 /-!
 
@@ -518,80 +518,6 @@ theorem A_bound₀' {A : Type} {n : ℕ}
 
 
 
-/-- The relation behind exact nondeterministic automatic complexity. -/
-def A_Ne_at_most {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=
-  ∃ Q : Type, ∃ _ : Fintype Q, card Q = q ∧
-    ∃ δ init final p, accepts_word_path δ w init final p
-    ∧ ∀ v : Fin n → A, ∀ p' : Fin (n+1) → Q,
-      accepts_word_path δ v init final p' → w = v
-
-theorem A_Ne_le_A_N {A : Type} {n q : ℕ} {w : Fin n → A}
-    (h : A_N_at_most w q) : A_Ne_at_most w q := by
-  obtain ⟨Q, fQ, hQ⟩ := h
-  obtain ⟨δ, init, final, p, hδ⟩ := hQ.2
-  use Q, fQ
-  constructor
-  · exact hQ.1
-  · use δ, init, final, p
-    constructor
-    · exact hδ.1
-    · intro v p' hp'
-      exact (hδ.2 v p' hp').2
-
-theorem A_N_le_A_minus {A : Type} {n q : ℕ} {w : Fin n → A}
-    (h : A_minus_at_most w q) : A_N_at_most w q := by
-  obtain ⟨Q, fQ, hQ⟩ := h
-  obtain ⟨δ, init, final, p, hδ⟩ := hQ.2
-  use Q, fQ
-  constructor
-  · exact hQ.1
-  · use δ, init, final, p
-    constructor
-    · exact hδ.2.1
-    · intro v p' hp'
-      exact hδ.2.2 v p' hp'
-
-theorem A_Ne_le_A_minus {A : Type} {n q : ℕ} {w : Fin n → A}
-    (h : A_minus_at_most w q) : A_Ne_at_most w q := by
-  obtain ⟨Q, fQ, hQ⟩ := h
-  obtain ⟨δ, init, final, p, hδ⟩ := hQ.2
-  use Q, fQ
-  constructor
-  · exact hQ.1
-  · use δ, init, final, p
-    constructor
-    · exact hδ.2.1
-    · intro v p' hp'
-      exact (hδ.2.2 v p' hp').2
-
-theorem A_minus_le_A {A : Type} {n q : ℕ} {w : Fin n → A}
-    (h : A_at_most w q) : A_minus_at_most w q := by
-  obtain ⟨Q, fQ, hQ⟩ := h
-  obtain ⟨δ, init, final, p, hδ⟩ := hQ.2
-  use Q, fQ
-  constructor
-  · exact hQ.1
-  · use δ, init, final, p
-    constructor
-    · intro a q
-      rw [hδ.1 a q]
-    · tauto
-
-
-theorem A_Ne_le_A {A : Type} {n q : ℕ} {w : Fin n → A}
-    (h : A_at_most w q) : A_Ne_at_most w q := by
-  obtain ⟨Q, fQ, hQ⟩ := h
-  obtain ⟨δ, init, final, p, hδ⟩ := hQ.2
-  use Q, fQ
-  constructor
-  · exact hQ.1
-  · use δ, init, final, p
-    constructor
-    · exact hδ.2.1
-    · intro v p' hp'
-      exact (hδ.2.2 v p' hp').2
-
-
 
 theorem A_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
   ∃ q, A_at_most w q := by
@@ -605,15 +531,8 @@ theorem A_minus_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
   exact A_bound₀' w
 
 
-theorem A_Ne_bounded {A : Type} {n : ℕ} (w : Fin n → A) :
-  ∃ q, A_Ne_at_most w q := by
-  use n/2+1
-  exact A_Ne_le_A_N <| hyde_all_lengths w
 
 
-/-- Exact nondeterministic automatic complexity. -/
-noncomputable def A_Ne {A : Type} : {n : ℕ} → (Fin n → A) → ℕ :=
-  fun w => Nat.find (A_Ne_bounded w)
 
 noncomputable def A {A : Type} : {n : ℕ} → (Fin n → A) → ℕ :=
   fun w => Nat.find (A_bounded w)
