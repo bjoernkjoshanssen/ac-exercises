@@ -405,19 +405,6 @@ theorem hyde_unique_word' {A : Type*} {k : ℕ} {w v : Fin (2*k+1) → A}
     exact ht.2.2
 
 
-/-- δ_of_path works as intended. -/
-theorem δ_of_path_works_as_intended {A Q : Type*} {n : ℕ} (w : Fin n → A) (p : Fin (n+1) → Q) :
-    (accepts_path (δ_of_path w p) (p 0) (p (Fin.last n)) p) := by
-  unfold accepts_path
-  constructor
-  · rfl
-  · constructor
-    · rfl
-    · intro i
-      unfold δ_of_path
-      use w i
-      simp
-      use i
 
 /-- δ_of_path works as intended. -/
 theorem δ_of_path_works_as_intended' {A Q : Type*} {n : ℕ} (w : Fin n → A) (p : Fin (n+1) → Q) :
