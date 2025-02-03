@@ -19,16 +19,16 @@ Wikipedia (https://en.wikipedia.org/wiki/Parsimonious_reduction):
 structure DecisionProblem where
   Instance : Type
   Space    : Instance → Type
-  Solution : (Σ i : Instance, Space i) → Prop
-  Question : Instance → Prop := λ i ↦ ∃ s, Solution ⟨i,s⟩ -- default question
+  Solution (i : Instance) : Space i → Prop
+  Question (i : Instance) := ∃ s, Solution i s -- default question
 
 def UNIQUE (P : DecisionProblem) : DecisionProblem where
   Instance := P.Instance
   Space    := P.Space
   Solution := P.Solution
-  Question := λ i ↦ Nonempty (Unique ({s // P.Solution ⟨i,s⟩}))
+  Question (i : P.Instance) := Nonempty (Unique ({s // P.Solution i s}))
 
-def Solution_of {P : DecisionProblem} (i : P.Instance) := { val : P.Space i // P.Solution ⟨i,val⟩}
+def Solution_of {P : DecisionProblem} (i : P.Instance) := { val : P.Space i // P.Solution i val}
 
 def Reduction (P Q : DecisionProblem) := { Map : P.Instance → Q.Instance //
    ∀ i : P.Instance, P.Question i ↔ Q.Question (Map i)}
@@ -38,7 +38,7 @@ structure Reduction' (P Q : DecisionProblem) where
   Property : ∀ i : P.Instance,
     (Nonempty (Solution_of i)) ↔ (Nonempty (Solution_of (Map i)))
 
-
+-- For φ:ParsimoniousReduction we have φ.Reduction.1 or φ.Reduction.Map
 structure ParsimoniousReduction (P Q : DecisionProblem) where
   Reduction : Reduction P Q
   SolutionMap : (i : P.Instance) → (Solution_of i → Solution_of (Reduction.1 i))  -- or : Fun : Σ i : P.Instance, (P.Space i → Q.Space (Reduction.Map i))
@@ -57,7 +57,7 @@ theorem inj_of_sur  {α β :Type} {f :α→β} (hf: Function.Surjective f) [None
 
 theorem surj_of_inj  {α β :Type} {f :α→β} (hf: Function.Injective f) [Nonempty α] :
     Function.Surjective (Function.invFun f) := by
-  intro x; exists (f x); let G :=  Function.invFun_comp hf; exact congr_arg (λ F ↦ F x) G
+  intro x; exists (f x); let G :=  Function.invFun_comp hf; exact congr_arg (fun F ↦ F x) G
 
 theorem unique_of_surjective {α β :Type} {f :α→β} (hf: Function.Surjective f)
     (h:Nonempty (Unique α)) : Nonempty (Unique β) := by
