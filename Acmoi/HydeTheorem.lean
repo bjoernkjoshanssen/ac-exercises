@@ -21,15 +21,17 @@ def δ_of_path {A Q : Type*} {n : ℕ} (w : Fin n → A) (p : Fin (n+1) → Q) :
 def khδ' {A : Type*} {k : ℕ} (w : Fin (2*k+1) → A) : A → Fin (k+1) → Set (Fin (k+1)) :=
   δ_of_path w fun t => dite (t.1 < k + 1) (⟨t.1, .⟩) (⟨2*k+1-t.1, flipCast .⟩)
 
+def moves_slowly {k : ℕ} (p : Fin (2 * k + 1 + 1) → Fin (k + 1)) : Prop :=
+  ∀  (s : Fin (2 * k + 1)), (p s.succ).1 ≤ (p s.castSucc).1 + 1
+
 /-- If a Kayleigh graph accepts a word then it never advances by more than one.
 NOTE: More is true, it is sufficient that ``khδ'` *process* the word. -/
-theorem move_slowly {A : Type*} {k : ℕ} {w : Fin (2 * k + 1) → A}
+theorem khδ_moves_slowly {A : Type*} {k : ℕ} {w : Fin (2 * k + 1) → A}
     {p : Fin (2 * k + 1 + 1) → Fin (k + 1)}
     {final : Fin (k+1)}
-    (h : accepts_path (khδ' w) 0 final p)
-    (s : Fin (2 * k + 1)) :
-    (p s.succ).1 ≤ (p s.castSucc).1 + 1 := by
+    (h : accepts_path (khδ' w) 0 final p) : moves_slowly p := by
   unfold khδ' accepts_path at h
+  intro s
   have := h.2.2 s
   obtain ⟨a,ha⟩ := this
   unfold δ_of_path at ha
@@ -54,28 +56,38 @@ theorem move_slowly {A : Type*} {k : ℕ} {w : Fin (2 * k + 1) → A}
 
 
 
-/-- If a Kayleigh graph accepts a word then its position is dominated by the identity.
-NOTE: More is true, it is sufficient that ``khδ` *process* the word. -/
-theorem kayleighBound {A : Type*} {k : ℕ} {w : Fin (2 * k + 1) → A}
+theorem idBound_of_moves_slowly {k : ℕ}
     {p : Fin (2 * k + 1 + 1) → Fin (k + 1)}
-    (h : accepts_path (khδ' w) 0 0 p) :
+    (h : p 0 = 0)
+    (h₀ : moves_slowly p)
+    :
     ∀ s : Fin (2*k+1+1), (p s).1 ≤ s.1 := by
   intro s
   exact @Fin.induction (2*k+1) (fun n => (p n).1 ≤ n.1)
-    (by simp only [Fin.val_zero, nonpos_iff_eq_zero];rw [h.1];simp) (by
+    (by simp;rw [h];simp) (by
       intro n ih
       calc
-      _ ≤ (p (n.castSucc)).1 + 1 := @move_slowly A k w p 0 h n
+      _ ≤ (p (n.castSucc)).1 + 1 := h₀ _
       _ ≤ n.castSucc + 1         := add_le_add_right ih 1
       _ ≤ _                      := le_refl (↑n.castSucc + 1)
     ) s
 
+/-- If a Kayleigh graph accepts a word then its position is dominated by the identity. -/
+theorem kayleighBound {A : Type*} {k : ℕ} {w : Fin (2 * k + 1) → A}
+    {p : Fin (2 * k + 1 + 1) → Fin (k + 1)}
+    (h : accepts_path (khδ' w) 0 0 p) :
+    ∀ s : Fin (2*k+1+1), (p s).1 ≤ s.1 := idBound_of_moves_slowly h.1 <| khδ_moves_slowly h
+
+def retreatSlow {k : ℕ} (p : Fin (2 * k + 1 + 1) → Fin (k + 1)) : Prop :=
+    ∀ (s : Fin (2 * k + 1)), (p s.succ).1 ≥ (p s.castSucc).1 - 1
+
 
 /-- A Kayleigh graph path does not retreat too fast. -/
 theorem kayleighBound_lower {A : Type*} {k : ℕ} (w : Fin (2 * k + 1) → A)
-    (p : Fin (2 * k + 1 + 1) → Fin (k + 1)) (h : accepts_path (khδ' w) 0 0 p)
-    (s : Fin (2 * k + 1)) : (p s.succ).1 ≥ (p s.castSucc).1 - 1 :=
-  @Fin.induction (2*k)
+    (p : Fin (2 * k + 1 + 1) → Fin (k + 1)) (h : accepts_path (khδ' w) 0 0 p) :
+    retreatSlow p := by
+  intro s
+  exact @Fin.induction (2*k)
     (fun n : Fin (2*k+1) => (p n.castSucc).1 - 1 ≤ (p n.succ).1)
     (by simp only [Fin.castSucc_zero, Fin.succ_zero_eq_one, tsub_le_iff_right]; rw [h.1]; simp) (by
       intro n hn
@@ -106,21 +118,16 @@ theorem kayleighBound_lower {A : Type*} {k : ℕ} (w : Fin (2 * k + 1) → A)
         omega
     ) s
 
-/-- If the Kayleigh graph ever uses the loop, we know when!
-Same proof for khδ' as for khδ given earlier lemmas, so we could
-generalize this.
--/
-theorem hyde_loop_when {A : Type*} {k : ℕ} (w : Fin (2 * k + 1) → A)
-    (p : Fin (2 * (k + 1)) → Fin (k + 1))
-    (h : accepts_path (khδ' w) 0 0 p) (t : Fin (2 * k + 1))
-    (ht : p t.castSucc = Fin.last k ∧ p t.succ = Fin.last k) :
+theorem loop_when_of_retreat_slow {k : ℕ} (p : Fin (2 * (k + 1)) → Fin (k + 1))
+    {t : Fin (2 * k + 1)} (ht : p t.castSucc = Fin.last k ∧ p t.succ = Fin.last k)
+    (h₀ : p 0 = 0) (h₁ : retreatSlow p)
+    (h₂ : moves_slowly p) (h₃ : p (Fin.last (2*k+1)) = 0) :
     t = ⟨k, by omega⟩ := by
   by_contra H
   cases lt_or_gt_of_ne fun hc => H <| Fin.eq_mk_iff_val_eq.mpr hc with
   | inl h' =>
     have : (p t.castSucc).1 < k := by
-      have h₁ : (p t.castSucc).1 ≤ t.castSucc := by
-        apply kayleighBound; exact h
+      have h₁ : (p t.castSucc).1 ≤ t.castSucc := idBound_of_moves_slowly h₀ h₂ _
       simp only [Fin.coe_castSucc] at h₁
       calc
       _ ≤ _ := h₁
@@ -128,22 +135,7 @@ theorem hyde_loop_when {A : Type*} {k : ℕ} (w : Fin (2 * k + 1) → A)
     rw [ht.1] at this
     simp at this
   | inr h' =>
-  · have g₀ : t.1 < 2*k + 1 := by
-      by_contra H
-      have ht2 := t.2
-      have ht : t.1 = 2*k+1 := by omega
-      unfold accepts_path khδ' at h
-      have := h.2.1
-      rw [ht] at H
-      have : p ⟨t.1,by omega⟩ = 0 := by
-        rw [← this]; congr
-      have : Fin.last k = 0 := by aesop
-      have : k = 0 := Fin.last_eq_zero_iff.mp this
-      omega
-    have : ∀ s : Fin (2*k+1), (p s.succ).1 ≥ p s.castSucc - 1 := by
-      apply kayleighBound_lower
-      exact h
-    have : ∀ s : Fin (2 * k+1 - t.1), (p (⟨t.1 + 1 + s, by omega⟩)).1 ≥ k - s := by
+  · have : ∀ s : Fin (2 * k+1 - t.1), (p (⟨t.1 + 1 + s, by omega⟩)).1 ≥ k - s := by
       intro s
       exact @Fin.induction (2*k-t.1)
         (fun n : Fin (2*k-t.1+1) =>
@@ -151,7 +143,7 @@ theorem hyde_loop_when {A : Type*} {k : ℕ} (w : Fin (2 * k + 1) → A)
           apply le_of_eq;symm;have :=ht.2
           exact Fin.mk.inj_iff.mp this) (by
           intro i hi
-          have h₁ := this ⟨t.1 + 1 + i.1, by omega⟩
+          have h₁ := h₁ ⟨t.1 + 1 + i.1, by omega⟩
           simp_all only [mul_eq, gt_iff_lt, Fin.is_lt, ge_iff_le, tsub_le_iff_right,
             Fin.coe_castSucc, Fin.succ_mk, Fin.castSucc_mk, Fin.val_succ]
           simp_rw [← add_assoc (t.1 + 1)]
@@ -164,103 +156,147 @@ theorem hyde_loop_when {A : Type*} {k : ℕ} (w : Fin (2 * k + 1) → A)
     have h₂ :  1 ≤ (p (Fin.last (2*k+1))).1 := by
       simp_rw [h₁] at h₀
       exact h₀
-    unfold accepts_path at h
     simp_all
 
 
-/-- If a Kayleigh graph path never uses the loop, then it preserves parity. -/
-theorem hyde_parity {A : Type*} {k : ℕ} (w : Fin (2 * k + 1) → A) (p : Fin (2 * (k + 1)) → Fin (k + 1))
-    (h : accepts_path (khδ' w) 0 0 p)
-    (H : ¬ ∃ t : Fin (2*k+1), p t.castSucc = Fin.last k ∧ p t.succ = Fin.last k) :
-    ∀ (t : Fin (2 * (k + 1))), (p t).1 % 2 = t % 2 := by
-  push_neg at H
-  intro t
-  exact @Fin.induction (2*k+1) (fun n => (p n).1 % 2 = n % 2)
-    (by simp only [Fin.val_zero, zero_mod];rw [h.1];simp) (by
+/-- If the Kayleigh graph ever uses the loop, we know when!
+Same proof for khδ' as for khδ given earlier lemmas, so we could
+generalize this.
+-/
+theorem hyde_loop_when {A : Type*} {k : ℕ} (w : Fin (2 * k + 1) → A)
+    (p : Fin (2 * (k + 1)) → Fin (k + 1))
+    (h : accepts_path (khδ' w) 0 0 p) (t : Fin (2 * k + 1))
+    (ht : p t.castSucc = Fin.last k ∧ p t.succ = Fin.last k) :
+    t = ⟨k, by omega⟩ :=
+  loop_when_of_retreat_slow _ ht h.1 (kayleighBound_lower w p h) (khδ_moves_slowly h) h.2.1
+
+theorem general_parity {k : ℕ} {p : Fin (2 * (k + 1)) → Fin (k + 1)}
+    (h₀ : p 0 = 0) (h₁ : retreatSlow p)
+    (h₂ : moves_slowly p)
+    (h₄ : ∀ i : Fin (2*k+1), p i.succ ≠ p i.castSucc) (t : Fin (2 * (k + 1))) :
+    (p t).1 % 2 = t % 2 :=
+  @Fin.induction (2*k+1) (fun n => (p n).1 % 2 = n % 2)
+    (by simp;rw [h₀];simp) (by
     intro n ih
-    have ⟨a,h₁⟩ := h.2.2 n
-    unfold khδ' δ_of_path at h₁
-    simp only [Fin.coe_eq_castSucc, Fin.coe_castSucc, mul_eq, Fin.val_succ, add_lt_add_iff_right,
-      reduceSubDiff, Set.mem_setOf_eq] at h₁
-    obtain ⟨t,ht⟩ := h₁
-    by_cases h₀ : t.1 < k + 1
-    · rw [dif_pos h₀] at ht
-      by_cases h₁ : t.1 < k
-      · rw [dif_pos h₁] at ht
-        rw [← ht.2.1]
-        simp only [Fin.val_succ]
-        have : t.1 % 2 = n.1 % 2 := by
-          have : t.1 = (p n.castSucc).1 := by rw [← ht.1]
-          rw [this, ih]
-          simp
-        exact add_mod_eq_add_mod_right 1 this
-      · rw [dif_neg h₁] at ht
-        rw [← ht.2.1]
-        rw [← ht.1] at ih
-        have : t.1 = k := by omega
-        simp_rw [this] at ih ht ⊢
-        have : 2 * k - k = k := by omega
-        simp_rw [this] at ht ⊢
-        have := H n (by
-          rw [← ht.1]
-          rfl
-        ) ht.2.1.symm
-        exact False.elim this
-    · rw [dif_neg h₀] at ht
-      have h₁ : ¬ t.1 < k := by omega
-      rw [dif_neg h₁] at ht
-      rw [← ht.1] at ih
-      rw [← ht.2.1]
-      simp only [Fin.coe_castSucc, Fin.val_succ] at ih ⊢
-      have : 2 * k + 1 - t.1 = 2 * k - t.1 + 1 := by omega
-      simp_rw [this] at ih
+    have : (p n.succ).1  = (p n.castSucc).1 + 1
+      ∨ (p n.succ).1 + 1 = (p n.castSucc).1 := by
+      cases lt_or_gt_of_ne <| h₄ n with
+      | inl h =>
+        right
+        have := h₁ n
+        omega
+      | inr h =>
+        left
+        have := h₂ n
+        omega
+    cases this with
+    | inl h =>
+      rw [h]
       have := add_mod_eq_add_mod_right 1 ih
+      rw [this]
+      simp
+    | inr h =>
+      have := add_mod_eq_add_mod_right 1 ih
+      simp at this
+      simp
       rw [← this]
+      rw [← h]
+      symm
       conv =>
-        rhs
-        arg 1
-        change 2 * k - t.1 + 2
-      exact Eq.symm (add_mod_right (2 * k - ↑t) 2)
+        lhs
+        left
+        rw [add_assoc]
+      conv =>
+        lhs
+        left
+        right
+        change 2
+      exact add_mod_right (↑(p n.succ)) 2
     ) t
 
-/-- A baffling auxiliary lemma about accepting paths in the Kayleigh graph NFA. -/
-theorem move_slowly_rev_aux {A : Type*} {k : ℕ} (w : Fin (2 * k + 1) → A)
-(p : Fin (2 * (k + 1)) → Fin (k + 1))
-    (h : accepts_path (khδ' w) 0 0 p) (s : Fin k) :
+theorem khδ_not_still.{u_1} {A : Type u_1} {k : ℕ}
+    {w : Fin (2 * k + 1) → A} {p : Fin (2 * (k + 1)) → Fin (k + 1)}
+    (h : accepts_path (khδ' w) 0 0 p) (i : Fin (2*k+1))
+    (hi : p i.succ = p i.castSucc) :
+    p i.succ = Fin.last k := by
+  obtain ⟨a,ha⟩ := h.2.2 i
+  obtain ⟨t,ht⟩ := ha
+  simp at ht
+  split_ifs at ht
+  ·
+    rw [← ht.2.1] at hi
+    rw [← ht.1] at hi
+    simp at hi
+  · have : t.1 = k := by omega
+    rw [← ht.2.1]
+    congr
+    omega
+  · omega
+  · rw [← ht.2.1] at hi
+    rw [← ht.1] at hi
+    simp at hi
+    omega
+
+
+/-- If a Kayleigh graph path never uses the loop, then it preserves parity. -/
+theorem hyde_parity {A : Type*} {k : ℕ} {w : Fin (2 * k + 1) → A} {p : Fin (2 * (k + 1)) → Fin (k + 1)}
+    (h : accepts_path (khδ' w) 0 0 p)
+    (H : ¬ ∃ t : Fin (2*k+1), p t.castSucc = Fin.last k ∧ p t.succ = Fin.last k) :
+    ∀ (t : Fin (2 * (k + 1))), (p t).1 % 2 = t % 2 :=
+  general_parity h.1 (kayleighBound_lower w p h) (khδ_moves_slowly h) (fun i hc => by
+    push_neg at H
+    have := khδ_not_still h i hc
+    exact H i (by omega) <| khδ_not_still h i hc
+  )
+
+
+
+/-- An auxiliary lemma about slow-retreating paths. -/
+theorem move_slowly_rev_aux' {k : ℕ} (p : Fin (2 * (k + 1)) → Fin (k + 1))
+    (h : retreatSlow p) (s : Fin k) :
     k ≤ k - (p ⟨s.1 + k + 1, by omega⟩).1 + 1
           + (p ⟨s.1 + 1 + k + 1, by omega⟩).1 := by
   suffices k ≤ k + 1 + (p ⟨s + 1 + k + 1, by omega⟩).1  - (p ⟨s + k + 1, by omega⟩).1 by omega
   simp_rw [show s + 1 + k + 1 = s + k + 1 + 1 by ring]
-  have hmo' := @kayleighBound_lower A k w p h ⟨s + k + 1, by omega⟩
+  have hmo' := h ⟨s+k+1, by omega⟩
+
   simp only [Fin.succ_mk, Fin.castSucc_mk, ge_iff_le, tsub_le_iff_right] at hmo'
   have h : k + (1 + (p ⟨s + k + 1 + 1, by omega⟩).1 - (p ⟨s + k + 1, by omega⟩).1)
     = k + 1 + (p ⟨s + k + 1 + 1, by omega⟩).1 - (p ⟨s + k + 1, by omega⟩).1 := by
     apply Nat.eq_sub_of_add_eq'
+
     omega
   rw [← h]
   apply Nat.le_add_right
 
 
-/-- The Kayleigh graph NFA for an odd-length word `w` accepts along only the intended path. -/
-theorem hyde_unique_path {A : Type*} {k : ℕ} (w : Fin (2*k+1) → A)
+/- general: if a path moves slowly, retreats slowly, never stands still except at k,
+and goes from 0 to 0 in odd time, then we know what the path is.
+-/
+theorem general_unique_path {k : ℕ}
   (p : Fin (2*(k+1)) → Fin (k+1))
-  (h : accepts_path (khδ' w) 0 0 p) :
+  (h₀ : p 0 = 0)
+  (h₁ : p (Fin.last (2*k+1)) = 0)
+  (h₂ : moves_slowly p)
+  (h₃ : retreatSlow p)
+  (h₄ : ∀ (i : Fin (2 * k + 1)), p i.succ = p i.castSucc → p i.succ = Fin.last k) :
   p = fun t : Fin (2*(k+1)) => dite (t.1 < k + 1) (⟨t.1, .⟩) (⟨2*k+1-t.1, flipCast .⟩)  := by
   by_cases H : ∃ t : Fin (2*k+1), p t.castSucc = Fin.last k ∧ p t.succ = Fin.last k -- we use the loop
   · obtain ⟨t,ht⟩ := H
-    have : t = ⟨k,by omega⟩ := by apply hyde_loop_when <;> tauto
+    have : t = ⟨k,by omega⟩ := loop_when_of_retreat_slow _ ht h₀ h₃ h₂ h₁
     ext s
     split_ifs with g₀
     · by_cases hh : s.1 = k
       · have : s = ⟨k, by omega⟩ := Fin.eq_of_val_eq hh
         aesop
       have h₀':= @exact_racecar k (fun x => p ⟨x.1,by have := x.2;linarith⟩)
+        h₀ (by aesop)
         (by
-          simp only [Fin.val_zero, Fin.zero_eta]
-          exact h.1) (by aesop)
-        (by
-          intro s;simp only [Fin.val_succ, Fin.coe_castSucc]
-          exact @move_slowly A k w p 0 h (s.castLT (by omega))
+          simp
+          unfold moves_slowly at h₂
+          intro s
+          have := h₂ ⟨s,by omega⟩
+          tauto
         ) ⟨s, by omega⟩
       simp only [Fin.castSucc_mk, Fin.eta] at h₀'
       rw [h₀']
@@ -272,8 +308,8 @@ theorem hyde_unique_path {A : Type*} {k : ℕ} (w : Fin (2*k+1) → A)
         simp only [Nat.sub_self]
         have h₀ : s = Fin.last (2*k+1) := Fin.eq_of_val_eq hh
         rw [h₀]
-        exact Fin.mk.inj_iff.mp h.2.1
-
+        rw [h₁]
+        simp
       · let f : Fin ((k+1)) → Fin ((k+1)) :=
           fun u  => ⟨k - (p ⟨u + k + 1,by omega⟩).1, by omega⟩
 
@@ -288,41 +324,33 @@ theorem hyde_unique_path {A : Type*} {k : ℕ} (w : Fin (2*k+1) → A)
           simp_all
         ) (by
           unfold f;
-          unfold accepts_path at h
-          have := h.2.1
-          simp only [mul_eq] at this
           simp only [Fin.val_last]
           simp_rw [← two_mul]
           apply Fin.mk.inj_iff.mpr
           show  k - (p (Fin.last (2*k+1))).1 = k
-          rw [this]
+          rw [h₁]
           simp
           ) (by
             intro s₁
             rw [tsub_le_iff_right]
-            apply move_slowly_rev_aux <;> tauto
+            apply move_slowly_rev_aux'
+            exact h₃
           ) ⟨s - (k+1), by omega⟩
         unfold f at this
         simp only [Fin.castSucc_mk, Fin.mk.injEq] at this
         exact this
-  · have : ∀ (t : Fin (2 * (k+1))), (p t).1 % 2 = t % 2 := by
-      apply hyde_parity <;> tauto
+  · have := @general_parity k p h₀ h₃ h₂ (by aesop) (Fin.last (2*k+1))
+    rw [h₁] at this
+    simp at this
+    omega
 
-    have : p (Fin.last (2*k+1)) ≠ 0 := by
-      intro hc
-      have := this (Fin.last (2*k+1))
-      rw [hc] at this
-      revert this
-      intro hc
-      symm at hc
-      revert hc
-      simp only [Fin.val_last, Fin.val_zero, zero_mod, imp_false, mod_two_ne_zero]
-      apply succ_mod_two_eq_one_iff.mpr
-      simp
-    exfalso
-    unfold accepts_path at h
-    tauto
 
+/-- The Kayleigh graph NFA for an odd-length word `w` accepts along only the intended path. -/
+theorem hyde_unique_path {A : Type*} {k : ℕ} (w : Fin (2*k+1) → A)
+    (p : Fin (2*(k+1)) → Fin (k+1)) (h : accepts_path (khδ' w) 0 0 p) :
+    p = fun t : Fin (2*(k+1)) => dite (t.1 < k + 1) (⟨t.1, .⟩) (⟨2*k+1-t.1, flipCast .⟩)  :=
+  general_unique_path _ h.1 h.2.1
+    (khδ_moves_slowly h) (kayleighBound_lower w p h) <| khδ_not_still h
 
 /-- The Kayleigh graph NFA for an odd-length word `w` accepts along only the intended path,
  no matter what word `v` with `|v| = |w|` is read. -/
