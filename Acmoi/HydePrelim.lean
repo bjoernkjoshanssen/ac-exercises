@@ -42,7 +42,7 @@ lemma odd_tuples_aux {A : Type*} {k : ℕ} {w v : Fin (2 * k + 1) → A}
       simp_rw [← this]
 
 /--  Discrete version of the Racecar Principle. -/
-lemma racecar {k : ℕ} {f : Fin (k+1) → Fin (k+1)} (a b : Fin (k+1))
+lemma racecar {k : ℕ} {f : Fin (k+1) → Fin (k+1)} {a b : Fin (k+1)}
     (h₀ : f a = b) (h : ∀ s : Fin k,
       (f s.succ).1
     ≤ (f s.castSucc).1 + 1) :
@@ -73,14 +73,14 @@ lemma exact_racecar {k : ℕ} {f : Fin (k+1) → Fin (k+1)}
     ≤ (f s.castSucc).1 + 1) {a : Fin k} :
     f a.castSucc = a.castSucc := by
     by_contra H
+    have hr := racecar h₀ h a.1 (by
+      simp only [Fin.val_zero, add_zero];omega
+    )
+    simp only [Fin.val_zero, add_zero] at hr
     have : (f a.castSucc).1 < a := by
-      have := @racecar k f 0 0 h₀ h a.1 (by
-        simp only [Fin.val_zero, add_zero];omega
-      )
-      simp only [Fin.val_zero, add_zero] at this
       contrapose H
       simp_all only [gt_iff_lt, not_lt, Decidable.not_not]
-      exact Fin.eq_of_val_eq <| Nat.le_antisymm this H
+      exact Fin.eq_of_val_eq <| Nat.le_antisymm hr H
     let b := (f a.castSucc)
     have : (f (Fin.last k)).1 < k := by
       have := @racecar k f a.castSucc b rfl h (k-a)

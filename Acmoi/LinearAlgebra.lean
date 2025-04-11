@@ -28,7 +28,7 @@ The closest of the newcomers to `A` is probably `As ℕ`.
  we assume the field is at least `ℤ / 2ℤ`.
  -/
 def astMat {α : Type*} {R : Type*} [Add R] [Mul R] [Zero R] [One R]
-  {n q : ℕ} (word : Fin n → α) (matrices : α → Fin q → Fin q → R) :
+  {n q : ℕ} (word : Fin n → α) (matrices : α → Matrix (Fin q) (Fin q) R) :
   Fin q → Fin q → R := match n with
 | 0 => fun x y => ite (x=y) 1 0
 | Nat.succ m => Matrix.mulᵣ (matrices (word m)) (astMat (Fin.init word) matrices)
@@ -655,3 +655,148 @@ theorem A_at_most_pow_of_Al_at_most'' {n b c : ℕ} (w : Fin n → Fin b) :
   rw [hm]
   apply Nat.find_le
   exact this
+
+
+/-
+
+## Reset words
+
+-/
+
+def resets_to {α : Type*} {R : Type*} [Add R] [Mul R] [Zero R] [One R] {n : ℕ}
+    (word : Fin n → α) {q : ℕ} (matrices : α → Fin q → Fin q → R) (final : Fin q → R) :=
+  ∀ init, astM word matrices init = final
+
+
+def resets {α : Type*} {R : Type*} [Add R] [Mul R] [Zero R] [One R] {n : ℕ}
+  (word : Fin n → α) {q : ℕ} (matrices : α → Fin q → Fin q → R):=
+  ∃ final : Fin q → R, resets_to word matrices final
+
+/-- Reset word for a linear representation. -/
+def resets' {α : Type*} {R : Type*} [Add R] [Mul R] [Zero R] [One R] {n : ℕ}
+  (word : Fin n → α) {q : ℕ} (matrices : α → Fin q → Fin q → R):=
+  ∀ init₁ init₂,
+    astM word matrices init₁ = astM word matrices init₂
+
+theorem resets_iff_resets'  {α : Type*} (R : Type*) [Add R] [Mul R] [Zero R] [One R] {n : ℕ}
+    (word : Fin n → α) (q : ℕ) (matrices : α → Fin q → Fin q → R)  :
+    resets word matrices ↔ resets' word matrices := by
+  unfold resets resets' resets_to
+  constructor
+  · intro h init₁ init₂
+    obtain ⟨w, h⟩ := h
+    simp_all only
+  · intro h
+    use astM word matrices 0 -- where 0 is the empty tuple!
+    intro init
+    exact h init 0
+
+def reset_threshold_at_most {α : Type*} {R : Type*} [Add R] [Mul R] [Zero R] [One R]
+  {q : ℕ} (matrices : α → Fin q → Fin q → R) (n:ℕ) :=
+  ∃ word : Fin n → α, ∃ final : Fin q → R, ∀ init,
+    astM word matrices init = final
+
+def reset_threshold {α : Type*} {R : Type*} [Add R] [Mul R] [Zero R] [One R]
+  {q : ℕ} (matrices : α → Fin q → Fin q → R) (n:ℕ) :=
+  reset_threshold_at_most matrices n ∧ ∀ m < n, ¬ reset_threshold_at_most matrices m
+
+def fiboMat : Fin 2 → Matrix (Fin 2) (Fin 2) (Fin 2) :=
+  ![
+    !![1,0; 0,0],
+    !![1,1; 1,0]
+  ]
+
+#eval astM ![0,1,1] fiboMat ![1,0]
+#eval astM ![0,1,1,0] fiboMat ![1,0]
+
+lemma vcases (v : Fin 2 → Fin 2) (i : Fin 2) :
+  v i = 0 ∨ v i = 1 := by
+  omega
+
+lemma veccases (v : Fin 2 → Fin 2) :
+  v = ![0,0]
+  ∨ v = ![0,1]
+  ∨ v = ![1,0]
+  ∨ v = ![1,1] := by
+  by_cases h₀: v 0 = 0
+  · by_cases h₁ : v 1 = 0
+    · left;ext i;fin_cases i <;> simp_all
+    · right;left;ext i
+      fin_cases i
+      · simp_all
+      cases vcases v 1 <;> aesop
+  · by_cases h₁ : v 1 = 0
+    · right;right;left
+      ext i
+      fin_cases i
+      cases vcases v 0 <;> aesop
+      aesop
+    · right;right;right
+      ext i
+      fin_cases i
+      cases vcases v 0 <;> aesop
+      cases vcases v 1 <;> aesop
+
+theorem cerny' : resets ![0,1,1,0] fiboMat := by
+  unfold resets
+  use ![0,0]
+  intro v
+  cases veccases v with
+  | inl h => subst h;decide
+  | inr h =>
+    cases h with
+    | inl h => subst h;decide
+    | inr h => cases h <;> (simp_all;decide)
+
+/-- One step in the naïve algorithm for finding a reset word. -/
+def naive (matrices : Fin 2 → Matrix (Fin 2) (Fin 2) (Fin 2)) (S : Set (Fin 2 → Fin 2)) (a : Fin 2) :
+    Set (Fin 2 → Fin 2) :=
+  {v | ∃ q ∈ S, Matrix.mulᵣ (matrices a)
+    (fun (i:Fin 2) (_ : Fin 1) => q i) = fun i _ => v i}
+
+def naiveWord (matrices : Fin 2 → Matrix (Fin 2) (Fin 2) (Fin 2))
+    (startSet : Set (Fin 2 → Fin 2))
+    {n:ℕ} (word : Fin n → Fin 2) : Set (Fin 2 → Fin 2) :=
+  match n with
+  | 0 => startSet
+  | Nat.succ k =>
+    naive matrices (naiveWord matrices Set.univ (Fin.init word))
+      (word (Fin.last k))
+
+theorem naiveEmptyWord (matrices : Fin 2 → Matrix (Fin 2) (Fin 2) (Fin 2)) :
+    naiveWord matrices Set.univ ![] = Set.univ := by
+  unfold naiveWord
+  simp
+
+
+example : naive fiboMat {![0,0]} 0 = {![0,0]} := by
+  unfold naive fiboMat
+  ext v
+  simp
+  constructor
+  · cases veccases v with
+  | inl h => subst h;decide
+  | inr h =>
+    cases h with
+    | inl h => subst h;decide
+    | inr h => cases h <;> (simp_all;decide)
+  · intro h
+    subst h
+    decide
+
+example : naive fiboMat {![1,0]} 0 = {![1,0]} := by
+  unfold naive fiboMat
+  ext v
+  simp
+  constructor
+  · cases veccases v with
+    | inl h => subst h;decide
+    | inr h =>
+      cases h with
+      | inl h => subst h;decide
+      | inr h => cases h with
+        | inl h => subst h;decide
+        | inr h => subst h;decide
+  · intro h
+    subst h
+    decide
