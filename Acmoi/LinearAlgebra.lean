@@ -1,8 +1,4 @@
 import Mathlib.Data.Matrix.Reflection
-import Mathlib.Data.Fin.Basic
-import Mathlib.Data.Nat.Find
-import Mathlib.LinearAlgebra.StdBasis
-import Mathlib.Data.Matrix.Basis
 import Acmoi.Perm
 import Acmoi.Theorem1_49
 /-!

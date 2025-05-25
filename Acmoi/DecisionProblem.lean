@@ -1,6 +1,4 @@
-import Mathlib.Computability.NFA
-import Mathlib.Data.Matrix.Basic
-
+import Mathlib.Logic.Unique
 /-!
 Wikipedia (https://en.wikipedia.org/wiki/Parsimonious_reduction):
   "A general reduction from problem A to problem B is a transformation that guarantees that

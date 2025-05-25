@@ -1,8 +1,3 @@
-import Mathlib.Computability.NFA
-import Mathlib.Data.Matrix.Basic
-import Acmoi.DecisionProblem
-import Acmoi.Ch7Tools
-import Acmoi.Cursive
 import Acmoi.Knapsack
 
 /-

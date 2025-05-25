@@ -1,9 +1,5 @@
-import Mathlib.NumberTheory.Padics.PadicNumbers
-import Mathlib.Algebra.Order.Floor
-import Mathlib.Data.Nat.Log
-import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Fin.Tuple.Take
-set_option maxHeartbeats 2000000
+import Mathlib.Algebra.Order.Ring.Nat
+import Mathlib.Data.Fintype.Card
 /-!
 
   # Preliminaries for Hyde's Theorem

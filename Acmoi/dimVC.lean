@@ -5,7 +5,6 @@ import Mathlib.InformationTheory.Hamming
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Fin.Tuple.Take
 
-set_option tactic.hygienic false
 
 /-!
 

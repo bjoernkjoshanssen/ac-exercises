@@ -1,11 +1,6 @@
-import Mathlib.NumberTheory.Padics.PadicNumbers
-import Mathlib.Algebra.Order.Floor
-import Mathlib.Data.Nat.Log
-import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Fin.Tuple.Take
 import Acmoi.HydePrelim
 import Acmoi.QuasTheorem
-set_option maxHeartbeats 20000000
+
 /-!
 
   # Kjos-Hanssen / Quas theorem
@@ -35,8 +30,10 @@ theorem least_not_in_range_nonempty {n q : ℕ} (h : q < n) (f : Fin (q + 1) →
 def least_not_in_range {n q : ℕ} (h : q < n) (f : Fin (q+1) → Fin (n+1)) : Fin (n+1) :=
   min' (filter (fun k => ∀ l, f l ≠ k) univ) (least_not_in_range_nonempty h _)
 
-/-- The DFA `δ` witnessing the permutation-automatic complexity of a word `w`. -/
-noncomputable def Perm_δ {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) (q : Fin (n+1)) :  (Fin (n+1)) := match q with
+/-- The DFA `δ` witnessing the permutation-automatic complexity
+ of a word `w`. -/
+noncomputable def Perm_δ {A : Type*} {n : ℕ} (w : Fin n → A)
+    (a : A) (q : Fin (n+1)) :  (Fin (n+1)) := match q with
 | 0 => by
   by_cases hn : n = 0
   · exact 0
@@ -44,13 +41,13 @@ noncomputable def Perm_δ {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) (q : F
     · exact ⟨1, by omega⟩
     · exact 0
 | Fin.mk (succ q) hq => by
-    by_cases h₀ : ∃ (h₁ : q+1 < n), a = w ⟨q+1, h₁⟩
-    · exact ⟨q+2, by
-            obtain ⟨h₁,hh₁⟩ := h₀
-            omega
-        ⟩
-    · have hqn : q < n := by omega
-      exact least_not_in_range hqn (fun i => Perm_δ w a ⟨i.1, by omega⟩)
+  by_cases h₀ : ∃ (h₁ : q+1 < n), a = w ⟨q+1, h₁⟩
+  · exact ⟨q+2, by
+      obtain ⟨h₁,_⟩ := h₀
+      exact Order.lt_add_one_iff.mpr h₁⟩
+  · have hqn : q < n := by omega
+    exact least_not_in_range
+      hqn (fun i => Perm_δ w a ⟨i.1, by omega⟩)
 
 /-- The minimum of a set `s` belongs to `s`. This version does not require mentioning `s` explicitly. -/
 theorem mem_of_eq_min {α : Type*} [LinearOrder α] {s : Finset α} {H : s.Nonempty} {a : α} (h : a = min' s H) : a ∈ s :=
@@ -385,109 +382,97 @@ theorem accepts_perm_word  {A : Type*} {n : ℕ} (v w : Fin n → A) (p : Fin (n
   ext i
   exact this i
 
+/-- If q+2 is the least not in the range then anything less
+ is in the range. -/
+theorem is_onto {n q r : ℕ} (h₉ : q + 1 < n) (hr : r < n)
+    (h₁ := Order.lt_add_one_iff.mpr h₉)
+    {p : Fin (n+1) → Fin (n+1)}
+    (h : ⟨q + 2, h₁⟩ =
+      least_not_in_range hr
+        fun i ↦ p ⟨i.1, by omega⟩) (x : Fin (q+2)):
+    ∃ y : Fin (r+1), p ⟨y.1, by omega⟩ = ⟨x.1, by omega⟩ := by
+  by_contra H
+  push_neg at H
+  have : (⟨q+2, h₁⟩ : Fin (n+1)) ≤ ⟨x.1, by omega⟩ := by
+    rw [h]
+    apply min'_le
+    simp
+    tauto
+  have : q + 2 ≤ x.1 := this
+  omega
+
+theorem bound_of_least_not_in_range {n q r : ℕ} (h₉ : q + 1 < n) (hr : r < n)
+    (h₁ := Order.lt_add_one_iff.mpr h₉)
+    {p : Fin (n+1) → Fin (n+1)}
+    (h : ⟨q + 2, h₁⟩ = least_not_in_range hr fun i ↦ p ⟨i.1, by omega⟩):
+    q + 2 ≤ r + 1 := by
+  have hnq : q + 2 ≤ n + 1 := by omega
+  have onto: ∀ x : Fin (q+2), ∃ y : Fin (r+1),
+    p ⟨y.1, by omega⟩ = ⟨x.1, by omega⟩ := by apply is_onto <;> tauto
+  let f (k : Fin (q+2)) := (@Fin.find (r+1)
+    (fun y : Fin (r+1) => p ⟨y.1, by omega⟩ = ⟨k.1, by omega⟩) _
+    ).get (Fin.isSome_find_iff.mpr <| onto k)
+  have : Function.Injective f := fun u v _ => by
+    have hu := @Fin.find_spec (r+1) (fun y : Fin (r+1) =>
+        p ⟨y.1, by omega⟩ = ⟨u.1, by omega⟩) _
+      (Option.get _ (Fin.isSome_find_iff.mpr (onto u))) (by aesop)
+    have hv := @Fin.find_spec (r+1) (fun y : Fin (r+1) =>
+      p ⟨y.1, by omega⟩ = ⟨v.1, by omega⟩) _
+      (Option.get _ (Fin.isSome_find_iff.mpr (onto u))) (by aesop)
+    exact (@Fin.castLE_inj (n+1) (q+2) hnq u v).mp <| hu.symm.trans hv
+  rw [← Fintype.card_fin (r + 1), ← Fintype.card_fin (q + 2)]
+  exact Fintype.card_le_of_injective _ this
+
+
 /-- Injectivity of `Perm_δ`, "forward" case. -/
-theorem injCase₁ {A : Type*} {n : ℕ} (w : Fin n → A) {q : ℕ}
-    (h₉ : q + 1 < n)
-    {r : ℕ} (hr : r.succ < n + 1) (h : Perm_δ w (w ⟨q + 1, h₉⟩) ⟨q.succ, by omega⟩
-                                     = Perm_δ w (w ⟨q + 1, h₉⟩) ⟨r.succ, hr⟩)
-    : q = r := by
-          have h₀ : ∃ (h₁ : q + 1 < n), w ⟨q + 1, h₉⟩ = w ⟨q + 1, h₁⟩ := by
-            use h₉
-          have hq : q.succ < n + 1 := by
-            obtain ⟨u,v⟩ := h₀
-            omega
-
-          unfold Perm_δ at h
-          rw [dif_pos h₀] at h
-          simp at h
-          by_cases h₁ : ∃ (h₁ : r + 1 < n), w ⟨q + 1, h₉⟩ = w ⟨r + 1, h₁⟩
-          · rw [dif_pos h₁] at h
-            aesop
-          · rw [dif_neg h₁] at h
-            push_neg at h₁
-            by_contra H
-            have hbig: Fintype.card (Fin (q+2)) ≤ Fintype.card (Fin (r+1)) := by
-                have : ∀ x : Fin (q+2), ∃ y : Fin (r+1),
-                    Perm_δ w (w ⟨q + 1, h₉⟩) ⟨y.1, by omega⟩ = ⟨x.1, by omega⟩ := by
-                    intro x
-                    by_contra H
-                    push_neg at H
-                    unfold least_not_in_range at h
-                    have : (⟨q+2, by
-                        obtain ⟨w_1, h⟩ := h₀
-                        omega
-                    ⟩ : Fin (n+1)) ≤ ⟨x.1, by omega⟩ := by
-                        rw [h]
-                        apply min'_le
-                        simp
-                        tauto
-                    have : q + 2 ≤ x.1 := by exact this
-                    have : x.1 < q + 2 := x.2
-                    omega
-                let f := fun k : Fin (q+2) => (@Fin.find (r+1)
-                    (fun y : Fin (r+1) =>
-                        Perm_δ w (w ⟨q + 1, h₉⟩) ⟨y.1, by omega⟩ = ⟨k.1, by omega⟩) _
-                    ).get (by
-                    apply Fin.isSome_find_iff.mpr
-                    exact this k)
-                have := @Fintype.card_le_of_injective (Fin (q+2)) (Fin (r+1)) _ _
-                    f (by
-                    intro u v huv
-                    unfold f at huv
-
-                    have hu := @Fin.find_spec (r+1)
-                        (fun y : Fin (r+1) =>
-                        Perm_δ w (w ⟨q + 1, h₉⟩) ⟨y.1, by omega⟩ = ⟨u.1, by omega⟩) _
-                        (@Option.get (Fin (r + 1))
-                        (Fin.find fun y ↦ Perm_δ w (w ⟨q + 1, h₉⟩) ⟨↑y, by omega⟩ = ⟨↑u, by omega⟩) (by
-                            exact Fin.isSome_find_iff.mpr (this u)
-                        ) : Fin (r + 1)) (by aesop)
-                    have hv := @Fin.find_spec (r+1)
-                        (fun y : Fin (r+1) =>
-                        Perm_δ w (w ⟨q + 1, h₉⟩) ⟨y.1, by omega⟩ = ⟨v.1, by omega⟩) _
-                        (@Option.get (Fin (r + 1))
-                        (Fin.find fun y ↦ Perm_δ w (w ⟨q + 1, h₉⟩) ⟨↑y, by omega⟩ = ⟨↑u, by omega⟩) (by
-                            exact Fin.isSome_find_iff.mpr (this u)
-                        ) : Fin (r + 1)) (by aesop)
-                    simp at hu hv
-                    suffices (⟨u.1, by omega⟩ : Fin (n+1)) = ⟨v.1, by omega⟩ by aesop
-                    apply hu.symm.trans
-                    tauto)
-                exact this
-            have hf₀: Fintype.card (Fin (r+1)) = r+1 := Fintype.card_fin (r + 1)
-            have hf₁: Fintype.card (Fin (q+2)) = q+2 := Fintype.card_fin (q + 2)
-            have : q + 2 ≤ r + 1 := by
-                rw [← hf₀, ← hf₁]
-                omega
-            have hl : q < r := by
-                omega
-            by_cases hrn : r + 1 < n
-            · have h₁ := h₁ hrn
-                -- @the bigger one the current bit is not a, but they are part of the same run of a's
-              have := mem_of_eq_min h
-              simp at this
-              apply this ⟨q+1, by omega⟩
-              unfold Perm_δ
-              simp
-              rw [dif_pos h₉]
-            · simp_all
-              have : r = n - 1 := by omega
-              subst this
-              unfold least_not_in_range at h
-              -- q+2 can't be the least not in the range because it's in the range!
-              have := mem_of_eq_min h
-              simp at this
-              apply this ⟨q+1, by omega⟩
-              unfold Perm_δ
-              simp
-              simp_rw [dif_pos h₉]
+theorem injCase₁ {A : Type*} {n : ℕ} (w : Fin n → A) {q : ℕ} (h₉ : q + 1 < n)
+    {r : ℕ} (hr : r.succ < n + 1)
+    (h : Perm_δ w (w ⟨q + 1, h₉⟩) ⟨q.succ, by omega⟩
+       = Perm_δ w (w ⟨q + 1, h₉⟩) ⟨r.succ, hr⟩) : q = r := by
+  have hnq : q + 2 ≤ n + 1 := by omega
+  have h₀ : ∃ (h₁ : q + 1 < n), w ⟨q + 1, h₉⟩ = w ⟨q + 1, h₁⟩ := by use h₉
+  have hq : q.succ < n + 1 := by
+    obtain ⟨u,v⟩ := h₀
+    omega
+  unfold Perm_δ at h
+  rw [dif_pos h₀] at h
+  simp at h
+  by_cases h₁ : ∃ (h₁ : r + 1 < n), w ⟨q + 1, h₉⟩ = w ⟨r + 1, h₁⟩
+  · rw [dif_pos h₁] at h
+    aesop
+  · rw [dif_neg h₁] at h
+    push_neg at h₁
+    by_contra H
+    have hbig: q+2 ≤ r+1 := by apply bound_of_least_not_in_range <;> tauto
+    have hl : q < r := by omega
+    by_cases hrn : r + 1 < n
+    · have h₁ := h₁ hrn
+        -- @the bigger one the current bit is not a, but they are part of the same run of a's
+      have := mem_of_eq_min h
+      simp at this
+      apply this ⟨q+1, by omega⟩
+      unfold Perm_δ
+      simp
+      rw [dif_pos h₉]
+    · simp_all
+      have : r = n - 1 := by omega
+      subst this
+      unfold least_not_in_range at h
+      -- q+2 can't be the least not in the range because it's in the range!
+      have := mem_of_eq_min h
+      simp at this
+      apply this ⟨q+1, by omega⟩
+      unfold Perm_δ
+      simp
+      simp_rw [dif_pos h₉]
 
 
 
 
 /-- Injectivity of `Perm_δ`, zero case. -/
-theorem injCase₀ {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q.succ < n + 1)
-    (h : Perm_δ w a 0 = Perm_δ w a ⟨q.succ, hq⟩) : False := by
+theorem injCase₀ {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) {q : ℕ} (hq : q.succ < n + 1) :
+    Perm_δ w a 0 ≠ Perm_δ w a ⟨q.succ, hq⟩ := by
+    intro h
     by_cases hn : n = 0
     · subst hn
       have : q = 0 := by omega
@@ -498,7 +483,6 @@ theorem injCase₀ {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq
       conv at h =>
           right
           unfold Perm_δ
-
       by_cases h₀ :  ∃ (h₁ : q + 1 < n), a = w ⟨q + 1, h₁⟩
       · symm at h
         unfold Perm_δ at h
@@ -509,78 +493,79 @@ theorem injCase₀ {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq
           right
           change (if a = w ⟨0, hn₀⟩ then ⟨1, hn₁⟩ else 0)
         by_cases h₁ : a = w ⟨0, hn₀⟩
-        rw [if_pos h₁] at h
-        simp at h
-        simp_all only [↓reduceIte]
-        obtain ⟨w_1, h⟩ := h₀
-        simp_all only
-        have : q + 2 = 0 := Fin.mk.inj_iff.mp h
-        simp at this
+        · rw [if_pos h₁] at h
+          simp at h
+        · simp_all only [↓reduceIte]
+          obtain ⟨w_1, h⟩ := h₀
+          simp_all only
+          have : q + 2 = 0 := Fin.mk.inj_iff.mp h
+          simp at this
 
       · rw [dif_neg h₀] at h
         have := mem_of_eq_min h
         simp only [mem_filter, mem_univ, true_and] at this
         exact this 0 rfl
 
+theorem injCase_helper {A : Type u_1} {n : ℕ} (w : Fin n → A) (a : A) {q : ℕ} (hq : q.succ < n + 1)
+    {r : ℕ}
+    (hr : r.succ < n + 1) (h : Perm_δ w a ⟨q + 1, hq⟩ = Perm_δ w a ⟨r + 1, hr⟩)
+    (hl : q < r) : ∃ (h₁ : r + 1 < n), a = w ⟨r + 1, h₁⟩ := by
+  by_contra h₁
+  conv at h =>
+      right
+      unfold Perm_δ
+  simp_rw [dif_neg h₁] at h
+  unfold least_not_in_range at h
+  have := mem_of_eq_min h
+  simp at this
+  apply this ⟨q + 1, by omega⟩
+  rfl
+
 /-- Injectivity of `Perm_δ`, "backward" case. -/
-theorem injCase {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) (q : ℕ) (hq : q.succ < n + 1) (r : ℕ)
+theorem injCase {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) {q : ℕ} (hq : q.succ < n + 1) {r : ℕ}
     (hr : r.succ < n + 1) (h : Perm_δ w a ⟨q.succ, hq⟩ = Perm_δ w a ⟨r.succ, hr⟩)
     (h₀ : ¬∃ (h₁ : q + 1 < n), a = w ⟨q + 1, h₁⟩) (h₁ : ¬∃ (h₁ : r + 1 < n), a = w ⟨r + 1, h₁⟩)
     : q = r := by
     by_contra H
-    simp at h
-    have : q < r ∨ r < q := by omega
-    cases this with
-    | inl hl =>
-        conv at h =>
-            right
-            unfold Perm_δ
-        simp_rw [dif_neg h₁] at h
-        unfold least_not_in_range at h
-        have := mem_of_eq_min h
-        simp at this
-        apply this ⟨q + 1, by omega⟩
-        rfl
-    | inr hl =>
-        -- entirely symmetrical
-        conv at h =>
-            left
-            unfold Perm_δ
-        simp_rw [dif_neg h₀] at h
-        unfold least_not_in_range at h
-        have := mem_of_eq_min h.symm
-        simp at this
-        apply this ⟨r + 1, by omega⟩
-        rfl
-    -- @both the current bit is not a, but they are part of the same run of a's
+    cases Nat.lt_or_gt_of_ne H with
+    | inl hl => exact h₁ <| injCase_helper _ _ _ _ h hl
+    | inr hl => exact h₀ <| injCase_helper _ _ _ _ h.symm hl
+
+example (P Q : Prop) (h : ∃ _ : P, Q) : Q := (exists_prop.mp h).2
+
+example (P Q : Prop) (h : ∃ _ : P, Q) : P := (exists_prop.mp h).1
+
+lemma exists_prop_fun {P : Prop} {Q : P → Prop} (h : ∃ h₀ : P, Q h₀) : P := by
+  obtain ⟨w, h⟩ := h
+  simp_all only
+
+
 
 /-- Injectivity of `Perm_δ`, which is its key property. -/
-theorem Perm_δ_injective  {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) :
+theorem Perm_δ_injective {A : Type*} {n : ℕ} (w : Fin n → A) (a : A) :
   Function.Injective (Perm_δ w a) := by
   intro x y h
   match x with
   | 0 =>
     match y with
     | 0 => rfl
-    | Fin.mk (succ q) hq => exfalso; apply injCase₀ <;> tauto
+    | Fin.mk (succ q) hq =>
+      exfalso; apply injCase₀ <;> tauto
   | Fin.mk (succ q) hq => match y with
-    | 0 =>                  exfalso; apply injCase₀ <;> tauto
+    | 0 =>
+      exfalso; apply injCase₀ <;> tauto
     | Fin.mk (succ r) hr =>
-        suffices q = r by simp_rw [this]
+        congr
         by_cases h₀ : ∃ (h₁ : q + 1 < n), a = w ⟨q + 1, h₁⟩
-        ·
-          exact @injCase₁ A n w q (by obtain ⟨_,_⟩ := h₀;tauto) r hr (by
+        · exact injCase₁ w (exists_prop_fun h₀) hr (by
             obtain ⟨u,v⟩ := h₀
-            exact v ▸ h
-          )
+            exact v ▸ h)
         · by_cases h₁ : ∃ (h₁ : r + 1 < n), a = w ⟨r + 1, h₁⟩
-          · have := @injCase₁ A n w r (by obtain ⟨u,v⟩ := h₁;exact u) q hq (by
+          · exact (injCase₁ w (exists_prop_fun h₁) hq (by
               obtain ⟨u,v⟩ := h₁
-              symm
-              exact v ▸ h
-              )
-            exact this.symm
-          · by_cases h₃ : q + 1 < n <;> (by_cases h₂ : r + 1 < n <;> (apply injCase <;> tauto))
+              exact (v ▸ h).symm)).symm
+          · by_cases h₃ : q + 1 < n <;>
+              (by_cases h₂ : r + 1 < n <;> (apply injCase <;> tauto))
 
 /-- The permutation-automatic complexity of `w` admits a witness of size `q`. -/
 def A_perm_witness_size {A : Type*} {n : ℕ} (w : Fin n → A) (q : ℕ): Prop :=

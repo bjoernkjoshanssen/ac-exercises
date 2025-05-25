@@ -1,11 +1,4 @@
-import Mathlib.Computability.NFA
-import Mathlib.NumberTheory.Padics.PadicNumbers
-import Mathlib.Algebra.Order.Floor
-import Mathlib.Data.Nat.Log
-import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Fin.Tuple.Take
 import Mathlib.Data.Matrix.Basic
-import Mathlib.Tactic.Ring
 
 section general
 

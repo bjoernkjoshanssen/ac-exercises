@@ -1,5 +1,3 @@
-import Mathlib.Computability.NFA
-import Mathlib.Data.Matrix.Basic
 import Acmoi.Ch7Tools
 import Acmoi.DecisionProblem
 /-!

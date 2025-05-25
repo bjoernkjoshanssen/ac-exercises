@@ -5,8 +5,6 @@ import Mathlib.InformationTheory.Hamming
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Fin.Tuple.Take
 
-set_option tactic.hygienic false
-set_option maxHeartbeats 2000000
 /-!
 
   # Quas' Theorem
@@ -132,7 +130,7 @@ def kayleighδ {A : Type*} {k : ℕ} (hk : k ≥ 1)
 
 
 example : @kayleighδ (Fin 2) 1 (by omega) ![0,1,1] 0 = myδ 0 := by
-  ext q
+  ext q x
   simp [kayleighδ, myδ]
   fin_cases q
   fin_cases x
@@ -149,7 +147,7 @@ example : @kayleighδ (Fin 2) 1 (by omega) ![0,1,1] 0 = myδ 0 := by
   tauto
 
 example : @kayleighδ (Fin 2) 1 (by omega) ![0,1,1] 1 = myδ 1 := by
-  ext q
+  ext q x
   simp [kayleighδ, myδ]
   fin_cases q
   fin_cases x
@@ -166,22 +164,26 @@ example : @kayleighδ (Fin 2) 1 (by omega) ![0,1,1] 1 = myδ 1 := by
   intro h
   simp at h
   change 1 = x.1 ∨ x.1 = 0 at h
-  cases h
-  simp_all
-  right
-  symm
-  exact Fin.eq_of_val_eq h_1
-  left
-  exact Eq.symm (Fin.eq_of_val_eq (id (Eq.symm h_1)))
+  cases h with
+  | inl h =>
+    simp_all
+    right
+    symm
+    exact Fin.eq_of_val_eq h
+  | inr h =>
+    simp_all
+    left
+    exact @Fin.eq_of_val_eq (1+1) x 0 h
   intro h
-  cases h
-  change 1 = x.1 ∨ x.1 = 0
-  right
-  exact (@Fin.mk.inj_iff 2 x.1 0 x.2 (by omega)).mp h_1
-  change 1 = x.1 ∨ x.1 = 0
-  left
-  symm
-  exact (@Fin.mk.inj_iff 2 x.1 1 x.2 (by omega)).mp h_1
+  cases h with
+  | inl h =>
+    right
+    exact (@Fin.mk.inj_iff 2 x.1 0 x.2 (by omega)).mp h
+  | inr h =>
+    change 1 = x.1 ∨ x.1 = 0
+    left
+    symm
+    apply Fin.mk.inj_iff.mp h
 
 example : 0 ∈ astN myδ ![0,1,1] 0 := by
   unfold myδ astN

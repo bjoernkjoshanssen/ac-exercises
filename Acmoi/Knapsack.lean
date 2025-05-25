@@ -1,4 +1,3 @@
-import Acmoi.DecisionProblem
 import Acmoi.Cursive
 
 structure KnapsackInstance (c: ℕ) where

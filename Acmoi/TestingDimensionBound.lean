@@ -1,11 +1,4 @@
-import Mathlib.NumberTheory.Padics.PadicNumbers
-import Mathlib.Algebra.Order.Floor
-import Mathlib.Data.Nat.Log
-import Mathlib.InformationTheory.Hamming
-import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Fin.Tuple.Take
 import Acmoi.dimVC
-set_option tactic.hygienic false
 
 /-!
 
@@ -196,3 +189,4 @@ lemma towards_lowerbound₃  {V : Type*} [DecidableEq V] [Fintype V] (c m : ℕ)
 --         simp
 --       sorry
 --     )).mp h
+#min_imports

@@ -1,11 +1,5 @@
-import Mathlib.NumberTheory.Padics.PadicNumbers
-import Mathlib.Algebra.Order.Floor
-import Mathlib.Data.Nat.Log
-import Mathlib.InformationTheory.Hamming
-import Mathlib.Data.Finset.Basic
-
-set_option tactic.hygienic false
-
+import Mathlib.Data.Nat.Size
+import Mathlib.NumberTheory.Padics.PadicVal.Basic
 /-!
 
   # VC-dimensions of nondeterministic finite automata for words of equal length
@@ -15,25 +9,20 @@ set_option tactic.hygienic false
 
 -/
 
-
-
-
 open Nat
 
 section clog
-theorem rescue_lemma_12 {m : ℕ} : (2 * m.succ).succ < 2 ^ (clog 2 (2 * m.succ).succ) := by
+theorem rescue_lemma_12 {m : ℕ} : (2 * (m+1)) + 1 < 2 ^ (clog 2 (2 * m.succ).succ) := by
   cases (lt_or_eq_of_le (le_pow_clog one_lt_two _)) with
   | inl g => exact g
   | inr g =>
     exfalso
-    obtain ⟨k,hk⟩ : ∃ k, clog 2 (succ (2 * m.succ)) = succ k :=
+    obtain ⟨k,hk⟩ : ∃ k, clog 2 ((2 * (m+1)) + 1) = k + 1 :=
       exists_eq_succ_of_ne_zero <| pos_iff_ne_zero.mp <| clog_pos one_lt_two <| by linarith
     have : 2 ^ clog 2 (succ (2 * m.succ)) = 2 * 2^ (clog 2 (succ (2 * m.succ)) - 1) := by
       rw [hk, pow_succ]
-      simp
-      ring
-    have h₀: Even ((2 * m.succ).succ) := g ▸ this ▸ even_two_mul _
-    simp at h₀
+      exact (Nat.mul_comm _ _).symm
+    exact not_even_bit1 _ <| g ▸ this ▸ even_two_mul _
 
 end clog
 
