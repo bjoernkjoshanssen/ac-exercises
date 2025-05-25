@@ -1,6 +1,6 @@
 import Acmoi.HydePrelim
 import Mathlib.Tactic.Ring
-import Mathlib.Tactic.LinArith
+import Mathlib.Tactic.Linarith
 /-!
   # Hyde's Theorem
 -/
