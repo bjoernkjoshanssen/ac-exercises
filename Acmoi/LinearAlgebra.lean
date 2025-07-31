@@ -1,3 +1,13 @@
+import Mathlib.Geometry.Euclidean.Angle.Unoriented.Affine
+import Mathlib.Analysis.InnerProductSpace.EuclideanDist
+-- import Mathlib.Analysis.Normed.Affine.Convex
+import Mathlib.Analysis.Calculus.LocalExtr.Basic
+import Mathlib.Analysis.Calculus.Gradient.Basic
+import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.Data.Matrix.Reflection
+import Mathlib.Geometry.Euclidean.Angle.Oriented.Basic --  Orientation.oangle
+import Mathlib.Geometry.Euclidean.Angle.Oriented.Affine --  EuclideanGeometry.oangle
+import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Data.Matrix.Reflection
 import Acmoi.Perm
 import Acmoi.Theorem1_49
@@ -23,6 +33,158 @@ The closest of the newcomers to `A` is probably `As ℕ`.
  To be able to talk about the identity matrix intelligently,
  we assume the field is at least `ℤ / 2ℤ`.
  -/
+example (n : ℕ) : (n = 2 ∨ n = 3) → n = 4 := by
+    -- repeat (try tauto)
+    rintro (h | h')
+    sorry
+    sorry
+
+example (P Q R : Prop) (h : P ∨ Q ∨ R) :
+    (P ∧ 0=1) ∨ (Q ∧ 0=1) ∨ (R ∧ 0=1) := by
+    aesop
+    -- rcases h with hP | hQ | hR
+    sorry
+    sorry
+    sorry
+
+
+
+example (n : ℕ) : (n = 2 ∨ n = 3 ∨ n = 4) → n = 4 := by
+    -- repeat (try tauto)
+    rintro (h₂ | h₃ | h₄)
+    sorry
+    sorry
+    sorry
+
+
+def myf : ℝ × ℝ → ℝ := by
+    intro x
+    exact x.fst^2+x.snd^2
+
+
+
+
+noncomputable def partial_deriv_x
+    (f : ℝ → ℝ → ℝ) : ℝ → ℝ → ℝ :=
+    fun y => deriv fun x => f x y
+
+noncomputable def partial_deriv_y
+    (f : ℝ → ℝ → ℝ) : ℝ → ℝ → ℝ :=
+    fun x => deriv fun y => f x y
+
+noncomputable def part_deriv_x
+    (f : (Fin 2 → ℝ) → ℝ) : ℝ → ℝ → ℝ :=
+    fun y => deriv fun x => f ![x, y]
+
+noncomputable def partDeriv_x
+    (f : (Fin 2 → ℝ) → ℝ) : (Fin 2 → ℝ) → ℝ :=
+    fun x => part_deriv_x f (x 0) (x 1)
+
+
+
+theorem suggestion (f : EuclideanSpace ℝ (Fin 2) → ℝ)
+    (a : Fin 2 → ℝ)
+    (h : IsLocalExtr f a) : fderiv ℝ f a =0 :=
+      IsLocalExtr.fderiv_eq_zero h
+
+
+
+-- make a repo with this
+theorem grad_zero_of_extr (f : EuclideanSpace ℝ (Fin 2) → ℝ)
+    (a : Fin 2 → ℝ) (h₀ : DifferentiableAt ℝ f a)
+    (h : IsLocalExtr f a)  : gradient f a =0 := by
+    apply HasGradientAt.gradient
+    have h₁ := (hasFDerivAt_iff_hasGradientAt).mp
+        (DifferentiableAt.hasFDerivAt h₀)
+    rw [IsLocalExtr.fderiv_eq_zero h] at h₁
+    simp at h₁
+    exact h₁
+
+
+
+-- Project members: Asaf Janani (Zixhao stats)
+theorem janani_suggestion (f : EuclideanSpace ℝ (Fin 2) → ℝ)
+    (a : Fin 2 → ℝ) (h₀ : DifferentiableAt ℝ f a)
+    (h : IsLocalExtr f a) (i : Fin 2) : part_deriv_x f (a 0) (a 1) =0 := by
+    have := @grad_zero_of_extr f a h₀ h
+
+    rw [funext_iff] at this
+
+    simp at this
+    specialize this 0
+    rw [← this]
+    unfold part_deriv_x
+
+    simp [gradient]
+
+    have h₁ := (@hasFDerivAt_iff_hasGradientAt ℝ (EuclideanSpace ℝ (Fin 2))
+        _ _ _ _ f a (by exact fderiv ℝ f a)).mp (by
+            apply DifferentiableAt.hasFDerivAt
+            exact h₀)
+    have h₂ := (@hasFDerivAt_iff_hasGradientAt ℝ (EuclideanSpace ℝ (Fin 2))
+        _ _ _ _ f a (by exact fderiv ℝ f a)).mpr (by
+            exact h₁)
+
+    have : IsLocalExtr (fun x => f ![x, a 1]) (a 0) := by
+
+        simp [IsLocalExtr] at h ⊢
+        obtain (h₀ | h₁) := h
+        · left
+          simp [IsMinFilter] at h₀ ⊢
+
+          simp [Filter.Eventually] at h₀ ⊢
+          rw [nhds_pi] at h₀
+          simp [Filter.pi] at h₀
+          rw [Filter.mem_iInf] at h₀
+          obtain ⟨I,hI⟩ := h₀
+          have ⟨V,hV⟩ := hI.2
+          have := hV.1
+
+          sorry
+        · sorry
+
+    sorry
+
+
+example : (!![(1:ℝ),0;0,1]).det = 0 := sorry
+
+def f0 : (Fin 2 → ℝ) → ℝ := by
+    intro x
+    have := x 0
+    have := x 1
+    exact (x 0)^2 + (x 1)^2
+def f₀ : EuclideanSpace ℝ (Fin 2) → ℝ := by
+    intro x
+    have := x 0
+    have := x 1
+    exact (x 0)^2 + (x 1)^2
+
+-- Function of two variables first partial derivative test
+-- example (f₀ : EuclideanSpace ℝ (Fin 2) → ℝ) :
+--     (hf₀ : )
+
+-- example : f0 ![2,2] = 8 := by
+--     simp [f0]
+--     linarith
+
+-- def myf'' : ℝ → ℝ → ℝ := by
+--     intro x y
+--     exact x^2+y^2
+
+-- def myf' : EuclideanSpace ℝ (Fin 2) → ℝ := by
+--     intro x y
+--     exact x^2+y^2
+
+
+
+
+
+
+
+
+
+
+
 def astMat {α : Type*} {R : Type*} [Add R] [Mul R] [Zero R] [One R]
   {n q : ℕ} (word : Fin n → α) (matrices : α → Matrix (Fin q) (Fin q) R) :
   Fin q → Fin q → R := match n with
@@ -108,25 +270,25 @@ lemma As_one_ring₂ {A : Type*} [DecidableEq A] {a : A} :
   intro v
   constructor
   · intro hv
-    unfold astM astCol astMat astMat at hv
-    simp at hv
     ext i
     have : i = 0 := Fin.fin_one_eq_zero i
     subst this
-    simp at hv ⊢
+    simp
     by_cases h : v 0 = a
     · rw [h]
-    · rw [if_neg h] at hv
+    · unfold astM astCol astMat astMat at hv
+      simp at hv ⊢
+      rw [if_neg h] at hv
       apply congrFun at hv
       specialize hv 0
       simp at hv
       have : (
-        Matrix.mulᵣ (Matrix.mulᵣ (fun (x x : Fin 1) ↦ 0)
-        (fun (x y : Fin 1) ↦ if x = y then 1 else 0)) (fun (x x_1 : Fin 1) ↦ Pi.single 0 1 x)) 0 0 = 0 := by
-        simp
-        conv =>
-          lhs; arg 1; arg 1; change 0
-        simp
+        Matrix.mulᵣ
+        (Matrix.mulᵣ (fun (x x : Fin 1) ↦ 0)
+        (fun (x y : Fin 1) ↦ if x = y then 1 else 0))
+        (fun (x _ : Fin 1) ↦ Pi.single 0 1 x)) 0 0 = 0 := by
+            rw [show (fun (x x : Fin 1) => 0) = 0 by exact rfl]
+            simp
       simp_all only [Fin.isValue, Matrix.mulᵣ_eq, one_ne_zero]
   · intro hv
     subst hv

@@ -1,6 +1,9 @@
 import Acmoi.Ch7Tools
 import Acmoi.DecisionProblem
-/-!
+import Mathlib.Algebra.Order.Star.Basic
+import Mathlib.Algebra.Ring.Regular
+import Mathlib.Computability.NFA
+import Mathlib.Data.PNat.Basic/-!
 
   # Cursive NFAs
 

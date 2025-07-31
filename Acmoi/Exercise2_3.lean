@@ -125,47 +125,47 @@ def no_duplicate_edges' (M : labeled_digraph' (Fin 2) (Fin 2)) : Prop :=
 theorem kayleigh2_no_duplicates  (x0 x1 x2 : Fin 2):
 no_duplicate_edges' (kayleigh2_digraph ⟨[x0,x1,x2],rfl⟩) := by
   intros x_0 x_1 x_2 a ha hb
-  rcases ha with hha | pp
-  rcases hha with hhha | ppp
+  cases ha with
+  | inl h =>
+    cases h with
+    | refl =>
+      cases hb with
+      | inl hhb =>
+        cases hhb with
+        | refl => rfl
+      | inr h =>
+        rcases h with h | h <;>
+        exact (Fin.zero_ne_one <| congrArg (fun x => x.1) h).elim
+  | inr h₁ =>
+  cases hb with
+  | inl h₀ =>
+    have hg0: x_0 = 0 := congrArg (fun x => x.1) h₀
+    rcases h₁ with h | h <;> (
+        have hg1: x_0 = 1 := congrArg (fun x => x.1) h
+        exfalso
+        exact Fin.zero_ne_one (hg0.symm.trans hg1))
+  | inr h₀ =>
+    cases h₀ with
+    | inl h =>
+      have hj: x_1 = 1 := congrArg (fun x => x.2.1) h
+      cases h₁ with
+      | inl h₀ =>
+        exact congrArg (fun x => x.2.2) (h.trans h₀.symm).symm
+      | inr h₀ =>
+        have hjj: x_1 = 0 := congrArg (fun x => x.2.1) h₀
+        exfalso
+        exact Fin.zero_ne_one (hjj.symm.trans hj)
+    | inr h =>
+      have hjj: x_1 = 0 := congrArg (fun x => x.2.1) h
+      cases h₁ with
+      | inl qz =>
+        have hj: x_1 = 1 := congrArg (fun x => x.2.1) qz
+        exfalso
+        exact Fin.zero_ne_one (hjj.symm.trans hj)
+      | inr qzz =>
+        have : (x_0,x_1,x_2) = (x_0,x_1,a) :=  qzz.trans h.symm
+        exact congrArg (fun x => x.2.2) this
 
-  rcases hb with hhb | pppp
-
-  rcases hhb with hhhb | ppppp
-  rfl
-  exfalso
-  rcases pppp with hha | pp
-  · let Q := congrArg (fun x => x.1) hha
-    exact Fin.zero_ne_one Q
-  · let Q := congrArg (fun x => x.1) pp
-    exact Fin.zero_ne_one Q
-  rcases hb with hhb | ppq
-  rcases pp with ppp | pppp
-  have hg0: x_0 = 0 := congrArg (fun x => x.1) hhb
-  have hg1: x_0 = 1 := congrArg (fun x => x.1) ppp
-  exfalso
-  exact Fin.zero_ne_one (Eq.trans hg0.symm hg1)
-
-  have hg0: x_0 = 0 := congrArg (fun x => x.1) hhb
-  have hg1: x_0 = 1 := congrArg (fun x => x.1) pppp
-  exfalso
-  exact Fin.zero_ne_one (Eq.trans hg0.symm hg1)
-  rcases ppq with ghh | ghhh
-  rcases pp with ggh | ggh
-  have : (x_0,x_1,x_2) = (x_0,x_1,a) :=  (Eq.trans ghh ggh.symm).symm
-  exact congrArg (fun x => x.2.2) this
-  have hj: x_1 = 1 := congrArg (fun x => x.2.1) ghh
-  have hjj: x_1 = 0 := congrArg (fun x => x.2.1) ggh
-  exfalso
-  exact Fin.zero_ne_one (Eq.trans hjj.symm hj)
-  rcases pp with qz | qzz
-
-  have hj: x_1 = 1 := congrArg (fun x => x.2.1) qz
-  have hjj: x_1 = 0 := congrArg (fun x => x.2.1) ghhh
-  exfalso
-  exact Fin.zero_ne_one (Eq.trans hjj.symm hj)
-
-  have : (x_0,x_1,x_2) = (x_0,x_1,a) :=  (Eq.trans qzz ghhh.symm)
-  exact congrArg (fun x => x.2.2) this
 
 
 /- A_N_bounded_by should be this statement together with no_duplicates,
@@ -176,132 +176,109 @@ theorem a_nice_case_of_hyde_theorem (x0 x1 x2 : Fin 2) :
       ∀ y0 y1 y2 : Fin 2,
       ∀ w' : walk_labeled M 0 0 [y0,y1,y2],
       walk_of_walk_labeled w =
-      walk_of_walk_labeled w' := by
-  exists kayleighwalk2 x0 x1 x2
-  intros _ _ _ w
-
+      walk_of_walk_labeled w' := ⟨kayleighwalk2 x0 x1 x2, fun y0 y1 y2 w => by
   cases w
-  cases kayleighwalk2 x0 x1 x2
-
-  cases h
-  have : v = 1 := congrArg (fun xx => xx.2.1) h_2
-  subst this
-
-  cases p
-  cases h
-  have : v = 1 := congrArg (fun xx => xx.2.1) h_3
-  subst this
-
-  exfalso
-  exact Fin.zero_ne_one ((congrArg Prod.fst h_3).symm)
-
-  cases h_3
-  have : v = 1 := congrArg (fun xx => xx.2.1) h
-  subst this
-  cases h_1
-  have : v_1 = 1 := congrArg (fun xx => xx.2.1) h_3
-  subst this
-  cases p_1
-  cases p_2
-  cases h_1
-  · have : v = 1 := congrArg (fun xx => xx.2.1) h_5
-    subst this
-    exfalso; exact Fin.zero_ne_one ((congrArg Prod.fst h_5).symm)
-  cases h_5
-  · cases p_1
-    · cases h_4
-      · exfalso; exact Fin.zero_ne_one ((congrArg Prod.fst h_5).symm)
-      · cases h_5
-        · exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h_4)
-        · have : v = 1 := congrArg (fun xx => xx.2.1) h_1
+  · cases kayleighwalk2 x0 x1 x2
+    · cases h with
+    | inl h_2 =>
+      · have : v = 1 := congrArg (fun xx => xx.2.1) h_2
+        subst this
+        cases p
+        cases h
+        · exfalso; exact Fin.zero_ne_one ((congrArg Prod.fst h_3).symm)
+        · cases h_3
+          have : v = 1 := congrArg (fun xx => xx.2.1) h
           subst this
-          cases p
+          cases h_1
+          have : v_1 = 1 := congrArg (fun xx => xx.2.1) h_3
+          subst this
           cases p_1
-          · cases h_5
-            · exfalso; exact Fin.zero_ne_one ((congrArg Prod.fst h_6).symm)
-            · cases h_6
-              · exfalso
-                have : kayleighsequence2.get 3 = 1 := congrArg (fun xx => xx.2.1) h_5
-                exact Fin.zero_ne_one this
-              · have : y0 = x0 := congrArg (fun xx => xx.2.2) h_2
-                subst this
-                have : y1 = x1 := congrArg (fun xx => xx.2.2) h
-                subst this
-                have : y2 = x2 := congrArg (fun xx => xx.2.2) h_4
-                subst this
-                rfl
-  have : v = 0 := congrArg (fun xx => xx.2.1) h_1
-  subst this
-  cases p_1
-  cases p
-  · cases p_1
-    · cases h_4
-      · exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h_6)
-      · cases h_6
-        · exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h_4)
-        · cases h_5
-          · exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h_6)
-          · cases h_6
-            · exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h_5)
-            · have : y0 = x0 := congrArg (fun xx => xx.2.2) h_2
+          cases p_2
+          cases h_1 with
+          | inl h_5 =>
+            have : v = 1 := congrArg (fun xx => xx.2.1) h_5
+            subst this
+            exfalso; exact Fin.zero_ne_one ((congrArg Prod.fst h_5).symm)
+          | inr h_5 =>
+            cases h_5 with
+            | inl h_1 =>
+            · have : v = 1 := congrArg (fun xx => xx.2.1) h_1
               subst this
-              have : y1 = x1 := congrArg (fun xx => xx.2.2) h
-              subst this
-              have : y2 = x2 := congrArg (fun xx => xx.2.2) h_4
-              subst this
-              exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h_5)
-  · cases h_3
-    · exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h_1)
-    · exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h_1)
-
--- should use the properties before doing cases!
-  have : v = 0 := congrArg (fun xx => xx.2.1) h
-  subst this
-  have : y1 = x2 := congrArg (fun xx => xx.2.2) h
-  subst this
-  have : y0 = x0 := congrArg (fun xx => xx.2.2) h_2
-  subst this
-  cases h_1
-  have : v_1 = 1 := congrArg (fun xx => xx.2.1) h_3
-  subst this
-  cases p_1
-  cases p
-  cases p_1
-  cases p_2
-  cases p with
-  | nil =>
-    cases h_1 with
-    | inl h =>
-      exfalso; exact Fin.zero_ne_one (congrArg (Prod.fst) h.symm)
-    | inr h_6 =>
-      cases h_6 with
-      | inl h =>
-        have : v = 1 := congrArg (fun xx => xx.2.1) h
-        subst this
-        cases h_5 with
-        | inl h =>
-          exfalso
-          exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h)
-        | inr h_6 =>
-          cases h_6 with
-          | inl h =>
-            exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h)
-          | inr h =>
-            exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h)
-      | inr h =>
-        have : v = 0 := congrArg (fun xx => xx.2.1) h
-        subst this
-        have : x1 = y1 := congrArg (fun xx => xx.2.2) h
-        subst this
-        cases h_5 with
-        | inl h => exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h)
-        | inr h_6 =>
-          cases h_6 with
-          | inl h => exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h)
-          | inr h => exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h)
-  cases h_3 with
-  | inl h => exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h)
-  | inr h => exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h)
-  cases h_2 with
-  | inl h => exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h)
-  | inr h => exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h)
+              cases p_1
+              · cases h_4
+                · exfalso; exact Fin.zero_ne_one ((congrArg Prod.fst h_5).symm)
+                · cases h_5 with
+                | inl h_4 =>
+                  · exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h_4)
+                | inr h_4 =>
+                  · have : y2 = x2 := congrArg (fun xx => xx.2.2) h_4
+                    subst this
+                    cases p
+                    · cases p_1
+                      · cases h_5
+                        · exfalso; exact Fin.zero_ne_one ((congrArg Prod.fst h_6).symm)
+                        · cases h_6
+                          · exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h_5)
+                          · rfl
+            | inr h_1 =>
+              · have : v = 0 := congrArg (fun xx => xx.2.1) h_1
+                subst this
+                cases p_1
+                · cases p
+                  · cases p_1
+                    · cases h_4
+                      · exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h_6)
+                      · cases h_6
+                        · exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h_4)
+                        · have : y2 = x2 := congrArg (fun xx => xx.2.2) h_4
+                          subst this
+                          cases h_5
+                          · exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h_6)
+                          · rcases h_6 with h_5 | h_5 <;> (
+                              exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h_5))
+          · rcases h_3 with h | h <;> (
+              exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h))
+          have : v = 0 := congrArg (fun xx => xx.2.1) h
+          subst this
+          have : y1 = x2 := congrArg (fun xx => xx.2.2) h
+          subst this
+          cases h_1 with
+          | inl h_3 =>
+          · have : v_1 = 1 := congrArg (fun xx => xx.2.1) h_3
+            subst this
+            cases p_1
+            · cases p
+              · cases p_1
+                · cases p_2
+                  · cases p with
+                    | nil =>
+                      cases h_1 with
+                      | inl h =>
+                        exfalso; exact Fin.zero_ne_one (congrArg (Prod.fst) h.symm)
+                      | inr h_6 =>
+                        cases h_6 with
+                        | inl h =>
+                          have : v = 1 := congrArg (fun xx => xx.2.1) h
+                          subst this
+                          cases h_5 with
+                          | inl h =>
+                            exfalso
+                            exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h)
+                          | inr h_6 =>
+                            rcases h_6 with h | h <;> (
+                              exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h))
+                        | inr h =>
+                          have : v = 0 := congrArg (fun xx => xx.2.1) h
+                          subst this
+                          have : x1 = y1 := congrArg (fun xx => xx.2.2) h
+                          subst this
+                          cases h_5 with
+                          | inl h => exfalso; exact Fin.zero_ne_one (congrArg (fun xx => xx.2.1) h)
+                          | inr h_3 =>
+                            rcases h_3 with h | h <;> (
+                              exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h))
+          | inr h_3 => rcases h_3 with h | h <;> (
+              exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h))
+    | inr h_3 => rcases h_3 with h | h <;> (
+              exfalso; exact Fin.zero_ne_one (congrArg Prod.fst h))
+⟩

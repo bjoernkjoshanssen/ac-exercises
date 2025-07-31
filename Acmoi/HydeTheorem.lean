@@ -408,12 +408,9 @@ theorem hyde_accepts {A : Type*} {k : ℕ}  (w : Fin (2*k+1) → A) :
     fun t => dite (t.1 < k + 1)
       (fun ht => (⟨t.1, ht⟩ : Fin (k+1))) (fun ht => ⟨2*k+1-t.1,flipCast ht⟩)
   simp [khδ'] at this
-  revert this
-  apply Iff.mp
-  apply Eq.to_iff
-  congr
-  simp
-  omega
+  convert this
+  have : ¬ 2 * k < k := by omega
+  rw [dif_neg this]
 
 
 
@@ -446,10 +443,8 @@ A_N_at_most w (n/2+1) := by
     subst hk
     have h₁ : (2 * k)/2 + 1 = k + 1 := by omega
     rw [h₁]
-    have a := (Classical.inhabited_of_nonempty
-      <| Nonempty.intro <| w ⟨0, zero_lt_of_ne_zero hn⟩).default
-    let w' := @Fin.snoc (2*k) (fun _ => A) w a
-    exact (Fin.init_snoc _ _) ▸ restricting <| hydetheorem_odd' w'
+    -- Append an arbitrary element of `A`, such as `w 0`, to `w`:
+    exact (Fin.init_snoc _ _) ▸ restricting $ hydetheorem_odd' $ Fin.snoc w $ w ⟨0, zero_lt_of_ne_zero hn⟩
 
 /-- Hyde's theorem in relational form. -/
 theorem hyde_all_lengths {A : Type*} {n : ℕ} (w : Fin n → A) :

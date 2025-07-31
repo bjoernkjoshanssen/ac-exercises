@@ -11,8 +11,7 @@ almost squarefreeness for binary words.
 000 is almost square-free but not overlapfree.
 -/
 
-def occurs_in {α:Type} (y w : List α)
-  :=
+def occurs_in {α:Type} (y w : List α) :=
   ∃ x z : List α, w = x ++ y ++ z
 
 
@@ -20,10 +19,7 @@ def nonnil_occurs_squared_in {α:Type} (y w : List α) : Prop :=
   (y ≠ nil) ∧
   occurs_in (y ++ y) w
 
-def pre_abstract_almost_square_free
-  (a b : Fin 2)
-  (w : List (Fin 2))
-  : Prop :=
+def pre_abstract_almost_square_free (a b : Fin 2) (w : List (Fin 2)) :=
   ∀ y : List (Fin 2), nonnil_occurs_squared_in y w
                     → y = [a] ∨ y = [b] ∨ y = [a,b]
 
@@ -31,21 +27,18 @@ def abstractAlmostSquareFree (w : List (Fin 2)) :=
   pre_abstract_almost_square_free 0 1 w ∨
   pre_abstract_almost_square_free 1 0 w
 
-def almostSquareFree (w : List (Fin 2)): Prop :=
+def almostSquareFree (w : List (Fin 2)) :=
   pre_abstract_almost_square_free 0 1 w
 
 /-- This is only interesting if a ≠ b so maybe that should be baked in. -/
-def abstract_almost_square_free
-  (a b : Fin 2) (_ : a ≠ b)
-  (w : List (Fin 2))
-  : Prop :=
+def abstract_almost_square_free (a b : Fin 2) (_ : a ≠ b) (w : List (Fin 2)) :=
   ∀ y : List (Fin 2), nonnil_occurs_squared_in y w
                     → y = [a] ∨ y = [b] ∨ y = [a,b]
 
-def almost_square_free (w : List (Fin 2)): Prop :=
+def almost_square_free (w : List (Fin 2)) :=
   abstract_almost_square_free 0 1 Fin.zero_ne_one w
 
-def generalized_almost_square_free {α:Type} (w : List α) : Prop :=
+def generalized_almost_square_free {α:Type} (w : List α) :=
   (∀ a b, ¬ (nonnil_occurs_squared_in [a,b] w ∧ nonnil_occurs_squared_in [b,a] w))
   ∧
   ∀ y, nonnil_occurs_squared_in y w → (∃ a, y = [a]) ∨ ∃ a b, y= [a,b]

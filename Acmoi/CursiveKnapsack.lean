@@ -1,7 +1,12 @@
 import Acmoi.Knapsack
+import Mathlib.Tactic.FinCases
 
 /-
-Connect the diophantine equation (a.val 0)x+(a.val 1)y=n with a walk in a digraph that has a cycle of length (a.val 0) followed by a cycle of length (a.val 1).
+Connect the diophantine equation
+`(a.val 0)x+(a.val 1)y=n`
+with a walk in a digraph that has
+a cycle of length `(a.val 0)` followed by
+a cycle of length `(a.val 1)`.
 -/
 
 -- KnapsackInstance_of_CursiveWalkInstance
