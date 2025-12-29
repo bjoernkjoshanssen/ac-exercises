@@ -191,6 +191,205 @@ def astMat {α : Type*} {R : Type*} [Add R] [Mul R] [Zero R] [One R]
 | 0 => fun x y => ite (x=y) 1 0
 | Nat.succ m => Matrix.mulᵣ (matrices (word m)) (astMat (Fin.init word) matrices)
 
+open Matrix
+
+example {R : Type*} [Mul R] [AddCommMonoid R]
+  (q : ℕ) (A B : Matrix (Fin q) (Fin q) R) :
+  mulᵣ A B = A * B := by simp only [mulᵣ_eq]
+
+-- /-- Completely positive map in Kraus operator form. -/
+-- def CP_apply {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
+--   {q krausDecompositionLength : ℕ}
+--   (krausOperator : Fin krausDecompositionLength → Matrix (Fin q) (Fin q) R)
+--   (ρ : Matrix (Fin q) (Fin q) R) : Matrix (Fin q) (Fin q) R :=
+--     ∑ i : Fin krausDecompositionLength,
+--       krausOperator i * ρ * (krausOperator i).conjTranspose
+
+/-- Completely positive map given by a (not necessarily minimal) Kraus family. -/
+def krausApply {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
+  {q r : ℕ}
+  (K : Fin r → Matrix (Fin q) (Fin q) R)
+  (ρ : Matrix (Fin q) (Fin q) R) : Matrix (Fin q) (Fin q) R :=
+  ∑ i : Fin r, K i * ρ * (K i)ᴴ
+
+def quantumChannel {R : Type*} [Mul R] [One R] [Star R] [AddCommMonoid R]
+  {q r : ℕ}
+  (K : Fin r → Matrix (Fin q) (Fin q) R) : Prop :=
+    ∑ i : Fin r, (K i)ᴴ * K i = fun i j => ite (i=j) 1 0
+
+
+/-- Transition function `δ^*` corresponding to a word `word` over an alphabet `α`,
+  where each symbol `a:α` is mapped to a completely positive map in Kraus form,
+  of rank at most `r`.
+-/
+def krausApplyWord {α : Type*} {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
+  {n q r : ℕ} (word : Fin n → α)
+  (K_of : α → Fin r → Matrix (Fin q) (Fin q) R)
+  (ρ : Matrix (Fin q) (Fin q) R) :
+  Matrix (Fin q) (Fin q) R := match n with
+| 0 => ρ
+| Nat.succ m => krausApply (K_of (word m))
+        (krausApplyWord (Fin.init word) K_of ρ)
+
+/-- The example Kraus operators from QCNC submission. -/
+def grudka_Z : Fin 2 → Fin 2 → Matrix (Fin 3) (Fin 3) ℤ := ![
+  ![
+    !![0,0,0;
+       1,0,0;
+       0,0,0], !![0,0,0;
+                  0,0,-1;
+                  0,1,0]
+  ], -- A
+  ![
+    !![0,-1,0;
+       1,0,0;
+       0,0,1],
+    0
+  ] -- B
+]
+
+def grudka_R : Fin 2 → Fin 2 → Matrix (Fin 3) (Fin 3) ℝ := ![
+  ![
+    !![0,0,0;
+       1,0,0;
+       0,0,0], !![0,0,0;
+                  0,0,-1;
+                  0,1,0]
+  ], -- A
+  ![
+    !![0,-1,0;
+       1,0,0;
+       0,0,1],
+    0
+  ] -- B
+]
+open Real
+noncomputable def grudka_R' (θ : ℝ) : Fin 2 → Fin 2 → Matrix (Fin 3) (Fin 3) ℝ := ![
+  ![
+    !![0,0,0;
+       1,0,0;
+       0,0,0], !![0,0,0;
+                  0,0,-1;
+                  0,1,0]
+  ], -- A
+  ![
+    !![cos θ, -sin θ, 0;
+       sin θ, cos θ,  0;
+       0,     0,      1],
+    0
+  ] -- B
+]
+
+example (θ : ℝ) : (grudka_R' θ 0 0).trace = 0 := by simp [grudka_R']
+
+open Matrix
+
+example (θ : ℝ) {ρ : Matrix (Fin 3) (Fin 3) ℝ}
+    (hρ : ρ.trace = 1) :
+    (krausApply (grudka_R' θ 1) ρ).trace = 1 := by
+  rw [krausApply, trace]
+  unfold grudka_R'
+  simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
+  simp [Fin.sum_univ_succ,vecHead,vecTail]
+  rw [trace] at hρ
+  simp [Fin.sum_univ_succ,vecHead,vecTail] at hρ
+  ring_nf
+  have := cos_sq_add_sin_sq θ
+  have := sin_sq_add_cos_sq θ
+  generalize cos θ ^ 2 = c at *
+  generalize sin θ ^ 2 = s at *
+  have : c = 1 - s := by linarith
+  subst this
+  linarith
+
+
+example : quantumChannel (grudka_Z 0) := by
+  simp [quantumChannel, grudka_Z]
+  ext i j
+  fin_cases i <;> fin_cases j <;> decide
+
+example : quantumChannel (grudka_Z 1) := by
+  simp [quantumChannel, grudka_Z]
+  ext i j
+  fin_cases i <;> fin_cases j <;> decide
+
+example : quantumChannel (grudka_R 1) := by
+  unfold quantumChannel grudka_R
+  apply ext
+  intro i j
+  simp only [sum_apply, mul_apply, conjTranspose_apply]
+  fin_cases i <;> fin_cases j <;> simp [Fin.sum_univ_succ,vecHead,vecTail]
+
+example (θ : ℝ) : quantumChannel (grudka_R' θ 1) := by
+  unfold quantumChannel grudka_R'
+  apply ext
+  intro i j
+  simp only [sum_apply, mul_apply, conjTranspose_apply]
+  fin_cases i <;> fin_cases j <;> all_goals
+      simp [Fin.sum_univ_succ,vecHead,vecTail]
+      try linarith
+      try repeat rw [← pow_two]
+      try exact cos_sq_add_sin_sq θ
+      try exact sin_sq_add_cos_sq θ
+
+
+def e₁ : Matrix (Fin 3) (Fin 1) ℝ := ![1, 0, 0]
+def e₂ : Matrix (Fin 3) (Fin 1) ℝ := ![0, 1, 0]
+def e₃ : Matrix (Fin 3) (Fin 1) ℝ := ![0, 0, 1]
+def e : Fin 3 → Matrix (Fin 3) (Fin 1) ℝ := fun i j k => ite (i=j ∧ j=k) 1 0
+def pureState (e : Matrix (Fin 3) (Fin 1) ℝ) := mulᵣ e e.transpose
+
+example : pureState e₁ = !![1,0,0;0,0,0;0,0,0] := by
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [pureState, e₁, pureState, mulᵣ, vecHead, vecTail]
+
+-- Trace exercise: probability of being in the state e₁.
+example : (pureState e₁ * (grudka_R' θ 1 0)).trace = cos θ := by
+  unfold e₁ grudka_R' pureState
+  simp [transpose]
+  rw [trace]
+  simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
+  simp [Fin.sum_univ_succ, vecHead, vecTail]
+
+example : (pureState e₂ * (grudka_R' θ 1 0)).trace = cos θ := by
+  unfold e₂ grudka_R' pureState
+  simp [transpose]
+  rw [trace]
+  simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
+  simp [Fin.sum_univ_succ, vecHead, vecTail]
+
+example : (pureState e₃ * (grudka_R' θ 1 0)).trace = 1 := by
+  unfold e₃ grudka_R' pureState
+  simp [transpose]
+  rw [trace]
+  simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
+  simp [Fin.sum_univ_succ, vecHead, vecTail]
+
+/-- The positive operator `pureState e₁` is chosen
+with probability `(pureState e₁ * ρ).trace`. -/
+lemma POVM {ρ : Matrix (Fin 3) (Fin 3) ℝ}
+    (hρ : ρ.trace = 1) :
+      (pureState e₁ * ρ).trace
+    + (pureState e₂ * ρ).trace
+    + (pureState e₃ * ρ).trace = 1 := by
+  unfold pureState e₁ e₂ e₃
+  simp [transpose]
+  repeat rw [trace]
+  simp only [diag, sum_apply, mul_apply, conjTranspose_apply] at hρ ⊢
+  simp [Fin.sum_univ_succ, vecHead, vecTail] at hρ ⊢
+  rw [trace] at hρ
+  simp only [diag_apply] at hρ
+  rw [← hρ]
+  exact Eq.symm (Fin.sum_univ_three fun i ↦ ρ i i)
+
+
+
+-- Now `pureState e₁`, `pureState e₂`, `pureState e₃` form a POVM.
+
+
+example : krausApplyWord ![0,1] grudka !![1,0,0;0,0,0;0,0,0] =
+  !![1,0,0;0,0,0;0,0,0] := by sorry
+
 /-- The `q × 1` column vector representing a state. -/
 def astCol {α R : Type*} [Add R] [Mul R] [Zero R] [One R] {n  q : ℕ}
   (word : Fin n → α)
