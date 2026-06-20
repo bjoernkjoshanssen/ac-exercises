@@ -224,12 +224,12 @@ def quantumChannel {R : Type*} [Mul R] [One R] [Star R] [AddCommMonoid R]
 -/
 def krausApplyWord {α : Type*} {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
   {n q r : ℕ} (word : Fin n → α)
-  (K_of : α → Fin r → Matrix (Fin q) (Fin q) R)
+  (𝓚  : α → Fin r → Matrix (Fin q) (Fin q) R)
   (ρ : Matrix (Fin q) (Fin q) R) :
   Matrix (Fin q) (Fin q) R := match n with
 | 0 => ρ
-| Nat.succ m => krausApply (K_of (word m))
-        (krausApplyWord (Fin.init word) K_of ρ)
+| Nat.succ m => krausApply (𝓚 (word m))
+        (krausApplyWord (Fin.init word) 𝓚 ρ)
 
 /-- The example Kraus operators from QCNC submission. -/
 def grudka_Z : Fin 2 → Fin 2 → Matrix (Fin 3) (Fin 3) ℤ := ![
@@ -387,8 +387,29 @@ lemma POVM {ρ : Matrix (Fin 3) (Fin 3) ℝ}
 -- Now `pureState e₁`, `pureState e₂`, `pureState e₃` form a POVM.
 
 
-example : krausApplyWord ![0,1] grudka !![1,0,0;0,0,0;0,0,0] =
-  !![1,0,0;0,0,0;0,0,0] := by sorry
+example : krausApplyWord ![0,1] grudka_R !![1,0,0;0,0,0;0,0,0] =
+  !![1,0,0;0,0,0;0,0,0] := by
+  unfold krausApplyWord
+  have : Fin.init ![(0:Fin 2),1] = ![0] := by
+    ext i
+    rw [Fin.fin_one_eq_zero i]
+    rfl
+  rw [this]
+  simp
+  unfold krausApplyWord
+  have : Fin.init ![(0 : Fin 2)] = ![] := by
+    ext i
+    have := i.2
+    simp at this
+  rw [this]
+  unfold krausApplyWord
+  simp
+  unfold krausApply
+  unfold grudka_R
+
+  simp
+
+  sorry
 
 /-- The `q × 1` column vector representing a state. -/
 def astCol {α R : Type*} [Add R] [Mul R] [Zero R] [One R] {n  q : ℕ}

@@ -1,5 +1,7 @@
 import Mathlib.Algebra.Order.Ring.Nat
 import Mathlib.Data.Fintype.Card
+import Mathlib.Analysis.InnerProductSpace.EuclideanDist
+
 /-!
 
   # Preliminaries for Hyde's Theorem
