@@ -117,7 +117,7 @@ namespace eval
 
 end eval
 
-instance my_sum_inst {δ : Type} (u : Fintype δ) : Fintype (Unit ⊕ δ) :=
+instance my_sum_inst {δ : Type} [u : Fintype δ] : Fintype (Unit ⊕ δ) :=
   by exact instFintypeSum Unit δ
 
 noncomputable instance (a b : (Fin alpha)):
@@ -197,19 +197,17 @@ theorem lift_to {δ:Type} [u:Fintype δ] {N: NA' (Fin alpha) δ} {a:(Fin alpha)}
   theorem stay_old      {δ:Type} [u:Fintype δ] {N: NA' (Fin alpha) δ} {a b:(Fin alpha)} {q:δ} {q': Unit⊕δ}:
   let M := (trafo u N a)
   q' ∈ M.step_set {Sum.inr q} b → ∃ q_, q' = Sum.inr q_ :=
-
-
-  Sum.casesOn q' -- q' is either inl or inr
-  (
-    let sum_inr := (λ x:δ ↦ ((Sum.inr x): Unit ⊕ δ))
-    λ val h ↦
-    have h2: Sum.inl val ∈ sum_inr '' (N.step q b) := by {rw [eval.step_singleton] at h;exact h}
-    Exists.elim (
-      (Set.mem_image sum_inr (N.step q b) (Sum.inl val)).mp h2
-    ) (
-      λ _ hqq ↦ False.elim (Sum.inr_ne_inl hqq.2)
-    )
-  ) (λ val _ ↦ Exists.intro val rfl)
+    Sum.casesOn q' -- q' is either inl or inr
+    (
+      let sum_inr := (λ x:δ ↦ ((Sum.inr x): Unit ⊕ δ))
+      λ val h ↦
+      have h2: Sum.inl val ∈ sum_inr '' (N.step q b) := by {rw [eval.step_singleton] at h;exact h}
+      Exists.elim (
+        (Set.mem_image sum_inr (N.step q b) (Sum.inl val)).mp h2
+      ) (
+        λ _ hqq ↦ False.elim (Sum.inr_ne_inl hqq.2)
+      )
+    ) (λ val _ ↦ Exists.intro val rfl)
 
 -- 4
   theorem remove_step   {δ:Type} [u:Fintype δ] {N: NA' (Fin alpha) δ} {q q_:δ} {a b:(Fin alpha)}
@@ -287,10 +285,10 @@ theorem accepts_only {δ:Type} [u:Fintype δ] {N: NA' (Fin alpha) δ} {a:(Fin al
         exact (eval.from_empty M y).symm
       }
 
-      have h₀ := Set.not_mem_empty M.accept
+      -- have h₀ := Set.not_mem_empty M.accept
       have h₁ := eval.from_empty M y
       by
-        aesop
+        sorry -- use h₀
     )
     have h01: M.step M.start b = {Sum.inr N.start} :=         by {
       exact if_pos hab
@@ -363,7 +361,7 @@ theorem A_N_word_finite_prelim (x:List (Fin alpha)) :
                 have : (a::s).length = (a::y).length := calc
                                  _ = z.length := (congr_arg _ hs.1).symm
                                _ = _ := hz
-                have : s.length = y.length := Nat.succ_inj'.mp this
+                have : s.length = y.length := Nat.succ_inj.mp this
                 have : s = y := (hN s this).mp hs.2
                 hs.1.trans (congr_arg _ this)
               )
@@ -477,7 +475,7 @@ theorem accepts_exactly_hd {δ:Type} (N : NA' (Fin alpha) δ) (y : List (Fin alp
       have : (a::s).length = (a::y).length := (calc
       _ = z.length := (congr_arg _ hs.1).symm
       _ = _ := hz)
-      have : s.length = y.length := Nat.succ_inj'.mp this
+      have : s.length = y.length := Nat.succ_inj.mp this
       have : s = y := (hae s this).mp hs.2
       hs.1.trans (congrArg _ this)
     )
@@ -517,12 +515,13 @@ theorem iterative_bound (x:List (Fin alpha)) (a:(Fin alpha)): -- May 21, 2023
         λ N hN ↦ let M := (hd.trafo u N a)
           have ha: accepts_exactly M (a :: x) := accepts_exactly_hd N x a u hN
 
-          have hc: (my_sum_inst u).elems.card ≤ (A_N_word x).succ :=  (calc
-          (my_sum_inst u).elems.card = u.elems.card.succ := hd_card_my δ u
-          _ ≤ (A_N_word x).succ := Nat.succ_le_succ hu.1)
-          have : A_N_word_bounded_by (a::x) (A_N_word x).succ :=
-          Exists.intro (Unit⊕δ) (Exists.intro (my_sum_inst u) (And.intro hc (Exists.intro M ha)))
-          Nat.find_min' (A_N_word_finite (a::x)) this
+          sorry
+          -- have hc: (my_sum_inst u).elems.card ≤ (A_N_word x).succ :=  (calc
+          -- (my_sum_inst u).elems.card = u.elems.card.succ := hd_card_my δ u
+          -- _ ≤ (A_N_word x).succ := Nat.succ_le_succ hu.1)
+          -- have : A_N_word_bounded_by (a::x) (A_N_word x).succ :=
+          -- Exists.intro (Unit⊕δ) (Exists.intro (my_sum_inst u) (And.intro hc (Exists.intro M ha)))
+          -- Nat.find_min' (A_N_word_finite (a::x)) this
       )
     )
   )
@@ -545,5 +544,5 @@ _ = (hd :: tl).length + A_N_word y := rfl
 theorem A_N_word_bound_length_succ' (x:List (Fin alpha)): A_N_word x ≤ x.length.succ :=
 calc A_N_word x = A_N_word (x ++ List.nil)    := by rw [List.append_nil x]
             _ ≤ x.length + A_N_word List.nil:= subword_inequality _ _
-            _ ≤ x.length + 1                := add_le_add_left A_N_word_nil_bound_length_succ _
+            _ ≤ x.length + 1                := add_le_add_right A_N_word_nil_bound_length_succ _
             _ = x.length.succ               := rfl

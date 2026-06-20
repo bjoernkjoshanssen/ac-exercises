@@ -79,22 +79,24 @@ theorem CS_injective (i:Knapsack2.Instance) :
     Function.Injective (fun sc : Solution_of i => CS sc) := by
   unfold Function.Injective; intro p₁ p₂ hp;
   unfold CS at hp
-  have h₁₁: p₁.val 0 = p₂.val 0 := walk__injective' i.wt _ _ (congrArg (fun x => x.1) hp)
+  have h₁₁: p₁.val 0 = p₂.val 0 := walk_injective' i.wt _ _ (congrArg (fun x => x.1) hp)
 
   have h₁₂: p₁.val 1 = p₂.val 1 := l_unique i.wt (p₁.val 0) _ _ (by
     unfold Solution_of at p₂; have g := p₂.2
     unfold DecisionProblem.Solution Knapsack2 at g
-    unfold Matrix.dotProduct at g; simp at g
+    unfold dotProduct at g; simp at g
+    change i.target = i.wt.val 0 * p₂.1 0 + i.wt.val 1 * p₂.1 1 at g
     rw [← h₁₁] at g;
     have G := p₁.2.symm
-    have : Matrix.dotProduct i.wt.val p₁.val
-    =  (Matrix.dotProduct i.wt.val fun i_1 => List.get [p₁.val 0, p₁.val 1] i_1)
-     := by simp [Matrix.dotProduct]
+    have : dotProduct i.wt.val p₁.val
+    =  (dotProduct i.wt.val fun i_1 => List.get [p₁.val 0, p₁.val 1] i_1)
+     := by simp [dotProduct]; rfl
     rw [← this,G,g]
-    unfold Matrix.dotProduct
+    unfold dotProduct
     simp
+    rfl
   )
-  exact Subtype.eq (by
+  exact Subtype.ext (by
     apply funext; intro i; have : i = 0 ∨ i = 1 := by fin_cases i <;> tauto
     cases this with
     | inl h => rw [h]; exact h₁₁
@@ -105,7 +107,6 @@ theorem CS_injective (i:Knapsack2.Instance) :
 
 noncomputable def KS_val (i : CursiveWalk.Instance) (s : Solution_of i) : (Fin 2 → ℕ) := by
   let j := KI i
-  unfold KI at j
   have : j.target.succ = i.length.val := PNat.natPred_add_one _
   have hT := s.2.2;
   rw [← this] at hT
@@ -124,20 +125,21 @@ noncomputable def KS {j : CursiveWalk.Instance} (s : Solution_of j) : Solution_o
     have : i.target.succ = j.length.val := PNat.natPred_add_one _
     rw [← this,(getk _ _).2] at hT;
     rw [(getk _ _).2] at hw;
-    have get_getl: KS_val j s 1 = (getl i.wt hT).1 := by simp [KS_val]
+    have get_getl: KS_val j s 1 = (getl i.wt hT).1 := by simp [KS_val]; rfl
     unfold Knapsack2
-    unfold Matrix.dotProduct;
+    unfold dotProduct;
     simp;
     have pro := (getl i.wt hT).2
     apply Nat.succ_injective at pro
     unfold i at pro
     simp_rw [pro]
-    unfold Matrix.dotProduct at pro
+    unfold dotProduct at pro
     simp at pro
     rw [← get_getl]
     rw [← KS_is_getk]
-    unfold Matrix.dotProduct
+    unfold dotProduct
     simp
+    rfl
 
 -- Thanks to Dillies:
 theorem cast_val {u₁ u₂ : CursiveWalk.Instance} {a : ℕ → ℕ}
@@ -166,7 +168,9 @@ theorem inverses_dot1 (j : CursiveWalk.Instance) (s : Solution_of j):
   simp
   have : (KI j).wt = j.cycleLength := rfl
   simp_rw [this]
-  rw [cast_val h₁ h₂ (inverses_CKI j)]
+  have := cast_val h₁ h₂ (inverses_CKI j)
+
+  sorry
 
 /-- We first want to prove: CS (KI j) (KS j s) = s, but that's not type-hygienic so we do:
 ( by {
@@ -192,6 +196,7 @@ theorem inverses_KCS {j : Knapsack2.Instance} (s : Solution_of j):
   have G := inverses_CKS_eqmp (CI j) ((fun sc : Solution_of j => CS sc) s)
   nth_rewrite 1 [G]
   simp
+  rfl
 
 theorem KS_injective :
     ∀ (j : CursiveWalk.Instance), Function.Injective fun s : Solution_of j => KS s := by

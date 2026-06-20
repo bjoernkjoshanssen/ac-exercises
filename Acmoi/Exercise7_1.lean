@@ -4,7 +4,7 @@ import Mathlib.Data.Vector.Basic
 
 example (a₁ a₂ b₁ b₂ : Nat) (h₁ : a₁ ≥ b₁) (h₂ : a₂ ≥ b₂) (h : a₁+a₂ = b₁+b₂) :
 a₁ = b₁ := by {
-  have g : a₁ = b₁ ∨ b₁ < a₁ := eq_or_gt_of_le h₁
+  have g : a₁ = b₁ ∨ b₁ < a₁ := by omega
   rcases g with p1 | p2
   exact p1
   exfalso

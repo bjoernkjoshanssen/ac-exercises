@@ -8,7 +8,7 @@ theorem decide_diophantine2_1 {a b n x y : ℕ} (h : a*x+b*y =n)
   (ha : 0 < a) : x < n/a + 1 := by
   have hh: x*a ≤ n := calc
        _ = a*x + 0     := by ring
-       _ ≤ a*x + (b*y) := add_le_add_left (Nat.zero_le  _) (a*x)
+       _ ≤ a*x + (b*y) := add_le_add_right (Nat.zero_le  _) (a*x)
        _ = _           := h
   calc _ ≤ n/a         := (Nat.le_div_iff_mul_le ha).mpr hh
      _ < _             := lt_add_one (n/a)

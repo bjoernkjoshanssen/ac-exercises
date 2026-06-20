@@ -17,7 +17,7 @@ theorem decide_diophantine3_1 {a b c n x y z : Nat}
 (h : a*x+b*y+c*z =n) (ha: 0 < a) : x < n/a + 1
 :=
 have hh: x*a ≤ n := calc x*a = a*x + 0     := by ring
-                        _ ≤ a*x + (b*y+c*z) := add_le_add_left (Nat.zero_le  _) (a*x)
+                        _ ≤ a*x + (b*y+c*z) := add_le_add_right (Nat.zero_le  _) (a*x)
                         _ = a*x + b*y + c*z := by ring
                         _ = n               := h
   calc _ ≤ n/a           := (Nat.le_div_iff_mul_le ha).mpr hh

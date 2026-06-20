@@ -21,7 +21,7 @@ theorem power_length' (u : List (Fin 2)) (k:ℕ) :
   := by induction k with
   |zero => rw [Nat.zero_mul];exact rfl
   |succ n h_ind => calc
-    _ = u.length + (power' u n).length := u.length_append (power' u n)
+    _ = u.length + (power' u n).length := u.length_append (bs := power' u n)
     _ = Nat.succ n * u.length := by
       rw [h_ind]
       rw [Nat.succ_eq_add_one]
@@ -41,8 +41,8 @@ theorem short_primitive' (x: List (Fin 2)) (h: x.length ≤ 1) : primitive' x :=
     obtain ⟨k, u, huu_left, hu⟩ := h_contra
     have hh: 2 ≤ 1 := calc
          2 = 2      * 1                       := (mul_one 2).symm
-         _ ≤ 2 * u.length                     := mul_le_mul_left' (huu_left) _
-         _ ≤ k.succ.succ * u.length           := mul_le_mul_right'  (Nat.succ_le_succ (Nat.succ_le_succ (zero_le _))) _
+         _ ≤ 2 * u.length                     := mul_le_mul_right (huu_left) _
+         _ ≤ k.succ.succ * u.length           := mul_le_mul_left  (Nat.succ_le_succ (Nat.succ_le_succ zero_le)) _
          _ = (power' u k.succ.succ).length := (power_length' _  _).symm
          _ ≤ 1                              := by rw [← hu];exact h
     exact Nat.not_succ_le_self 1 hh
@@ -77,10 +77,7 @@ theorem repeat_not_primitive' {k:ℕ} : nontrivial_power' (List.replicate k.succ
   exact repeat_is_power'
 }
 
-theorem List_nil_length : (List.nil : List (Fin 2)).length = 0 := by {
-  have : (List.nil : List (Fin 2)).length = 0 ↔ List.nil = List.nil := List.length_eq_zero
-  refine this.mpr rfl
-  }
+theorem List_nil_length : (List.nil : List (Fin 2)).length = 0 := by simp
 
 example (k:ℕ) (h:1≤ k): k ≠ 0 := Nat.one_le_iff_ne_zero.mp h
 

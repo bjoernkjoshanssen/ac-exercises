@@ -53,8 +53,8 @@ theorem bits_even {n:ℕ} (h : n ≠ 0) : bits (2 * n) = false :: bits n :=
 theorem length_map_sum : ∀ l : List Bool, (l.map Bool.toNat).sum ≤ l.length
 | [] => by simp
 | head :: tail => by rw [List.length_cons,List.map_cons,List.sum_cons]; calc
-  _ ≤ 1 + List.sum (List.map Bool.toNat tail) := add_le_add_right (Bool.toNat_le head) _
-  _ ≤ 1 + List.length tail                    := add_le_add_left (length_map_sum _) _
+  _ ≤ 1 + List.sum (List.map Bool.toNat tail) := add_le_add_left (Bool.toNat_le head) _
+  _ ≤ 1 + List.length tail                    := add_le_add_right (length_map_sum _) _
   _ = succ (List.length tail)                 := by linarith
 
 -- w = binaryHammingWeight (Lemma 11 of VC paper)
@@ -83,35 +83,38 @@ theorem andhence {m : ℕ} : hammingBits (2 * m.succ) < clog 2 (2 * m.succ).succ
 
 end w
 
-theorem ν₂_hammingBits (n : ℕ) : ν₂ (n + 1) + hammingBits (n + 1) = hammingBits n + 1 := by
-  induction' n using Nat.strong_induction_on with n ih -- https://leanprover-community.github.io/mathematics_in_lean/mathematics_in_lean.pdf
-  by_cases hn : n = 0
-  · simp [hn, ν₂, hammingBits]
-  by_cases he : Even n
-  · obtain ⟨k,hk⟩ := he
-    have h₁ : 0 < k := Nat.pos_of_ne_zero fun _ => hn <| by linarith
-    have h₂ : k < n := calc k < k + k := add_lt_add_left h₁ k
-                            _ = n     := hk.symm
-    have : hammingBits n = hammingBits k := by rw [← hammingBits_2 k, two_mul, hk]
-    rw [this, ← ih k h₂] -- use ind.hyp.
-    subst hk
-    apply succ_injective
-    conv =>
-      right
-      rw [succ_eq_add_one, add_assoc]
-    rw [← two_mul,hammingBits_odd k, ← ih k h₂, ν₂_odd _]
-    linarith
+theorem ν₂_hammingBits (n : ℕ) :
+  ν₂ (n + 1) + hammingBits (n + 1) = hammingBits n + 1 := by
+  induction n using Nat.strong_induction_on with
+  | h n ih =>
+  -- induction' n using Nat.strong_induction_on with n ih -- https://leanprover-community.github.io/mathematics_in_lean/mathematics_in_lean.pdf
+    by_cases hn : n = 0
+    · simp [hn, ν₂, hammingBits]
+    by_cases he : Even n
+    · obtain ⟨k,hk⟩ := he
+      have h₁ : 0 < k := Nat.pos_of_ne_zero fun _ => hn <| by linarith
+      have h₂ : k < n := calc k < k + k := add_lt_add_right h₁ k
+                              _ = n     := hk.symm
+      have : hammingBits n = hammingBits k := by rw [← hammingBits_2 k, two_mul, hk]
+      rw [this, ← ih k h₂] -- use ind.hyp.
+      subst hk
+      apply succ_injective
+      conv =>
+        right
+        rw [succ_eq_add_one, add_assoc]
+      rw [← two_mul,hammingBits_odd k, ← ih k h₂, ν₂_odd _]
+      linarith
 
-  · obtain ⟨k,hk⟩ := not_even_iff_odd.mp he
-    subst hk
-    rw [
-      show 2 * k + 1 + 1 = 2 * (k + 1) by ring,
-      hammingBits_2, hammingBits_odd, ν₂_2, add_comm, ← add_assoc
-    ]
-    apply (add_left_inj _).mpr
-    rw [add_comm, ih k] -- use ind.hyp.
-    linarith
-    linarith
+    · obtain ⟨k,hk⟩ := not_even_iff_odd.mp he
+      subst hk
+      rw [
+        show 2 * k + 1 + 1 = 2 * (k + 1) by ring,
+        hammingBits_2, hammingBits_odd, ν₂_2, add_comm, ← add_assoc
+      ]
+      apply (add_left_inj _).mpr
+      rw [add_comm, ih k] -- use ind.hyp.
+      linarith
+      linarith
 
 /-- This function is called `a` at https://oeis.org/A005187 and we
 name it in honor of Jörg Arndt. -/
@@ -149,7 +152,7 @@ lemma lemma12 (n:ℕ) : arndt n + clog 2 n.succ ≥ 2 * n := by
     rw [clog_of_two_le one_lt_two this] -- strange but wonderful!
     simp
   have : arndt m.succ + clog 2 (succ m.succ) + 1 > 2 * m.succ := calc
-     _ ≥ arndt m.succ + clog 2 (succ (2 * m.succ)) := add_le_add_left hkey _
-     _ > arndt m.succ + hammingBits (2 * m.succ)   := add_lt_add_left (@andhence m) _
+     _ ≥ arndt m.succ + clog 2 (succ (2 * m.succ)) := add_le_add_right hkey _
+     _ > arndt m.succ + hammingBits (2 * m.succ)   := add_lt_add_right (@andhence m) _
      _ = 2 * m.succ                                := lemma11 m.succ
-  exact lt_succ.mp this
+  exact Nat.lt_succ_iff.mp this

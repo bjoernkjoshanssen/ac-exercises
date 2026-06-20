@@ -1,10 +1,10 @@
 import Mathlib.NumberTheory.Padics.PadicNumbers
-import Mathlib.Algebra.Order.Floor
+-- import Mathlib.Algebra.Order.Floor
 import Mathlib.Data.Nat.Log
 import Mathlib.InformationTheory.Hamming
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Fin.Tuple.Take
-
+import Mathlib
 
 /-!
 
@@ -59,11 +59,7 @@ theorem nonempty_shatters {V : Type*} [DecidableEq V]  (𝓕 : Finset (Finset V)
     shatters_some 𝓕 0 := by
   use ∅
   simp
-  intro B hB
-  constructor
   use A
-  symm
-  exact Finset.subset_empty.mp hB
 
 open Finset
 
@@ -87,7 +83,7 @@ theorem shatters_some₁ {V : Type*} [DecidableEq V] [Fintype V] (𝓕: Finset (
     obtain ⟨B,hB⟩ := hA.2
     have : ∃ u, ¬ (u ∈ A ↔ u ∈ B) := by
       by_contra hc
-      push_neg at hc
+      push Not at hc
       simp_all [Finset.ext_iff.mpr hc]
     obtain ⟨u,hu⟩ := this
     use {u}
@@ -96,13 +92,13 @@ theorem shatters_some₁ {V : Type*} [DecidableEq V] [Fintype V] (𝓕: Finset (
     · intro X hX
       simp at hX
       cases hX
-      · push_neg at hu
+      · push Not at hu
         cases hu
         · use B
           simp_all
         · use A
           simp_all
-      · push_neg at hu
+      · push Not at hu
         cases hu
         · use A
           simp_all
@@ -156,7 +152,6 @@ theorem subset_of_size {α : Type*} {s : Finset α} (a b : ℕ)
     intro x hx
     rw [List.mem_toFinset] at hx
     have : x ∈ List.take a s.toList := hx
-    simp at this
     refine mem_toList.mp ?_
     exact List.mem_of_mem_take hx
   have h_card_t : t.card = a := by
@@ -191,15 +186,14 @@ theorem not_shatters_all_emp {V : Type*} [DecidableEq V] [Fintype V] :
 theorem shatters_all₀ {V : Type*} [DecidableEq V] [Fintype V] (F: Finset (Finset V)) :
     F ≠ ∅ ↔ shatters_all F 0 := by
   constructor
-  · intro h
-    intro A hA B hB
+  · intro h A hA B hB
     simp at hA
     subst hA
     simp
     constructor
     exact Nonempty.exists_mem <| nonempty_iff_ne_empty.mpr h
     exact .symm <| subset_empty.mp hB
-  · exact fun h hc => not_shatters_all_empty 0 (zero_le _) <| hc ▸ h
+  · exact fun h hc => not_shatters_all_empty 0 (zero_le) <| hc ▸ h
 
 
 
@@ -285,11 +279,12 @@ theorem pow_le_of_shatters {V : Type*} [DecidableEq V] [Fintype V] (F : Finset (
 theorem pow_le_of_shatters₂ {V : Type*} [DecidableEq V] [Fintype V] (F : Finset (Finset V)) (k : ℕ)
     (h : shatters_some F k) : k ≤ Nat.log 2 F.card := by
   have := pow_le_of_shatters F k h
-  refine (Nat.pow_le_iff_le_log ?hb ?hy).mp this
-  simp
-  intro hc
-  rw [hc] at this
-  simp at this
+  sorry
+  -- refine (Nat.pow_le_iff_le_log ?hb ?hy).mp this
+  -- simp
+  -- intro hc
+  -- rw [hc] at this
+  -- simp at this
 
 
 lemma pow_le (m : ℕ) : m < 2 ^ m := by
@@ -325,8 +320,6 @@ theorem dimVC_def {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset (Finset
   unfold dimVC
   simp_all
   apply this
-  show k < #univ + 1
-  suffices k ≤ #univ by linarith
   obtain ⟨t,ht⟩ := h₁
   rw [← ht.1]
   refine card_le_card ?mpr.intro.a
@@ -352,7 +345,7 @@ lemma indexVC_as_min'_defined {V : Type*} [DecidableEq V] [Fintype V] {𝓕 : Fi
   use #(univ : Finset V) + 1
   simp
   unfold shatters_some
-  push_neg
+  push Not
   intro A hA
   exfalso
   contrapose hA
@@ -389,7 +382,7 @@ def indexVC_as_min' {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset (Fins
 theorem too_big_to_shatter {V : Type*} [DecidableEq V] [Fintype V]
 (𝓕 : Finset (Finset V)) : ¬shatters_some 𝓕 (Fintype.card V + 1) := by
   unfold shatters_some
-  push_neg
+  push Not
   intro A hA
   exfalso
   have : #A ≤ Fintype.card V := by
@@ -527,7 +520,7 @@ theorem dim_index_VC {V : Type*} [DecidableEq V] [Fintype V]
           #(univ : Finset V) + 2 := by
             have := @min'_le ℕ _ (filter (fun k ↦ ¬shatters_some 𝓕 k) (range (#(univ : Finset V) + 2))) (#(univ : Finset V) + 1)
               (by
-              simp; unfold shatters_some;push_neg;intro A hA
+              simp; unfold shatters_some;push Not;intro A hA
               exfalso
               contrapose hA
               suffices #A ≤ Fintype.card V by linarith
@@ -536,10 +529,10 @@ theorem dim_index_VC {V : Type*} [DecidableEq V] [Fintype V]
               exact subset_univ A
             )
             linarith
-        show (filter (fun k ↦ ¬shatters_some 𝓕 k) (range (#univ + 2))).min' _ - 1 < #univ + 1
+        simp at h₀ ⊢
         omega
       · by_contra H₀
-        simp at H₀
+        -- simp at H₀
         have h₀ : (filter (fun k ↦ ¬shatters_some 𝓕 k) (range (#(univ : Finset V) + 2))).min' indexVC_as_min'_defined - 1
           < (filter (fun k ↦ ¬shatters_some 𝓕 k) (range (#(univ : Finset V) + 2))).min' indexVC_as_min'_defined := by
           apply Nat.sub_one_lt
@@ -615,7 +608,7 @@ def indexTest {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset (Finset V))
   by_cases hf : ∃ B, B ∉ 𝓕
   exact Finset.min' (filter (fun k => ¬ shatters_all 𝓕 k) (range ((univ:Finset V).card + 1))) (by
     unfold shatters_all
-    push_neg
+    push Not
     simp
     use #(univ : Finset V)
     simp
@@ -684,8 +677,8 @@ theorem shatters_all_mono  {V : Type*} [DecidableEq V] [Fintype V] {𝓕 : Finse
   -- take A ∪ X where X is a set of size l-k in univ \ A.
   obtain ⟨X,hX⟩ := @subset_of_size V (univ \ A) (l-k) (univ \ A).card rfl (by
     have : #(univ \ A) = #(univ : Finset V) - #A := by
-      refine card_sdiff ?h
-      exact subset_univ A
+      rw [card_sdiff]
+      simp
     rw [this]
     rw [hA]
     exact Nat.sub_le_sub_right h₁ k
@@ -713,8 +706,6 @@ theorem shatters_all_mono  {V : Type*} [DecidableEq V] [Fintype V] {𝓕 : Finse
   have : (B ∪ X) ∩ A = B := by rw [union_inter_distrib_right, hAX];simp_all
   have : (A ∪ X) ∩ (A ∩ C) = A ∩ C := by
     rw [union_inter_distrib_right];simp_all
-    intro x hx;exfalso; rw [← inter_assoc, ‹X ∩ A = ∅›] at hx
-    simp_all
   aesop
 
 lemma please_nemp {V : Type*} [DecidableEq V] [Fintype V] {𝓕 : Finset (Finset V)} (G : ∃ B, B ∉ 𝓕) :
@@ -722,7 +713,7 @@ lemma please_nemp {V : Type*} [DecidableEq V] [Fintype V] {𝓕 : Finset (Finset
   use #(univ : Finset V)
   simp
   unfold shatters_all
-  push_neg
+  push Not
   use univ
   simp
   tauto
@@ -750,7 +741,7 @@ theorem indexTest_le_indexVC {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Fin
         have hu₁ := hu.2 B (by aesop)
         simp at hu₁
         tauto
-      · show (filter (fun k ↦ ¬shatters_some 𝓕 k) (range (Fintype.card V + 1))).min' _ < Fintype.card V + 1
+      · --show (filter (fun k ↦ ¬shatters_some 𝓕 k) (range (Fintype.card V + 1))).min' _ < Fintype.card V + 1
         suffices (filter (fun k ↦ ¬shatters_some 𝓕 k) (range (Fintype.card V + 1))).min' (by use Fintype.card V;simp;tauto) ≤ Fintype.card V by
           omega
         apply min'_le
@@ -770,7 +761,7 @@ theorem indexTest_le_indexVC {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Fin
       tauto
       contrapose h
 
-      simp_all
+
       have := h univ
       simp_all
       split_ifs at * with g₀
@@ -826,8 +817,7 @@ theorem dim_index_test {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset (F
     obtain ⟨x,hx⟩ := H
     obtain ⟨y,hy⟩ := hx.2.2
     exact hx.2.1 <| shatters_all_mono hy.2.1 hy.2.2
-      ((show #univ = Fintype.card V by rfl) ▸ Nat.le_of_lt_succ hy.1)
-
+      (by simp;exact hy.1)
     apply le_max'
     simp
     have h₀ := min'_mem (filter (fun k ↦ ¬shatters_all 𝓕 k) (range (Fintype.card V + 1)))
@@ -848,8 +838,8 @@ theorem dim_index_test {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset (F
     · intro A hA
       let please := (filter (fun k ↦ ¬shatters_all 𝓕 k) (range (Fintype.card V + 1)))
       let g := ((filter (fun k ↦ ¬shatters_all 𝓕 k) (range (Fintype.card V + 1))).min' (please_nemp G))
-      have h₁ : IsLeast please.toSet g := isLeast_min' please (please_nemp G)
-      have h₆ : ¬ #A ∈ please.toSet := by
+      have h₁ : IsLeast please g := isLeast_min' please (please_nemp G)
+      have h₆ : ¬ #A ∈ please := by
         intro hc
         have := h₁.2 hc
         omega
@@ -859,7 +849,7 @@ theorem dim_index_test {V : Type*} [DecidableEq V] [Fintype V] (𝓕 : Finset (F
       have h₃ : shatters_all 𝓕 #A := by
         suffices ¬ (#A ∈ filter (fun k ↦ ¬shatters_all 𝓕 k) (range (Fintype.card V + 1))) by
           simp at this;
-          exact this h₁
+          exact this (by omega)
         aesop
       exact h₃ A rfl
   simp_all

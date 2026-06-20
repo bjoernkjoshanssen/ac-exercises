@@ -1,5 +1,7 @@
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.FinCases
+import Mathlib
 
 open List
 
@@ -68,7 +70,22 @@ theorem generalized (w : List (Fin 2)) (a b : Fin 2)
     exact hab (eq_cons_ne_nil (hsqf _ hc.1) (hsqf _ hc.2))
     intros y hy
     have hin: y = [a] ∨ (y = [b] ∨ y = [a,b]) := hsqf _ hy
-    aesop
+    simp_all only [Fin.exists_fin_two, Fin.isValue]
+    cases hin with
+    | inl h =>
+      subst h
+      simp_all only [Fin.isValue, cons.injEq, and_true, ne_cons_self, and_false, or_self, or_false]
+      fin_cases a <;> simp
+    | inr h_1 =>
+      cases h_1 with
+      | inl h =>
+        subst h
+        simp_all only [Fin.isValue, cons.injEq, and_true, ne_cons_self, and_false, or_self, or_false]
+        fin_cases b <;> simp
+      | inr h_2 =>
+        subst h_2
+        simp_all only [Fin.isValue, cons.injEq, cons_ne_self, and_false, or_self, and_true, false_or]
+        fin_cases a <;> fin_cases b <;> simp
 
 def overlapfree (w : List (Fin 2)) : Prop :=
 ∀ y : List (Fin 2), ∀ a : Fin 2, ¬ occurs_in ((a :: y) ++ (a ::y) ++ [a]) w
@@ -80,7 +97,7 @@ theorem cons_append_length {a b : Fin 2} {x u z : List (Fin 2)} :
   x.length +  u.length.succ.succ +  u.length.succ.succ +  z.length := by
     repeat rw [append_assoc]
     repeat rw [length_append]
-    repeat simp [length_append, add_assoc, length_cons]
+    repeat simp [add_assoc, length_cons]
 
 theorem square_length_ge_four {x z u: List (Fin 2)} {a b : Fin 2}:
   (x ++ ((a :: (b :: u)) ++ (a::(b::u))) ++ z).length ≥ 4 := by
@@ -121,7 +138,7 @@ example: generalized_almost_square_free ctrex := by
 
 example: ¬ overlapfree ctrex := by
   unfold overlapfree
-  push_neg
+  push Not
   exists nil, 0, nil, nil
 
 example: ¬ almost_square_free ([0,1,1,0,1,1] : List (Fin 2)) := by

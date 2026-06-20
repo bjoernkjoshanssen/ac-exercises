@@ -77,13 +77,13 @@ lemma exact_racecar {k : ℕ} {f : Fin (k+1) → Fin (k+1)}
     simp only [Fin.val_zero, add_zero] at hr
     have : (f a.castSucc).1 < a := by
       contrapose H
-      simp_all only [gt_iff_lt, not_lt, Decidable.not_not]
+      simp_all only [not_lt]
       exact Fin.eq_of_val_eq <| Nat.le_antisymm hr H
     let b := (f a.castSucc)
     have : (f (Fin.last k)).1 < k := by
       have := @racecar k f a.castSucc b rfl h (k-a)
         (by simp)
-      simp only [Fin.coe_castSucc, Fin.is_le', Nat.sub_add_cancel] at this
+      simp only [Fin.val_castSucc, Fin.is_le', Nat.sub_add_cancel] at this
       calc
       _ ≤ k - a.1 + b.1 := this
       _ < k := by omega

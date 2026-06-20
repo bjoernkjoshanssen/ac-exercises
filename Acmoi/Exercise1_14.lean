@@ -205,7 +205,7 @@ theorem complexity_of_repeat (z:α) (n:ℕ): automatic_complexity_is_at_most (Li
       λ ha ↦
       calc t = List.replicate t.length z            := TwoState_accepts_only_repeat ha
       _ = List.replicate (List.replicate n z).length z := by rw [h]
-      _ = List.replicate n z                   := by rw [List.length_replicate n z]
+      _ = List.replicate n z                   := by rw [List.length_replicate]
 
     have mpr: t=(List.replicate n z) → M.accepts t := λ his ↦ by {rw [← his] at n2;exact n2}
 

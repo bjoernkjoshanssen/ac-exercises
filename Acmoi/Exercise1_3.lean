@@ -14,7 +14,7 @@ theorem lemma_1_52 (r x y:ℤ)(hr:0<r)(hy:0 ≤ y)(hx:0 ≤ x) :
             _ = (2 * r^2) % r :=  by ring_nf
             _ = ((x+y)*r+(y+1)) % r := by rw [h]
             _ = ((y+1)+(x+y)*r) % r := by ring_nf
-            _ = (y+1)%r := Int.add_mul_emod_self
+            _ = (y+1)%r := by simp
             _ = y+1 - r * ((y+1)/r) := Int.emod_def (y + 1) r --Int.mod_def (y+1) r
     have h₄ : y+1 = r * ((y+1)/r) := by linarith
     have : r ∣ (y+1) := Exists.intro ((y+1)/r) h₄ -- note it's \ mid not just |

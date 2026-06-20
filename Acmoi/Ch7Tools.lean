@@ -4,8 +4,11 @@ section general
 
 theorem sub_succ_add_one {n b : ℕ} (hn: n ≥ b.succ) : n - Nat.succ (b) + 1 = n - b := by omega
 
-def moveOne (i s : Fin 2 → ℕ) : (Nat.succ (Matrix.dotProduct i s)) = (i 0 * s 0 + 1 + i 1 * s 1) := by
-  simp [Matrix.dotProduct]
+theorem moveOne (i s : Fin 2 → ℕ) : (Nat.succ (dotProduct i s)) = (i 0 * s 0 + 1 + i 1 * s 1) := by
+  simp [dotProduct]
+  have (i : Fin 2 → ℕ) : ∑ x : Fin 2, i x = (i 0) + (i 1) :=
+    Eq.symm (Nat.add_zero ((i 0).add (i 1)))
+  rw [this]
   omega
 
 def functional_eq_add_of_le  {m n : ℕ} (h : m ≤ n) : {k // n = m + k} :=
@@ -71,7 +74,7 @@ theorem unique_iff_of_bijective {α β : Type} {P : α → Prop} {Q : β → Pro
     have pair := get_equation' hab han; exact ⟨pair.1, pair.2⟩
 
   theorem zero_of_mod {a n : ℕ} (hn: 1 ≤ n) (ha: a % n  = 0 ) (han: a < n) : a = 0 := by
-    have := (@Nat.mod_eq_iff_lt a n (by omega)).mpr han
+    have := (@Nat.mod_eq_iff_lt n a (by omega)).mpr han
     apply Eq.trans this.symm ha
 
 end general

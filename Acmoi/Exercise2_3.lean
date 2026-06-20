@@ -75,7 +75,7 @@ walk_labeled.recOn wa walk.nil (
   }
 )
 
-def kayleigh2_digraph (x : Mathlib.Vector (Fin 2) 3) : labeled_digraph' (Fin 2) (Fin 2) := {
+def kayleigh2_digraph (x : List.Vector (Fin 2) 3) : labeled_digraph' (Fin 2) (Fin 2) := {
   edge := (fun q1 q2 b =>
     (q1,q2,b) = (0, 1, x.get 0) ∨
     (q1,q2,b) = (1, 1, x.get 1) ∨
@@ -83,7 +83,7 @@ def kayleigh2_digraph (x : Mathlib.Vector (Fin 2) 3) : labeled_digraph' (Fin 2) 
   )
 }
 
-def kayleighsequence2 : Mathlib.Vector (Fin 2) 4 := ⟨[0,1,1,0],rfl⟩
+def kayleighsequence2 : List.Vector (Fin 2) 4 := ⟨[0,1,1,0],rfl⟩
 /- Although 1,0,0,1 would be better for induction proofs -/
 
 /-

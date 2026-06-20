@@ -2,7 +2,7 @@ import Mathlib.Data.Vector.Basic
 
 -- Solution to Exercise 5.1.
 
-def Lookback (m k t : ℕ) {n:ℕ} (x: Mathlib.Vector (Fin 2) n) : Prop :=
+def Lookback (m k t : ℕ) {n:ℕ} (x: List.Vector (Fin 2) n) : Prop :=
   ∀ u:ℕ, u < t → x.1.getI (m+u) = x.1.getI (m+u-k)
 
 example :

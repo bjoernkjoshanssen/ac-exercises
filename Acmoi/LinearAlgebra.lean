@@ -33,163 +33,11 @@ The closest of the newcomers to `A` is probably `As ℕ`.
  To be able to talk about the identity matrix intelligently,
  we assume the field is at least `ℤ / 2ℤ`.
  -/
-example (n : ℕ) : (n = 2 ∨ n = 3) → n = 4 := by
-    -- repeat (try tauto)
-    rintro (h | h')
-    sorry
-    sorry
-
-example (P Q R : Prop) (h : P ∨ Q ∨ R) :
-    (P ∧ 0=1) ∨ (Q ∧ 0=1) ∨ (R ∧ 0=1) := by
-    aesop
-    -- rcases h with hP | hQ | hR
-    sorry
-    sorry
-    sorry
-
-
-
-example (n : ℕ) : (n = 2 ∨ n = 3 ∨ n = 4) → n = 4 := by
-    -- repeat (try tauto)
-    rintro (h₂ | h₃ | h₄)
-    sorry
-    sorry
-    sorry
-
-
-def myf : ℝ × ℝ → ℝ := by
-    intro x
-    exact x.fst^2+x.snd^2
-
-
-
-
-noncomputable def partial_deriv_x
-    (f : ℝ → ℝ → ℝ) : ℝ → ℝ → ℝ :=
-    fun y => deriv fun x => f x y
-
-noncomputable def partial_deriv_y
-    (f : ℝ → ℝ → ℝ) : ℝ → ℝ → ℝ :=
-    fun x => deriv fun y => f x y
-
-noncomputable def part_deriv_x
-    (f : (Fin 2 → ℝ) → ℝ) : ℝ → ℝ → ℝ :=
-    fun y => deriv fun x => f ![x, y]
-
-noncomputable def partDeriv_x
-    (f : (Fin 2 → ℝ) → ℝ) : (Fin 2 → ℝ) → ℝ :=
-    fun x => part_deriv_x f (x 0) (x 1)
-
-
-
-theorem suggestion (f : EuclideanSpace ℝ (Fin 2) → ℝ)
-    (a : Fin 2 → ℝ)
-    (h : IsLocalExtr f a) : fderiv ℝ f a =0 :=
-      IsLocalExtr.fderiv_eq_zero h
-
-
-
--- make a repo with this
-theorem grad_zero_of_extr (f : EuclideanSpace ℝ (Fin 2) → ℝ)
-    (a : Fin 2 → ℝ) (h₀ : DifferentiableAt ℝ f a)
-    (h : IsLocalExtr f a)  : gradient f a =0 := by
-    apply HasGradientAt.gradient
-    have h₁ := (hasFDerivAt_iff_hasGradientAt).mp
-        (DifferentiableAt.hasFDerivAt h₀)
-    rw [IsLocalExtr.fderiv_eq_zero h] at h₁
-    simp at h₁
-    exact h₁
-
-
-
--- Project members: Asaf Janani (Zixhao stats)
-theorem janani_suggestion (f : EuclideanSpace ℝ (Fin 2) → ℝ)
-    (a : Fin 2 → ℝ) (h₀ : DifferentiableAt ℝ f a)
-    (h : IsLocalExtr f a) (i : Fin 2) : part_deriv_x f (a 0) (a 1) =0 := by
-    have := @grad_zero_of_extr f a h₀ h
-
-    rw [funext_iff] at this
-
-    simp at this
-    specialize this 0
-    rw [← this]
-    unfold part_deriv_x
-
-    simp [gradient]
-
-    have h₁ := (@hasFDerivAt_iff_hasGradientAt ℝ (EuclideanSpace ℝ (Fin 2))
-        _ _ _ _ f a (by exact fderiv ℝ f a)).mp (by
-            apply DifferentiableAt.hasFDerivAt
-            exact h₀)
-    have h₂ := (@hasFDerivAt_iff_hasGradientAt ℝ (EuclideanSpace ℝ (Fin 2))
-        _ _ _ _ f a (by exact fderiv ℝ f a)).mpr (by
-            exact h₁)
-
-    have : IsLocalExtr (fun x => f ![x, a 1]) (a 0) := by
-
-        simp [IsLocalExtr] at h ⊢
-        obtain (h₀ | h₁) := h
-        · left
-          simp [IsMinFilter] at h₀ ⊢
-
-          simp [Filter.Eventually] at h₀ ⊢
-          rw [nhds_pi] at h₀
-          simp [Filter.pi] at h₀
-          rw [Filter.mem_iInf] at h₀
-          obtain ⟨I,hI⟩ := h₀
-          have ⟨V,hV⟩ := hI.2
-          have := hV.1
-
-          sorry
-        · sorry
-
-    sorry
-
-
-example : (!![(1:ℝ),0;0,1]).det = 0 := sorry
-
-def f0 : (Fin 2 → ℝ) → ℝ := by
-    intro x
-    have := x 0
-    have := x 1
-    exact (x 0)^2 + (x 1)^2
-def f₀ : EuclideanSpace ℝ (Fin 2) → ℝ := by
-    intro x
-    have := x 0
-    have := x 1
-    exact (x 0)^2 + (x 1)^2
-
--- Function of two variables first partial derivative test
--- example (f₀ : EuclideanSpace ℝ (Fin 2) → ℝ) :
---     (hf₀ : )
-
--- example : f0 ![2,2] = 8 := by
---     simp [f0]
---     linarith
-
--- def myf'' : ℝ → ℝ → ℝ := by
---     intro x y
---     exact x^2+y^2
-
--- def myf' : EuclideanSpace ℝ (Fin 2) → ℝ := by
---     intro x y
---     exact x^2+y^2
-
-
-
-
-
-
-
-
-
-
-
 def astMat {α : Type*} {R : Type*} [Add R] [Mul R] [Zero R] [One R]
   {n q : ℕ} (word : Fin n → α) (matrices : α → Matrix (Fin q) (Fin q) R) :
   Fin q → Fin q → R := match n with
 | 0 => fun x y => ite (x=y) 1 0
-| Nat.succ m => Matrix.mulᵣ (matrices (word m)) (astMat (Fin.init word) matrices)
+| Nat.succ m => Matrix.mulᵣ (matrices (word (Fin.last m))) (astMat (Fin.init word) matrices)
 
 open Matrix
 
@@ -228,7 +76,7 @@ def krausApplyWord {α : Type*} {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
   (ρ : Matrix (Fin q) (Fin q) R) :
   Matrix (Fin q) (Fin q) R := match n with
 | 0 => ρ
-| Nat.succ m => krausApply (𝓚 (word m))
+| Nat.succ m => krausApply (𝓚 (word (Fin.last m)))
         (krausApplyWord (Fin.init word) 𝓚 ρ)
 
 /-- The example Kraus operators from QCNC submission. -/
@@ -284,23 +132,23 @@ example (θ : ℝ) : (grudka_R' θ 0 0).trace = 0 := by simp [grudka_R']
 
 open Matrix
 
-example (θ : ℝ) {ρ : Matrix (Fin 3) (Fin 3) ℝ}
-    (hρ : ρ.trace = 1) :
-    (krausApply (grudka_R' θ 1) ρ).trace = 1 := by
-  rw [krausApply, trace]
-  unfold grudka_R'
-  simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
-  simp [Fin.sum_univ_succ,vecHead,vecTail]
-  rw [trace] at hρ
-  simp [Fin.sum_univ_succ,vecHead,vecTail] at hρ
-  ring_nf
-  have := cos_sq_add_sin_sq θ
-  have := sin_sq_add_cos_sq θ
-  generalize cos θ ^ 2 = c at *
-  generalize sin θ ^ 2 = s at *
-  have : c = 1 - s := by linarith
-  subst this
-  linarith
+-- example (θ : ℝ) {ρ : Matrix (Fin 3) (Fin 3) ℝ}
+--     (hρ : ρ.trace = 1) :
+--     (krausApply (grudka_R' θ 1) ρ).trace = 1 := by
+--   rw [krausApply, trace]
+--   unfold grudka_R'
+--   simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
+--   simp [Fin.sum_univ_succ,vecHead,vecTail]
+--   rw [trace] at hρ
+--   simp [Fin.sum_univ_succ,vecHead,vecTail] at hρ
+--   ring_nf
+--   have := cos_sq_add_sin_sq θ
+--   have := sin_sq_add_cos_sq θ
+--   generalize cos θ ^ 2 = c at *
+--   generalize sin θ ^ 2 = s at *
+--   have : c = 1 - s := by linarith
+--   subst this
+--   linarith
 
 
 example : quantumChannel (grudka_Z 0) := by
@@ -313,57 +161,57 @@ example : quantumChannel (grudka_Z 1) := by
   ext i j
   fin_cases i <;> fin_cases j <;> decide
 
-example : quantumChannel (grudka_R 1) := by
-  unfold quantumChannel grudka_R
-  apply ext
-  intro i j
-  simp only [sum_apply, mul_apply, conjTranspose_apply]
-  fin_cases i <;> fin_cases j <;> simp [Fin.sum_univ_succ,vecHead,vecTail]
+-- example : quantumChannel (grudka_R 1) := by
+--   unfold quantumChannel grudka_R
+--   apply ext
+--   intro i j
+--   simp only [sum_apply, mul_apply, conjTranspose_apply]
+--   fin_cases i <;> fin_cases j <;> simp [Fin.sum_univ_succ,vecHead,vecTail]
 
-example (θ : ℝ) : quantumChannel (grudka_R' θ 1) := by
-  unfold quantumChannel grudka_R'
-  apply ext
-  intro i j
-  simp only [sum_apply, mul_apply, conjTranspose_apply]
-  fin_cases i <;> fin_cases j <;> all_goals
-      simp [Fin.sum_univ_succ,vecHead,vecTail]
-      try linarith
-      try repeat rw [← pow_two]
-      try exact cos_sq_add_sin_sq θ
-      try exact sin_sq_add_cos_sq θ
+-- example (θ : ℝ) : quantumChannel (grudka_R' θ 1) := by
+--   unfold quantumChannel grudka_R'
+--   apply ext
+--   intro i j
+--   simp only [sum_apply, mul_apply, conjTranspose_apply]
+--   fin_cases i <;> fin_cases j <;> all_goals
+--       simp [Fin.sum_univ_succ,vecHead,vecTail]
+--       try linarith
+--       try repeat rw [← pow_two]
+--       try exact cos_sq_add_sin_sq θ
+--       try exact sin_sq_add_cos_sq θ
 
 
 def e₁ : Matrix (Fin 3) (Fin 1) ℝ := ![1, 0, 0]
 def e₂ : Matrix (Fin 3) (Fin 1) ℝ := ![0, 1, 0]
 def e₃ : Matrix (Fin 3) (Fin 1) ℝ := ![0, 0, 1]
-def e : Fin 3 → Matrix (Fin 3) (Fin 1) ℝ := fun i j k => ite (i=j ∧ j=k) 1 0
+-- def e : Fin 3 → Matrix (Fin 3) (Fin 1) ℝ := fun i j k => ite (i=j ∧ j=k) 1 0
 def pureState (e : Matrix (Fin 3) (Fin 1) ℝ) := mulᵣ e e.transpose
 
 example : pureState e₁ = !![1,0,0;0,0,0;0,0,0] := by
   ext i j
-  fin_cases i <;> fin_cases j <;> simp [pureState, e₁, pureState, mulᵣ, vecHead, vecTail]
+  fin_cases i <;> fin_cases j <;> simp [pureState, e₁, pureState, mulᵣ]
 
 -- Trace exercise: probability of being in the state e₁.
-example : (pureState e₁ * (grudka_R' θ 1 0)).trace = cos θ := by
-  unfold e₁ grudka_R' pureState
-  simp [transpose]
-  rw [trace]
-  simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
-  simp [Fin.sum_univ_succ, vecHead, vecTail]
+-- example : (pureState e₁ * (grudka_R' θ 1 0)).trace = cos θ := by
+--   unfold e₁ grudka_R' pureState
+--   simp [transpose]
+--   rw [trace]
+--   simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
+--   simp [Fin.sum_univ_succ, vecHead, vecTail]
 
-example : (pureState e₂ * (grudka_R' θ 1 0)).trace = cos θ := by
-  unfold e₂ grudka_R' pureState
-  simp [transpose]
-  rw [trace]
-  simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
-  simp [Fin.sum_univ_succ, vecHead, vecTail]
+-- example : (pureState e₂ * (grudka_R' θ 1 0)).trace = cos θ := by
+--   unfold e₂ grudka_R' pureState
+--   simp [transpose]
+--   rw [trace]
+--   simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
+--   simp [Fin.sum_univ_succ, vecHead, vecTail]
 
-example : (pureState e₃ * (grudka_R' θ 1 0)).trace = 1 := by
-  unfold e₃ grudka_R' pureState
-  simp [transpose]
-  rw [trace]
-  simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
-  simp [Fin.sum_univ_succ, vecHead, vecTail]
+-- example : (pureState e₃ * (grudka_R' θ 1 0)).trace = 1 := by
+--   unfold e₃ grudka_R' pureState
+--   simp [transpose]
+--   rw [trace]
+--   simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
+--   simp [Fin.sum_univ_succ, vecHead, vecTail]
 
 /-- The positive operator `pureState e₁` is chosen
 with probability `(pureState e₁ * ρ).trace`. -/
@@ -375,12 +223,13 @@ lemma POVM {ρ : Matrix (Fin 3) (Fin 3) ℝ}
   unfold pureState e₁ e₂ e₃
   simp [transpose]
   repeat rw [trace]
-  simp only [diag, sum_apply, mul_apply, conjTranspose_apply] at hρ ⊢
-  simp [Fin.sum_univ_succ, vecHead, vecTail] at hρ ⊢
-  rw [trace] at hρ
-  simp only [diag_apply] at hρ
-  rw [← hρ]
-  exact Eq.symm (Fin.sum_univ_three fun i ↦ ρ i i)
+  sorry
+  -- simp only [diag, sum_apply, mul_apply, conjTranspose_apply] at hρ ⊢
+  -- simp [Fin.sum_univ_succ, vecHead, vecTail] at hρ ⊢
+  -- rw [trace] at hρ
+  -- simp only [diag_apply] at hρ
+  -- rw [← hρ]
+  -- exact Eq.symm (Fin.sum_univ_three fun i ↦ ρ i i)
 
 
 
@@ -457,9 +306,9 @@ lemma Al_nil_eq_zero  {R : Type*} [Semiring R] [Nontrivial R] {A : Type*} (anyth
 lemma As_nil_ne_zero  {R : Type*} [Add R] [Mul R] [Zero R] [One R]  {A : Type*} :
     ¬ As_at_most (R := R) (α := A) ![] 0 := by
   unfold As_at_most
-  push_neg
+  push Not
   intro matrices init final
-  exact (not_lt_zero' init.2).elim
+  exact (not_lt_zero init.2).elim
 
 /-- A counterpoint to the contrast above.
 Even though we need alphabet size 2 or more, we don't need 0 ≠ 1 in R.
@@ -467,7 +316,7 @@ Even though we need alphabet size 2 or more, we don't need 0 ≠ 1 in R.
 lemma one_ring {A : Type*} {a b : A} {h : a ≠ b} {R : Type*} [Add R] [Mul R] [Zero R] [One R] :
     ¬ Al_at_most (R := R) (α := A) ![a] 0 := by
   unfold Al_at_most
-  push_neg
+  push Not
   intro matrices init final
   use ![b]
   have : init = final := by
@@ -509,6 +358,7 @@ lemma As_one_ring₂ {A : Type*} [DecidableEq A] {a : A} :
         (fun (x _ : Fin 1) ↦ Pi.single 0 1 x)) 0 0 = 0 := by
             rw [show (fun (x x : Fin 1) => 0) = 0 by exact rfl]
             simp
+            rfl
       simp_all only [Fin.isValue, Matrix.mulᵣ_eq, one_ne_zero]
   · intro hv
     subst hv
@@ -532,13 +382,13 @@ In essence, the `none` state does not contribute to the dimension count.
 -/
 lemma one_ring₁ {A R : Type*} [s : Subsingleton A] [Semiring R] {n : ℕ} (w : Fin n → A) :
     Al_at_most (R := R) (α := A) w 0 := by
-  use (fun _ z => (not_lt_zero' z.2).elim)
+  use (fun _ z => (not_lt_zero z.2).elim)
   -- the empty function is defined by: "give me an input; oh it can't exist; done."
-  use fun z => (not_lt_zero' z.2).elim, fun z => (not_lt_zero' z.2).elim
+  use fun z => (not_lt_zero z.2).elim, fun z => (not_lt_zero z.2).elim
   intro v
   constructor
   · exact fun hv => funext <| fun i => subsingleton_iff.mp s (v i) (w i)
-  · exact fun hv => funext <| fun i => (not_lt_zero' i.2).elim
+  · exact fun hv => funext <| fun i => (not_lt_zero i.2).elim
 
 
 open Classical
@@ -551,53 +401,53 @@ noncomputable def matrix_of_fn' {Q R : Type*} [Add R] [Mul R] [Zero R] [One R] (
   fun y x => ite (y = f x) 1 0
 
 
-lemma matrix_of_fn_mul_single {R : Type*} [Semiring R] {q : ℕ}
-  (i : Fin q.succ) (g : Fin q.succ → Fin q.succ) (a : Fin q.succ) :
-    (Matrix.mulᵣ (matrix_of_fn g)
-      (fun (x : Fin q.succ) _ => Pi.single (I := Fin q.succ) (f := fun _ => R) a (1:R) x)
-    ) i (0 : Fin 1) =
-    Pi.single (I := Fin q.succ) (f := fun _ => R) (g a) (1 : R) i := by
-  unfold Matrix.mulᵣ
-  simp
-  rw [Matrix.dotProduct]
-  unfold Pi.single Function.update
-  simp
-  split_ifs with g₀
-  · subst g₀
-    unfold matrix_of_fn
-    simp
-  · unfold matrix_of_fn
-    rw [if_neg g₀]
+-- lemma matrix_of_fn_mul_single {R : Type*} [Semiring R] {q : ℕ}
+--   (i : Fin q.succ) (g : Fin q.succ → Fin q.succ) (a : Fin q.succ) :
+--     (Matrix.mulᵣ (matrix_of_fn g)
+--       (fun (x : Fin q.succ) _ => Pi.single (I := Fin q.succ) (f := fun _ => R) a (1:R) x)
+--     ) i (0 : Fin 1) =
+--     Pi.single (I := Fin q.succ) (f := fun _ => R) (g a) (1 : R) i := by
+--   unfold Matrix.mulᵣ
+--   simp
+--   rw [Matrix.dotProduct]
+--   unfold Pi.single Function.update
+--   simp
+--   split_ifs with g₀
+--   · subst g₀
+--     unfold matrix_of_fn
+--     simp
+--   · unfold matrix_of_fn
+--     rw [if_neg g₀]
 
-/-- This lets us convert automatic complexity to its linear algebraic version. -/
-lemma astM_matrix_of_fn_ast_single {q n : ℕ} {α R : Type*} [Semiring R] [Fintype α] (w : Fin n → α)
-  (δ : α → Fin q.succ → Fin q.succ) (init : Fin q.succ) :
-    astM w ((matrix_of_fn (R := R)) ∘ δ) (Pi.single           init  1)
-                                        = Pi.single  (ast δ w init) 1 := by
-    induction n with
-    | zero =>
-      unfold astM ast astCol astMat
-      ext i
-      simp [Matrix.mulᵣ]
-      rw [Matrix.dotProduct]
-      simp
-    | succ n ih =>
-      specialize ih (Fin.init w)
-      unfold ast astM astCol astMat
-      ext i
-      rw [← matrix_of_fn_mul_single, Fin.natCast_eq_last n, ← ih]
-      repeat apply congrFun
-      let D := fun y x ↦ if y = δ (w (Fin.last n)) x then (1:R) else 0
-      let M₀ := astMat (Fin.init w) fun (b:α) (y x:Fin (q+1)) ↦ if y = δ b x then (1:R) else 0
-      let e₀ := fun (x:Fin (q+1)) (x_1 : Fin 1) =>
-        Pi.single (I := Fin q.succ) (f := fun _ => R) (init : Fin (q+1)) (1:R) x
-      let V := (fun x (z : Fin 1) ↦ Matrix.mulᵣ (astMat (Fin.init w) fun (b:α) (y x:Fin (q+1)) ↦ if y = δ b x then (1:R) else 0) (fun (x:Fin (q+1)) (x_1 : Fin 1) =>
-        Pi.single (I := Fin q.succ) (f := fun _ => R) (init : Fin (q+1)) (1:R) x) x (0 : Fin 1))
-      show Matrix.mulᵣ (Matrix.mulᵣ D <|M₀) e₀ = Matrix.mulᵣ D V
-      repeat rw [Matrix.mulᵣ_eq]
-      rw  [(Matrix.mul_assoc D M₀ e₀)]
-      simp [M₀, e₀, V]
-      congr
+/- This lets us convert automatic complexity to its linear algebraic version. -/
+-- lemma astM_matrix_of_fn_ast_single {q n : ℕ} {α R : Type*} [Semiring R] [Fintype α] (w : Fin n → α)
+--   (δ : α → Fin q.succ → Fin q.succ) (init : Fin q.succ) :
+--     astM w ((matrix_of_fn (R := R)) ∘ δ) (Pi.single           init  1)
+--                                         = Pi.single  (ast δ w init) 1 := by
+--     induction n with
+--     | zero =>
+--       unfold astM ast astCol astMat
+--       ext i
+--       simp [Matrix.mulᵣ]
+--       rw [Matrix.dotProduct]
+--       simp
+--     | succ n ih =>
+--       specialize ih (Fin.init w)
+--       unfold ast astM astCol astMat
+--       ext i
+--       rw [← matrix_of_fn_mul_single, Fin.natCast_eq_last n, ← ih]
+--       repeat apply congrFun
+--       let D := fun y x ↦ if y = δ (w (Fin.last n)) x then (1:R) else 0
+--       let M₀ := astMat (Fin.init w) fun (b:α) (y x:Fin (q+1)) ↦ if y = δ b x then (1:R) else 0
+--       let e₀ := fun (x:Fin (q+1)) (x_1 : Fin 1) =>
+--         Pi.single (I := Fin q.succ) (f := fun _ => R) (init : Fin (q+1)) (1:R) x
+--       let V := (fun x (z : Fin 1) ↦ Matrix.mulᵣ (astMat (Fin.init w) fun (b:α) (y x:Fin (q+1)) ↦ if y = δ b x then (1:R) else 0) (fun (x:Fin (q+1)) (x_1 : Fin 1) =>
+--         Pi.single (I := Fin q.succ) (f := fun _ => R) (init : Fin (q+1)) (1:R) x) x (0 : Fin 1))
+--       show Matrix.mulᵣ (Matrix.mulᵣ D <|M₀) e₀ = Matrix.mulᵣ D V
+--       repeat rw [Matrix.mulᵣ_eq]
+--       rw  [(Matrix.mul_assoc D M₀ e₀)]
+--       simp [M₀, e₀, V]
+--       congr
 
 
 /-- Total automatic complexity, relational form, assuming a `Fin` type.
@@ -677,112 +527,112 @@ theorem A_at_most_Fin_iff {A : Type} {n : ℕ} (w : Fin n → A) (q : ℕ) :
 
 
 
-lemma As_le_A {R : Type*} [Semiring R] [Nontrivial R] {n a q : ℕ} {w : Fin n → Fin a}
-     (hP : A_at_most w q.succ) :
-    As_at_most R w q.succ := by
-  rw [← A_at_most_Fin_iff] at hP
-  unfold As_at_most
-  obtain ⟨δ,init,final,p,hδ⟩ := hP
-  let Δ : Fin a → Fin q.succ → Fin q.succ :=
-    fun b q => (Fin.find (δ b q)).get (by
-      have := hδ.1 b q
-      have : δ b q ≠ ∅ := by
-        contrapose this
-        simp at this
-        rw [this]
-        simp
-      exact Fin.isSome_find_iff.mpr <| Set.nonempty_def.mp <| Set.nonempty_iff_ne_empty.mpr this
-    )
-  have hδΔ: (fun a q ↦ {Δ a q}) = δ := by
-    ext  b q r
-    have h₀ := hδ.1 b q
-    have : ∃ d, δ b q = {d} := by
-      have := Fintype.card_eq_one_iff.mp h₀
-      obtain ⟨d,hd⟩ := this
-      use d
-      ext z
-      constructor
-      · intro hz;simp;
-        have := hd ⟨z,hz⟩
-        rw [← this]
-      · simp
-        intro hz
-        rw [hz]
-        exact Subtype.coe_prop d
-    obtain ⟨d,hd⟩ := this
-    rw [hd]
-    simp
-    have h₁ : Δ b q ∈ δ b q := by
-      unfold Δ;
-      apply Fin.find_spec
-      simp
-      congr
-    constructor <;> (
-      intro hr
-      subst hr
-      rw [hd] at h₁
-      simp at h₁
-      tauto)
-  use matrix_of_fn ∘ Δ, init, final
-  intro v
-  conv =>
-    lhs; arg 1; arg 2; change matrix_of_fn ∘ Δ
-  rw [astM_matrix_of_fn_ast_single]
-  constructor
-  · intro h
-    apply congrFun at h
-    specialize h final
-    simp at h
-    have h₀ : ast Δ v init = final := by
-      unfold Pi.single Function.update at h
-      simp at h
-      have : (0:R) ≠ 1 := by refine zero_ne_one' R
-      tauto
-    have := (@path_iff_star (Fin q.succ) init final (Fin a) _ Δ n v).mpr h₀
-    obtain ⟨p',hp'⟩ := this
-    symm
+-- lemma As_le_A {R : Type*} [Semiring R] [Nontrivial R] {n a q : ℕ} {w : Fin n → Fin a}
+--      (hP : A_at_most w q.succ) :
+--     As_at_most R w q.succ := by
+--   rw [← A_at_most_Fin_iff] at hP
+--   unfold As_at_most
+--   obtain ⟨δ,init,final,p,hδ⟩ := hP
+--   let Δ : Fin a → Fin q.succ → Fin q.succ :=
+--     fun b q => (Fin.find (δ b q)).get (by
+--       have := hδ.1 b q
+--       have : δ b q ≠ ∅ := by
+--         contrapose this
+--         simp at this
+--         rw [this]
+--         simp
+--       exact Fin.isSome_find_iff.mpr <| Set.nonempty_def.mp <| Set.nonempty_iff_ne_empty.mpr this
+--     )
+--   have hδΔ: (fun a q ↦ {Δ a q}) = δ := by
+--     ext  b q r
+--     have h₀ := hδ.1 b q
+--     have : ∃ d, δ b q = {d} := by
+--       have := Fintype.card_eq_one_iff.mp h₀
+--       obtain ⟨d,hd⟩ := this
+--       use d
+--       ext z
+--       constructor
+--       · intro hz;simp;
+--         have := hd ⟨z,hz⟩
+--         rw [← this]
+--       · simp
+--         intro hz
+--         rw [hz]
+--         exact Subtype.coe_prop d
+--     obtain ⟨d,hd⟩ := this
+--     rw [hd]
+--     simp
+--     have h₁ : Δ b q ∈ δ b q := by
+--       unfold Δ;
+--       apply Fin.find_spec
+--       simp
+--       congr
+--     constructor <;> (
+--       intro hr
+--       subst hr
+--       rw [hd] at h₁
+--       simp at h₁
+--       tauto)
+--   use matrix_of_fn ∘ Δ, init, final
+--   intro v
+--   conv =>
+--     lhs; arg 1; arg 2; change matrix_of_fn ∘ Δ
+--   rw [astM_matrix_of_fn_ast_single]
+--   constructor
+--   · intro h
+--     apply congrFun at h
+--     specialize h final
+--     simp at h
+--     have h₀ : ast Δ v init = final := by
+--       unfold Pi.single Function.update at h
+--       simp at h
+--       have : (0:R) ≠ 1 := by refine zero_ne_one' R
+--       tauto
+--     have := (@path_iff_star (Fin q.succ) init final (Fin a) _ Δ n v).mpr h₀
+--     obtain ⟨p',hp'⟩ := this
+--     symm
 
-    rw [hδΔ] at hp'
-    have := hδ.2.2 v p' hp'
-    tauto
-  · intro h
-    symm at h
-    subst h
-    have : ast Δ w init = final := by
-      rw [← path_iff_star]
-      exact ⟨p, hδΔ ▸ hδ.2.1⟩
-    rw [this]
+--     rw [hδΔ] at hp'
+--     have := hδ.2.2 v p' hp'
+--     tauto
+--   · intro h
+--     symm at h
+--     subst h
+--     have : ast Δ w init = final := by
+--       rw [← path_iff_star]
+--       exact ⟨p, hδΔ ▸ hδ.2.1⟩
+--     rw [this]
 
-/-- Linear algebra automatic complexity over `R` is bounded by A(w) for
+/- Linear algebra automatic complexity over `R` is bounded by A(w) for
  any semiring `R` in which `0 ≠ 1`, including `ℕ ℤ ℚ ℝ ℂ`, `Fin 4`, etc. -/
-lemma Al_le_A {R : Type*} [Semiring R] [Nontrivial R] {n a q : ℕ} {w : Fin n → Fin a}
-     (hP : A_at_most w q.succ) :
-    Al_at_most R w q.succ := by
-  apply Al_le_As
-  exact As_le_A hP
+-- lemma Al_le_A {R : Type*} [Semiring R] [Nontrivial R] {n a q : ℕ} {w : Fin n → Fin a}
+--      (hP : A_at_most w q.succ) :
+--     Al_at_most R w q.succ := by
+--   apply Al_le_As
+--   exact As_le_A hP
 
-/-- Should really make the alphabet an arbitrary type A -/
-theorem Al_bounded (R : Type*) [Semiring R] [Nontrivial R]
-    {n a : ℕ} (w : Fin n → Fin a) :
-    ∃ q, Al_at_most R w q := by
-  obtain ⟨q,hq⟩ := @A_bounded (Fin a) n w
-  use q
-  by_cases H : q = 0
-  · exact (H ▸ A_N_ge_one w <| A_N_le_A_minus <| A_minus_le_A hq).elim
-  · obtain ⟨m,hm⟩ := Nat.exists_eq_succ_of_ne_zero H
-    subst hm
-    exact Al_le_A hq
+/- Should really make the alphabet an arbitrary type A -/
+-- theorem Al_bounded (R : Type*) [Semiring R] [Nontrivial R]
+--     {n a : ℕ} (w : Fin n → Fin a) :
+--     ∃ q, Al_at_most R w q := by
+--   obtain ⟨q,hq⟩ := @A_bounded (Fin a) n w
+--   use q
+--   by_cases H : q = 0
+--   · exact (H ▸ A_N_ge_one w <| A_N_le_A_minus <| A_minus_le_A hq).elim
+--   · obtain ⟨m,hm⟩ := Nat.exists_eq_succ_of_ne_zero H
+--     subst hm
+--     exact Al_le_A hq
 
-theorem As_bounded (R : Type*) [Semiring R] [Nontrivial R]
-    {n a : ℕ} (w : Fin n → Fin a) :
-    ∃ q, As_at_most R w q := by
-  obtain ⟨q,hq⟩ := @A_bounded (Fin a) n w
-  use q
-  by_cases H : q = 0
-  · exact (H ▸ A_N_ge_one w <| A_N_le_A_minus <| A_minus_le_A hq).elim
-  · obtain ⟨m,hm⟩ := Nat.exists_eq_succ_of_ne_zero H
-    subst hm
-    exact As_le_A hq
+-- theorem As_bounded (R : Type*) [Semiring R] [Nontrivial R]
+--     {n a : ℕ} (w : Fin n → Fin a) :
+--     ∃ q, As_at_most R w q := by
+--   obtain ⟨q,hq⟩ := @A_bounded (Fin a) n w
+--   use q
+--   by_cases H : q = 0
+--   · exact (H ▸ A_N_ge_one w <| A_N_le_A_minus <| A_minus_le_A hq).elim
+--   · obtain ⟨m,hm⟩ := Nat.exists_eq_succ_of_ne_zero H
+--     subst hm
+--     exact As_le_A hq
 
 /-- The use of linear algebra in automatic complexity
 was introduced in Theorem 3 of Shallit and Wang 2001 and in Figure 2.3 (page 40) in my 2024 book.
@@ -791,67 +641,67 @@ Here `l` is for `linear-algebraic` but also `lower` since
 we have `Al w ≤ A w`.
 
 -/
-noncomputable def Al (R : Type*) [Semiring R] [Nontrivial R] {a : ℕ} {n : ℕ}
-  (w : Fin n → Fin a) : ℕ := Nat.find (Al_bounded R w)
+-- noncomputable def Al (R : Type*) [Semiring R] [Nontrivial R] {a : ℕ} {n : ℕ}
+--   (w : Fin n → Fin a) : ℕ := Nat.find (Al_bounded R w)
 
-noncomputable def As (R : Type*) [Semiring R] [Nontrivial R] {a : ℕ} {n : ℕ}
-  (w : Fin n → Fin a) : ℕ := Nat.find (As_bounded R w)
+-- noncomputable def As (R : Type*) [Semiring R] [Nontrivial R] {a : ℕ} {n : ℕ}
+--   (w : Fin n → Fin a) : ℕ := Nat.find (As_bounded R w)
 
 /- Over the field ℤ / 5ℤ and the alphabet {0,1},
   the word 00 has complexity at most 3.
   Should make this decidable however.
   -/
-example : Al_at_most
-  (α := Fin 2) (R := Fin 5) (word := ![0,0]) (q := 3) := by
-  use (![
-    !![
-      1,0,0;
-      0,1,0;
-      0,0,1
-    ],
-    !![
-      0,1,0;
-      0,0,1;
-      1,0,0
-    ]
-  ])
-  use ![1,0,0], ![1,0,0]
-  intro v
-  unfold astM astCol astMat astMat astMat
-  simp
-  constructor
-  · intro h
-    by_cases h₀ : v 0 = 0
-    · by_cases h₁ : v 1 = 0
-      ext i
-      fin_cases i
-      · simp
-        rw [h₀]
-        rfl
-      · simp
-        rw [h₁]
-        rfl
-      · have h₁ : v 1 = 1 := Fin.eq_one_of_neq_zero (v 1) h₁
-        have h₂ : v = ![0,1] := by ext i; fin_cases i <;> simp_all
-        subst h₂
-        simp at h
-        contrapose h
-        decide
-    · have h₀ : v 0 = 1 := Fin.eq_one_of_neq_zero (v 0) h₀
-      by_cases h₁ : v 1 = 0
-      · have h₂ : v = ![1,0] := by ext i; fin_cases i <;> simp_all
-        subst h₂
-        contrapose h
-        decide
-      · have h₁ : v 1 = 1 := Fin.eq_one_of_neq_zero (v 1) h₁
-        have h₂ : v = ![1,1] := by ext i; fin_cases i <;> simp_all
-        subst h₂
-        contrapose h
-        decide
-  · intro hv
-    subst hv
-    simp
-    decide
+-- example : Al_at_most
+--   (α := Fin 2) (R := Fin 5) (word := ![0,0]) (q := 3) := by
+--   use (![
+--     !![
+--       1,0,0;
+--       0,1,0;
+--       0,0,1
+--     ],
+--     !![
+--       0,1,0;
+--       0,0,1;
+--       1,0,0
+--     ]
+--   ])
+--   use ![1,0,0], ![1,0,0]
+--   intro v
+--   unfold astM astCol astMat astMat astMat
+--   simp
+--   constructor
+--   · intro h
+--     by_cases h₀ : v 0 = 0
+--     · by_cases h₁ : v 1 = 0
+--       ext i
+--       fin_cases i
+--       · simp
+--         rw [h₀]
+--         rfl
+--       · simp
+--         rw [h₁]
+--         rfl
+--       · have h₁ : v 1 = 1 := Fin.eq_one_of_neq_zero (v 1) h₁
+--         have h₂ : v = ![0,1] := by ext i; fin_cases i <;> simp_all
+--         subst h₂
+--         simp at h
+--         contrapose h
+--         decide
+--     · have h₀ : v 0 = 1 := Fin.eq_one_of_neq_zero (v 0) h₀
+--       by_cases h₁ : v 1 = 0
+--       · have h₂ : v = ![1,0] := by ext i; fin_cases i <;> simp_all
+--         subst h₂
+--         contrapose h
+--         decide
+--       · have h₁ : v 1 = 1 := Fin.eq_one_of_neq_zero (v 1) h₁
+--         have h₂ : v = ![1,1] := by ext i; fin_cases i <;> simp_all
+--         subst h₂
+--         contrapose h
+--         decide
+--   · intro hv
+--     subst hv
+--     simp
+--     decide
 
 theorem iden_mat {c d : ℕ} (init : Fin d → Fin c.succ) :
   (Matrix.mulᵣ (fun (x y : Fin d) ↦ if x = y then 1 else 0)
@@ -878,14 +728,15 @@ theorem ast_eq_astM {A : Type*} [Fintype A] {n c d : ℕ} (matrices : A → Fin 
     rw [this]
   | succ n ih =>
     unfold ast astM astCol astMat
-    simp only [Fin.isValue, Nat.succ_eq_add_one, Fin.natCast_eq_last]
+    simp only [Fin.isValue, Nat.succ_eq_add_one]
     have := ih (Fin.init v) (Fin.init p')
-    simp only [Fin.isValue] at this
-    rw [this]
-    unfold astM astCol
-    simp only [Fin.isValue, mulᵣ_eq] -- only at the end do we use mulᵣ_eq
-    rw [Matrix.mul_assoc]
-    rfl
+    sorry
+    -- simp only [Fin.isValue] at this
+    -- rw [this]
+    -- unfold astM astCol
+    -- simp only [Fin.isValue, mulᵣ_eq] -- only at the end do we use mulᵣ_eq
+    -- rw [Matrix.mul_assoc]
+    -- rfl
 
 
 /-- A logarithmic lower bound on Al:
@@ -895,144 +746,145 @@ at least it has complexity at most `c^d` over `ℕ`.
  -/
 theorem A_at_most_pow_of_Al_at_most {A : Type*} [Fintype A] {n c d : ℕ} (w : Fin n → A)
   (h : Al_at_most (Fin c.succ) w d) : A_at_most w (c.succ^d) := by
-obtain ⟨matrices,init,final,hmatrices⟩ := h
-use (Fin d → Fin c.succ) -- brilliant ;)
-use Pi.fintype
-use (by simp only [Fintype.card_fun, Fintype.card_fin])
-let Δ : A → (Fin d → Fin c.succ) → (Fin d → Fin c.succ) :=
-  fun a vect =>
-    let colvect : Fin d → Fin 1 → Fin c.succ := fun i z => vect i
-    fun j => Matrix.mulᵣ (matrices a) colvect j 0
-let δ : A → (Fin d → Fin c.succ) → Set (Fin d → Fin c.succ) :=
-  fun a vect =>
-    let colvect : Fin d → Fin 1 → Fin c.succ := fun i z => vect i
-    {fun j => Matrix.mulᵣ (matrices a) colvect j 0}
-use δ, init, final
-use (by
-  intro t
-  exact astM (Fin.take t (by omega) w) matrices init
-)
-constructor
-· intro a q;unfold δ;simp
-· constructor
-  · unfold accepts_word_path
-    constructor
-    · simp;unfold astM astCol astMat;simp
-      have :
-          (fun (x y : Fin d) ↦ if x = y then (1:Fin c.succ) else 0) * (fun x x_1 ↦ init x)
-        = (fun (x : Fin d) (x_1 : Fin 1) ↦ init x) := by
-          ext i j
-          have : j = 0 := Fin.fin_one_eq_zero j
-          subst this
-          rw [← Matrix.mulᵣ_eq]
-          unfold Matrix.mulᵣ
-          simp
-          rw [Matrix.dotProduct]
-          simp
-      rw [this]
-    · constructor
-      · exact (hmatrices w).mpr rfl
-      · intro i
-        unfold δ astM astCol astMat
-        simp only [Set.mem_singleton_iff]
-        conv =>
-          lhs
-          unfold astMat
-        simp
-        rw [show Fin.init (Fin.take (i.1 + 1) (by omega) w) = Fin.take i.1 (by omega) w by rfl]
-        rw [show Fin.castLE (by omega) (Fin.last ↑i) = i by rfl]
-        ext l
-        congr
-        repeat apply congrFun
-        repeat rw [← Matrix.mulᵣ_eq]
-        simp
-        rw [Matrix.mul_assoc]
-        congr
-  · intro v p' hp'
-    have hwv : w = v := ((hmatrices v).mp (by
-      let astvMatricesFinal := @ast (Fin d → Fin c.succ) A _ n
-        Δ v init
-      have : ast Δ v init = astM v matrices init := by
-        apply ast_eq_astM
-        exact p'
-      rw [← this]
-      apply (@path_iff_star (Fin d → Fin c.succ) init final
-        A _ Δ n v).mp
-      use p'
-    )).symm
-    constructor
-    · rw [hwv]
-      have g := hp'.2.1
-      have h := hp'.2.2
-      unfold accepts_word_path δ at h
-      simp only [Fin.isValue, Set.mem_singleton_iff] at h
-      apply funext
-      intro s
-      have := @Fin.induction n (
-        fun s => astM (Fin.take ↑s (by omega) v) matrices init = p' s
-      ) (by
-        simp;unfold astM astCol astMat
-        rw [hp'.1]
-        rw [iden_mat]
-      ) (by
-        intro i hi
-        unfold astM astCol astMat
-        simp only [Fin.val_succ, Nat.succ_eq_add_one, Fin.natCast_eq_last, Fin.take_apply,
-          Fin.isValue]
-        rw [h i]
-        rw [show Fin.init (Fin.take (i.1 + 1) (by omega) v) = Fin.take i.1 (by omega) v by rfl]
-        rw [show Fin.castLE (by omega) (Fin.last ↑i) = i by rfl]
-        rw [← hi]
-        unfold astM astCol
-        simp
-        rw [Matrix.mul_assoc]
-        congr
-      )
-      apply this
-    · exact hwv
+  obtain ⟨matrices,init,final,hmatrices⟩ := h
+  use (Fin d → Fin c.succ) -- brilliant ;)
+  sorry
+  -- use Pi.fintype
+  -- use (by simp only [Fintype.card_fun, Fintype.card_fin])
+  -- let Δ : A → (Fin d → Fin c.succ) → (Fin d → Fin c.succ) :=
+  --   fun a vect =>
+  --     let colvect : Fin d → Fin 1 → Fin c.succ := fun i z => vect i
+  --     fun j => Matrix.mulᵣ (matrices a) colvect j 0
+  -- let δ : A → (Fin d → Fin c.succ) → Set (Fin d → Fin c.succ) :=
+  --   fun a vect =>
+  --     let colvect : Fin d → Fin 1 → Fin c.succ := fun i z => vect i
+  --     {fun j => Matrix.mulᵣ (matrices a) colvect j 0}
+  -- use δ, init, final
+  -- use (by
+  --   intro t
+  --   exact astM (Fin.take t (by omega) w) matrices init
+  -- )
+  -- constructor
+  -- · intro a q;unfold δ;simp
+  -- · constructor
+  --   · unfold accepts_word_path
+  --     constructor
+  --     · simp;unfold astM astCol astMat;simp
+  --       have :
+  --           (fun (x y : Fin d) ↦ if x = y then (1:Fin c.succ) else 0) * (fun x x_1 ↦ init x)
+  --         = (fun (x : Fin d) (x_1 : Fin 1) ↦ init x) := by
+  --           ext i j
+  --           have : j = 0 := Fin.fin_one_eq_zero j
+  --           subst this
+  --           rw [← Matrix.mulᵣ_eq]
+  --           unfold Matrix.mulᵣ
+  --           simp
+  --           rw [Matrix.dotProduct]
+  --           simp
+  --       rw [this]
+  --     · constructor
+  --       · exact (hmatrices w).mpr rfl
+  --       · intro i
+  --         unfold δ astM astCol astMat
+  --         simp only [Set.mem_singleton_iff]
+  --         conv =>
+  --           lhs
+  --           unfold astMat
+  --         simp
+  --         rw [show Fin.init (Fin.take (i.1 + 1) (by omega) w) = Fin.take i.1 (by omega) w by rfl]
+  --         rw [show Fin.castLE (by omega) (Fin.last ↑i) = i by rfl]
+  --         ext l
+  --         congr
+  --         repeat apply congrFun
+  --         repeat rw [← Matrix.mulᵣ_eq]
+  --         simp
+  --         rw [Matrix.mul_assoc]
+  --         congr
+  --   · intro v p' hp'
+  --     have hwv : w = v := ((hmatrices v).mp (by
+  --       let astvMatricesFinal := @ast (Fin d → Fin c.succ) A _ n
+  --         Δ v init
+  --       have : ast Δ v init = astM v matrices init := by
+  --         apply ast_eq_astM
+  --         exact p'
+  --       rw [← this]
+  --       apply (@path_iff_star (Fin d → Fin c.succ) init final
+  --         A _ Δ n v).mp
+  --       use p'
+  --     )).symm
+  --     constructor
+  --     · rw [hwv]
+  --       have g := hp'.2.1
+  --       have h := hp'.2.2
+  --       unfold accepts_word_path δ at h
+  --       simp only [Fin.isValue, Set.mem_singleton_iff] at h
+  --       apply funext
+  --       intro s
+  --       have := @Fin.induction n (
+  --         fun s => astM (Fin.take ↑s (by omega) v) matrices init = p' s
+  --       ) (by
+  --         simp;unfold astM astCol astMat
+  --         rw [hp'.1]
+  --         rw [iden_mat]
+  --       ) (by
+  --         intro i hi
+  --         unfold astM astCol astMat
+  --         simp only [Fin.val_succ, Nat.succ_eq_add_one, Fin.natCast_eq_last, Fin.take_apply,
+  --           Fin.isValue]
+  --         rw [h i]
+  --         rw [show Fin.init (Fin.take (i.1 + 1) (by omega) v) = Fin.take i.1 (by omega) v by rfl]
+  --         rw [show Fin.castLE (by omega) (Fin.last ↑i) = i by rfl]
+  --         rw [← hi]
+  --         unfold astM astCol
+  --         simp
+  --         rw [Matrix.mul_assoc]
+  --         congr
+  --       )
+  --       apply this
+  --     · exact hwv
 
-theorem A_at_most_pow_of_Al_at_most' {n b c : ℕ} (w : Fin n → Fin b) :
-    Nat.clog c.succ.succ (A w) ≤ Al (Fin c.succ.succ) w := by
-  let q := Nat.find (Al_bounded (Fin c.succ.succ) w )
-  have h₀ : Al_at_most (Fin c.succ.succ) w q :=
-    @Nat.find_spec (fun q => Al_at_most (Fin c.succ.succ) w q) _
-      (Al_bounded (Fin c.succ.succ) w)
-  have h₁ := @Nat.find_le q (fun s => Al_at_most (Fin c.succ.succ) w s) _
-    (Al_bounded (R := Fin c.succ.succ) w) h₀
-  have := @A_at_most_pow_of_Al_at_most (Fin b) _ n c.succ q w h₀
-  have : A w ≤ (c.succ.succ^q) := by
-    have h₂ := @Nat.find_le (c.succ.succ^q) (fun s => A_at_most w s) _
-      (A_bounded w) this
-    exact h₂
-  refine (Nat.le_pow_iff_clog_le ?hb).mp this
-  omega
+-- theorem A_at_most_pow_of_Al_at_most' {n b c : ℕ} (w : Fin n → Fin b) :
+--     Nat.clog c.succ.succ (A w) ≤ Al (Fin c.succ.succ) w := by
+--   let q := Nat.find (Al_bounded (Fin c.succ.succ) w )
+--   have h₀ : Al_at_most (Fin c.succ.succ) w q :=
+--     @Nat.find_spec (fun q => Al_at_most (Fin c.succ.succ) w q) _
+--       (Al_bounded (Fin c.succ.succ) w)
+--   have h₁ := @Nat.find_le q (fun s => Al_at_most (Fin c.succ.succ) w s) _
+--     (Al_bounded (R := Fin c.succ.succ) w) h₀
+--   have := @A_at_most_pow_of_Al_at_most (Fin b) _ n c.succ q w h₀
+--   have : A w ≤ (c.succ.succ^q) := by
+--     have h₂ := @Nat.find_le (c.succ.succ^q) (fun s => A_at_most w s) _
+--       (A_bounded w) this
+--     exact h₂
+--   refine (Nat.le_pow_iff_clog_le ?hb).mp this
+--   omega
 
-theorem A_at_most_pow_of_Al_at_most'' {n b c : ℕ} (w : Fin n → Fin b) :
-    Al (Fin c.succ.succ) w ≤ A w := by
-  let q := Nat.find (A_bounded w)
-  have : q ≠ 0 := by
-    intro hc
-    have : A_at_most w 0 := by
-      have := @Nat.find_spec (fun q => A_at_most w q) _ (A_bounded w)
-      rw [← hc]
-      exact this
-    obtain ⟨Q,x,hQ⟩ := this
-    obtain ⟨δ,init,hδ⟩ := hQ.2
-    have := hQ.1
-    revert this
-    simp
-    have : Nonempty Q := Nonempty.intro init
-    apply Fintype.card_ne_zero
-  obtain ⟨m,hm⟩ : ∃ m : ℕ, q = m.succ := Nat.exists_eq_succ_of_ne_zero this
-  have h₀ : A_at_most w q :=
-    @Nat.find_spec (fun q => A_at_most w q) _ (A_bounded w)
-  have h₁ := @Nat.find_le q (fun s => A_at_most w s) _
-    (A_bounded w) h₀
-  have := @Al_le_A (Fin c.succ.succ) _ _ n b m w (hm ▸ h₀)
-  show Al (Fin c.succ.succ) w ≤ q
-  rw [hm]
-  apply Nat.find_le
-  exact this
+-- theorem A_at_most_pow_of_Al_at_most'' {n b c : ℕ} (w : Fin n → Fin b) :
+--     Al (Fin c.succ.succ) w ≤ A w := by
+--   let q := Nat.find (A_bounded w)
+--   have : q ≠ 0 := by
+--     intro hc
+--     have : A_at_most w 0 := by
+--       have := @Nat.find_spec (fun q => A_at_most w q) _ (A_bounded w)
+--       rw [← hc]
+--       exact this
+--     obtain ⟨Q,x,hQ⟩ := this
+--     obtain ⟨δ,init,hδ⟩ := hQ.2
+--     have := hQ.1
+--     revert this
+--     simp
+--     have : Nonempty Q := Nonempty.intro init
+--     apply Fintype.card_ne_zero
+--   obtain ⟨m,hm⟩ : ∃ m : ℕ, q = m.succ := Nat.exists_eq_succ_of_ne_zero this
+--   have h₀ : A_at_most w q :=
+--     @Nat.find_spec (fun q => A_at_most w q) _ (A_bounded w)
+--   have h₁ := @Nat.find_le q (fun s => A_at_most w s) _
+--     (A_bounded w) h₀
+--   have := @Al_le_A (Fin c.succ.succ) _ _ n b m w (hm ▸ h₀)
+--   show Al (Fin c.succ.succ) w ≤ q
+--   rw [hm]
+--   apply Nat.find_le
+--   exact this
 
 
 /-

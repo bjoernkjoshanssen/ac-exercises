@@ -1,4 +1,5 @@
-import Mathlib.Data.Set.Finite
+module
+public import Mathlib.Data.Finset.Card
 
 -- Solution to Exercise 7.2.
 
@@ -50,3 +51,4 @@ width (x++y) ≤ width x + width y := by
   exact Finset.card_union_le _ _
 
 #eval width  ([0,1,1,1,0]: List (Fin 5))
+#min_imports

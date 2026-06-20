@@ -75,7 +75,7 @@ theorem E_N_List_nil {b:ℕ} : E_N_bounded_by (List.nil : List (Fin b)) 0 :=
      /- No duplicate edges -/
     exists walk_labeled_digraph.nil   /- Uniqueness -/
     intros y hy w'
-    have : y = List.nil := List.length_eq_zero.mp hy
+    have : y = List.nil := List.eq_nil_iff_length_eq_zero.mpr hy
     subst this
     cases w'
     rfl
@@ -120,7 +120,6 @@ theorem prod_eq_zero {b:ℕ} : -- by tidy
       tauto
       intro h
       rw [h]
-      simp
 
 theorem E_N_one {b:ℕ} : E_N_bounded_by ([0] : List (Fin b.succ)) 1 := by
     exists 1, 0, 0, {edge:= (λ x ↦ x.2.2=0)}

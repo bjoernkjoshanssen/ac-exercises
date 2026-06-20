@@ -16,7 +16,7 @@ theorem SW_15_induction (x:ℝ) (k:ℕ) (h0: 0 ≤ x) (h1: x ≤ 1):
             _ = 1-0 := by ring)
     have hkk:(1-x)≤ 1 := by simp;exact h0
     have hn: (1-x)^n ≤ 1 := calc
-      (1-x)^n ≤ 1^n := pow_le_pow_left H hkk n
+      (1-x)^n ≤ 1^n := pow_le_pow_left₀ H hkk n
       _ = 1   := one_pow n
     have hm: -(1*x) ≤ (-(1-x)^n)*x := calc
       -(1*x) ≤ -((1-x)^n*x) := neg_le_neg (mul_le_mul_of_nonneg_right hn h0)

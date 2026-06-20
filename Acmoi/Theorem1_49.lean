@@ -1,6 +1,7 @@
 import Mathlib.NumberTheory.Padics.PadicNumbers
 import Acmoi.HydePrelim
-import Mathlib.Data.Set.Finite
+-- import Mathlib.Data.Set.Finite
+import Mathlib
 /-!
 
   # Theorem 1.49 in ACMOI
@@ -42,7 +43,7 @@ theorem deadRingδ₂ {A : Type} {m n : ℕ} (v : Fin m → A) (w : Fin n → A)
   (ht : p t = Fin.last n) (s : Fin (m+1)) (hs : t.1 ≤ s.1) :
     p s = Fin.last n := by
   have := @Fin.induction m (fun k => t.1 ≤ k.1 → p k = Fin.last n) (by
-    simp;intro hh;rw [← ht];congr;symm;exact Fin.eq_of_val_eq hh
+    simp;intro hh;rw [← ht];congr;symm;exact hh
   ) (by
   simp
   intro i h₀ h₁
@@ -264,7 +265,7 @@ theorem ringδ_unique_word' {A : Type} {n : ℕ}
   subst hm
   ext t
   have := @Fin.induction m (fun k => w k = v k) (by
-    simp
+    -- simp
     unfold accepts_word_path ringδ' at h
     have := h.2.2 0
     simp at this
@@ -274,7 +275,7 @@ theorem ringδ_unique_word' {A : Type} {n : ℕ}
     have hlt : 1 % (m+1) < m+1 := mod_lt 1 <| by omega
     have : 1 % (m+1) = m+1 := Fin.mk.inj_iff.mp this
     omega) (by
-      simp
+      -- simp
       intro i hi
       unfold accepts_word_path ringδ' at h
       simp at h
@@ -564,7 +565,7 @@ theorem A_bound₀'extend {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin n → A)
       · constructor
         · rfl
         · constructor
-          · simp
+          · simp; rfl
           · intro i
             unfold extend
             simp

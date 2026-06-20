@@ -35,7 +35,7 @@ theorem walk_mod_a0' (a : Fin 2 → ℕ) {f:ℕ → ℕ}(c : cursiveFun a f)(t: 
     rw [c.init]
     rfl
   | succ n ih =>
-    have hfn : f n = n % (a 0) := ih (fun s hsn ↦ hs s (Nat.le_step hsn))
+    have hfn : f n = n % (a 0) := ih (fun s hsn ↦ hs s (Nat.le_succ_of_le hsn))
     by_cases hna : (n % (a 0) = 0)
     · rw [hna] at hfn
       have g := c.branch n hfn
@@ -86,7 +86,7 @@ theorem keep_arriving' (a : Fin 2 → ℕ) (p : Fin 2 → ℕ) :
 
 -- This one should be "public" in order to reduce use of moveOne:
 theorem keep_arriving (a : Fin 2 → ℕ) (p : Fin 2 → ℕ) :
-    cwalk a (p 0) (Matrix.dotProduct a p).succ = a 0 := by
+    cwalk a (p 0) (dotProduct a p).succ = a 0 := by
   rw [moveOne]
   exact keep_arriving' _ _
 
@@ -137,14 +137,17 @@ theorem before_nexus {a : PF 2}  {t₀ : ℕ} {f : ℕ → ℕ} (c : cursiveFun 
       · cases c.branch n h with
         | inl h₀ => exact h₀ ▸ Nat.mod_lt _ (a.pos 0)
         | inr h₀ => exact (ht₀ n.succ (le_refl _) h₀).elim
-      · specialize ih (fun _ hsn => ht₀ _ (Nat.le_step hsn)) n (le_refl _)
+      · specialize ih (fun _ hsn => ht₀ _ (Nat.le_succ_of_le hsn)) n (le_refl _)
         have : f n % a.val 0 ≠ 0 := by
           contrapose h
-          simp only [Decidable.not_not] at h ⊢
-          exact zero_of_mod (Nat.one_le_iff_ne_zero.mpr (Nat.not_eq_zero_of_lt (a.pos 0))) h ih
+          apply zero_of_mod
+          show 1 ≤ a.val 0
+          omega
+          tauto
+          tauto
         rw [c.loop₁ (f n) n this (Nat.mod_eq_of_lt ih).symm]
         exact Nat.mod_lt _ ((a.pos 0))
-    | step h₀ => exact ih (fun h hsn => ht₀ h (Nat.le_step hsn)) s h₀
+    | step h₀ => exact ih (fun h hsn => ht₀ h (Nat.le_succ_of_le hsn)) s h₀
 
 
 structure CursiveWalkInstance (c: PNat) where
@@ -204,8 +207,9 @@ theorem walkInjective (a : PF 2) {k₁ k₂ : ℕ} (hk : k₁ < k₂) : cwalk a.
   simp [cwalk] at hc
   rw [if_neg this] at hc
   have h := Nat.mod_lt (a.val 0 * k₁).succ (a.pos 0)
+  simp at h
   rw [← hc] at h
-  omega
+  simp at h
 
 
 theorem unique_walk_cursive_helper' {a : PF 2} {w : ℕ → ℕ} {k : ℕ}
@@ -218,7 +222,7 @@ theorem unique_walk_cursive_helper' {a : PF 2} {w : ℕ → ℕ} {k : ℕ}
     intro; rw [hw.1]; exact a.pos 0
   | succ n ih =>
     have hw := hw.2
-    simp [curs_walks, CursiveNFA, cursive_step', walk_in_NFA] at hw
+    simp [CursiveNFA, cursive_step'] at hw
     specialize hw n
     intro hn
     by_cases h : n < (a.val 0*k).succ
@@ -315,7 +319,7 @@ theorem ne_of_le' (a : PF 2) {w : ℕ → ℕ} {t₀:ℕ} (hw: curs_walks a.val 
   | zero =>
     intro hc
     have gg := hw.1
-    simp at gg
+    simp [CursiveNFA] at gg
     rw [gg] at hc
     have ha₀pos := a.pos 0
     rw [← hc] at ha₀pos
@@ -323,7 +327,7 @@ theorem ne_of_le' (a : PF 2) {w : ℕ → ℕ} {t₀:ℕ} (hw: curs_walks a.val 
   | succ n =>
     intro hc
     have g := ht₀.2 n (hc)
-    have : n < n := Nat.succ_le.mp (le_trans hs g)
+    have : n < n := Nat.succ_le_iff.mp (le_trans hs g)
     exact LT.lt.false this
 
 
@@ -441,10 +445,14 @@ theorem l_unique' (a : PF 2) {k l₁ l₂ : ℕ} (he: a.val 0*k + 1 + a.val 1*l�
     l₁ = l₂ := Nat.eq_of_mul_eq_mul_left (a.pos 1) (Nat.add_left_cancel he)
 
 theorem l_unique (a : PF 2) (k l₁ l₂ : ℕ)
-    (he: Matrix.dotProduct a.val (fun i ↦ [k,l₁].get i)
-       = Matrix.dotProduct a.val (fun i ↦ [k,l₂].get i)) : l₁=l₂ :=  by
-  simp [Matrix.dotProduct] at he
+    (he: dotProduct a.val (fun i ↦ [k,l₁].get i)
+       = dotProduct a.val (fun i ↦ [k,l₂].get i)) : l₁=l₂ :=  by
+  simp [dotProduct] at he
   have := a.pos 1
+  have h₀ (i : Fin 2 → ℕ) : ∑ x : Fin 2, i x = i 0 + i 1 :=
+    Eq.symm (Nat.add_zero ((i 0).add (i 1)))
+  repeat rw [h₀] at he
+  simp at he
   omega
 
 def getl' (a : PF 2) {k n:ℕ} (hmod₀: cwalk a.val k n = a.val 0) :
@@ -470,7 +478,7 @@ def getl' (a : PF 2) {k n:ℕ} (hmod₀: cwalk a.val k n = a.val 0) :
   exact ⟨l,this⟩
 
 def getl (a : PF 2) {k n:ℕ} (hmod₀: cwalk a.val k n = a.val 0) :
-    {l : ℕ // n = Nat.succ (Matrix.dotProduct a.val (fun i ↦ [k,l].get i))} := by
+    {l : ℕ // n = Nat.succ (dotProduct a.val (fun i ↦ [k,l].get i))} := by
   have ⟨l,lproof⟩ := getl' a hmod₀
   exists l
   rw [lproof,moveOne]
@@ -542,8 +550,9 @@ theorem walk_walks' (a : PF 2) (k:ℕ) : curs_walks a.val (cwalk a.val k) := by
           rw [if_pos (Nat.mod_lt _ (a.pos 0))]
           rfl
 
-theorem walk__injective' (a : PF 2) (k₁ k₂ : ℕ) (he : cwalk a.val k₁ = cwalk a.val k₂) : k₁ = k₂ := by
-  contrapose he
-  cases Ne.lt_or_lt he with
+theorem walk_injective' (a : PF 2) (k₁ k₂ : ℕ) (he : cwalk a.val k₁ = cwalk a.val k₂) : k₁ = k₂ := by
+  contrapose! he
+  have : k₁ < k₂ ∨ k₁ > k₂ := by omega
+  cases this with
   | inl h => exact walkInjective a h
   | inr h => exact (walkInjective a h).symm

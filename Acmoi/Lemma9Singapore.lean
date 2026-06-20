@@ -1,6 +1,7 @@
 import Acmoi.HydePrelim
 import Mathlib.Data.Fintype.Option
-import Mathlib.Data.Set.Finite
+-- import Mathlib.Data.Set.Finite
+import Mathlib
 /-!
 
   # Lemma 9 in NUS paper 2025
@@ -95,7 +96,7 @@ theorem A_minus_bound₀'extendMod {A : Type} {n : ℕ} (hn : n ≠ 0) (w : Fin 
       · constructor
         · rfl
         · constructor
-          · simp
+          · simp; rfl
           · intro i
             unfold extendMod
             simp
@@ -215,8 +216,8 @@ lemma complet_preserves_unique_path' {A Q : Type} {δ : A → Q → Set Q} {n : 
     have h₀ : ∀ j, j₀.1 ≤ j.1 → op' j = none :=
       @Fin.induction n (fun j => j₀.1 ≤ j.1 → op' j = none) (by
         simp
-        intro h;have : j₀ = 0 := Eq.symm (Fin.eq_of_val_eq (id (Eq.symm h)))
-        rw [this] at hj₀
+        intro h
+        rw [h] at hj₀
         exact hj₀
       ) (by
         intro i;simp;intro ih hi
@@ -235,7 +236,7 @@ lemma complet_preserves_unique_path' {A Q : Type} {δ : A → Q → Set Q} {n : 
     -- dead lemma
     have := h.2.1
     simp_all
-  push_neg at H
+  push Not at H
   let f (j : Fin (n+1)) : Q :=
     (op' j).get (isSome_iff_ne_none.mpr (H j))
   have h₀ : op' = fun j => some (f j) := by ext; simp [f]
