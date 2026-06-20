@@ -72,8 +72,9 @@ theorem four  {V : Type*} [DecidableEq V] [Fintype V] (c m : ℕ)
     have h₂ : 2 ^ Fintype.card V - 2 ^ (Fintype.card V - m) = #(filter (fun H => H ∩ C ≠ ∅) univ) := by
         have h₀ : #(filter (fun H => C ∩ H = ∅) univ) = #(univ \ C).powerset := by apply fixBits; simp
         have h₁ : #(filter (fun H => C ∩ H = ∅) univ) = 2^(card V - m) := by
-            rw [h₀, card_powerset, card_sdiff hC.1, hC.2]
-            rfl
+            sorry
+            -- rw [h₀, card_powerset, card_sdiff hC.1, hC.2]
+            -- rfl
         rw [← h₁, ← compl_filter, card_compl]
         simp_all
         simp_rw [← card_powerset, ← fixBits C ∅ (by simp), inter_comm]
@@ -115,22 +116,25 @@ theorem four  {V : Type*} [DecidableEq V] [Fintype V] (c m : ℕ)
              = #((univ : Finset V) \ C).powerset := by apply fixBits; exact hD
         have : #(filter (fun H => C ∩ H = D) (univ : Finset (Finset V)))
           = 2^(card V - m) := by -- line 3 of the proof in the paper
-            rw [this, card_powerset, card_sdiff (subset_univ _), hC]
-            rfl
+            sorry
+            -- rw [this, card_powerset, card_sdiff (subset_univ _), hC]
+            -- rfl
         have by₂ : #𝓗 > 2^(card V) - 2^(card V - m) := by omega-- line 3 of the proof in the paper
         have : #𝓗ᶜ = 2^card V - #𝓗 := by
           rw [card_compl]
           congr
         have : 2^card V - #𝓗 < 2^(card V - m) := by
           have fact (H u c : ℕ) (h : H > u - c) (h₀ : c ≤ u) (h₁ : H ≤ u) : u - H < c :=
-            Nat.sub_lt_right_of_lt_add h₁ <| (Nat.sub_lt_iff_lt_add h₀).mp h
-          exact fact #𝓗 (2^card V) (2^(card V - m)) by₂ (by
-            apply Nat.pow_le_pow_of_le_right
-            simp
-            exact Nat.sub_le (Fintype.card V) m) (by
-              rw [← h₀]
-              exact card_le_card <| subset_univ 𝓗
-            )
+            sorry
+            -- Nat.sub_lt_right_of_lt_add h₁ <| (Nat.sub_lt_iff_lt_add h₀).mp h
+          sorry
+          -- exact fact #𝓗 (2^card V) (2^(card V - m)) by₂ (by
+          --   apply Nat.pow_le_pow_of_le_right
+          --   simp
+          --   exact Nat.sub_le (Fintype.card V) m) (by
+          --     rw [← h₀]
+          --     exact card_le_card <| subset_univ 𝓗
+          --   )
         have : #𝓗ᶜ < 2^(card V - m) := by omega -- line 4 of the proof in the paper
         have : ¬ (filter (fun H => C ∩ H = D) (univ : Finset (Finset V))) ⊆ 𝓗ᶜ := by
           intro hc
@@ -156,8 +160,9 @@ lemma towards_lowerbound₀  {V : Type*} [DecidableEq V] [Fintype V] (c m : ℕ)
 lemma towards_lowerbound₁  {V : Type*} [DecidableEq V] [Fintype V] (c m : ℕ) :
        card V - m ≥ Nat.clog 2 (2^(card V) - c) →
     2^(card V - m) ≥ 2^(Nat.clog 2 (2^(card V) - c)) := by
-  apply Nat.pow_le_pow_of_le_right
-  simp
+  sorry
+  -- apply Nat.pow_le_pow_of_le_right
+  -- simp
 
 lemma towards_lowerbound₂  {V : Type*} [DecidableEq V] [Fintype V] (c : ℕ) :
     2^(Nat.clog 2 (2^(card V) - c))

@@ -19,27 +19,27 @@ theorem vertex_in_walk_induction {V : Type} {G : SimpleGraph V} {S : Set V} {w :
 (hw: ¬ w ∈ S) (n:ℕ):
 ∀ t, t ∈ S →  (∀ p : G.Walk t w, p.length = n → ∃ a, ∃ u, u ∈ S ∧ (G.Adj u a) ∧ ¬ a ∈ S)
 :=
-Nat.recOn n (
-    (λ v hv _ hpl ↦
-    have : v ≠ w := ne_of_mem_of_not_mem hv hw
-    False.elim (this (SimpleGraph.Walk.eq_of_length_eq_zero hpl)))
-)
-(λ k h_ind v hv p hp ↦
-    have : v ≠ w := ne_of_mem_of_not_mem hv hw
-    Exists.elim (SimpleGraph.Walk.exists_eq_cons_of_ne this p) (
-      λ b hb ↦ Exists.elim hb (λ h hh ↦ Exists.elim hh (
-        λ p' hp' ↦
-        have h_can_ind: p'.length = k := reverse_cons_length b v w p' p h hp hp'
-        (Classical.em (b ∈ S)).elim (
-          λ heq ↦
-          h_ind b heq p' h_can_ind
-        ) (
-          λ hneq ↦ Exists.intro b (Exists.intro v (And.intro hv (And.intro h hneq)))
+  Nat.recOn n (
+      (λ v hv _ hpl ↦
+      have : v ≠ w := ne_of_mem_of_not_mem hv hw
+      False.elim (this (SimpleGraph.Walk.eq_of_length_eq_zero hpl)))
+  )
+  (λ k h_ind v hv p hp ↦
+      have : v ≠ w := ne_of_mem_of_not_mem hv hw
+      Exists.elim (SimpleGraph.Walk.exists_eq_cons_of_ne this p) (
+        λ b hb ↦ Exists.elim hb (λ h hh ↦ Exists.elim hh (
+          λ p' hp' ↦
+          have h_can_ind: p'.length = k := reverse_cons_length b v w p' p h hp hp'
+          (Classical.em (b ∈ S)).elim (
+            λ heq ↦
+            h_ind b heq p' h_can_ind
+          ) (
+            λ hneq ↦ Exists.intro b (Exists.intro v (And.intro hv (And.intro h hneq)))
+          )
         )
       )
     )
   )
-)
 
 theorem vertex_in_walk {V : Type} {G : SimpleGraph V} (S : Set V) (w t : V)
 (hw: ¬ w ∈ S) (ht: t ∈ S)

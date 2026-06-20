@@ -49,10 +49,10 @@ have hab: a*x + b*y = a*x₀ + b*y₀ → (x,y) = (x₀,y₀) :=
         (
           λ hn2: n < 0 ↦
             have hnx: n ≤ -1 := sub_nonpos.mp hn2
-            have hnx1: n*b ≤ (-1)*b := (mul_le_mul_right h2).mpr hnx
+            have hnx1: n*b ≤ (-1)*b := (Int.mul_le_mul_iff_of_pos_right h2).mpr hnx
             have hnx2: x < 0 := calc
                        _ = x₀ + n*b   := hn1
-                     _ ≤ x₀ + (-1)*b  := add_le_add_left hnx1 x₀
+                     _ ≤ x₀ + (-1)*b  := add_le_add_right hnx1 x₀
                      _ = x₀ - b       := by ring
                      _ < 0            := sub_neg.mpr h6
             absurd h8 (not_le.mpr hnx2)
@@ -61,7 +61,7 @@ have hab: a*x + b*y = a*x₀ + b*y₀ → (x,y) = (x₀,y₀) :=
           Or.elim (em' (n = 0))
           (
             λ hnn0: ¬ n = 0 ↦
-            have hnn1: n < 0 ∨ n > 0 := Ne.lt_or_lt hnn0
+            have hnn1: n < 0 ∨ n > 0 := Int.ne_iff_lt_or_gt.mp hnn0
             Or.elim (hnn1)
             (
               λ hnn2: n < 0 ↦
@@ -69,22 +69,22 @@ have hab: a*x + b*y = a*x₀ + b*y₀ → (x,y) = (x₀,y₀) :=
             )
             (
               λ hnn3: n > 0 ↦
-              have hnn4: n*b ≥ (1)*b := (mul_le_mul_right h2).mpr hnn3
+              have hnn4: n*b ≥ (1)*b := (Int.mul_le_mul_iff_of_pos_right h2).mpr hnn3
               have hnn5:  x ≥ x₀ + b := calc
                           _ = x₀ + n*b  := hn1
-                          _ ≥ x₀ + 1*b  := add_le_add_left hnn4 x₀
+                          _ ≥ x₀ + 1*b  := add_le_add_right hnn4 x₀
                           _ = _         := by ring
 
-              have hnn6: a*x ≥ a*(x₀ + b) := (mul_le_mul_left h1).mpr hnn5
-              have hnn7: b*y ≥ b*0 := (mul_le_mul_left h2).mpr h9
+              have hnn6: a*x ≥ a*(x₀ + b) := (Int.mul_le_mul_left h1).mpr hnn5
+              have hnn7: b*y ≥ b*0 := (Int.mul_le_mul_left h2).mpr h9
 
-              have hnn8: b*a > b*y₀ := (mul_lt_mul_left h2).mpr h7
+              have hnn8: b*a > b*y₀ := Int.mul_lt_mul_of_pos_left h7 h2
               have hnn9: a*x + b*y > a*x₀ + b*y₀ := calc
                                  _ ≥ a*(x₀ + b) + b*0 := add_le_add hnn6 hnn7
                                  _ = a*(x₀+b)         := by ring
                                  _ = a*x₀+a*b         := mul_add a x₀ b
                                  _ = a*x₀+b*a         := by rw [mul_comm a b]
-                                 _ > _                := add_lt_add_left hnn8 (a * x₀)
+                                 _ > _                := add_lt_add_right hnn8 (a * x₀)
               absurd hab0 (ne_of_gt hnn9)
             )
           )
